@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>systematic-debugging · Skill Workflow</title>
+<style>
+/* ============================================================
+   skill-to-webpage 骨架层(base.html)
+   布局:Hero(R层) + 流程带 + 侧栏目录 + 详情面板
+   机制:CSS 变量换肤 / data-source 出处 / 追问打包 / SVG 子流程图
+   槽位 theme_styles(下方,勿在注释里写成双花括号形式)注入全部主题 CSS(docs 的 :root 默认块 +
+        3 个 [data-theme] 覆盖块,见 templates/themes/)
+   ============================================================ */
+
+/* —— 主题层(渲染时整段注入 4 个 themes/*.css)—— */
+/* ============================================================
+   简洁文档(docs · 默认主题)
+   白底大留白,Linear/Notion 风,克制的靛蓝强调。
+   本文件的变量块 = base.html 中 :root 的默认值;
+   其余主题以 [data-theme="X"] 覆盖同名变量。
+   ============================================================ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --ink: #17181c;
+  --ink-soft: #3c3f46;
+  --muted: #7a7e88;
+  --line: #e6e7eb;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(79, 70, 229, .09);
+  --ok: #1a7f4e;
+  --warn: #b45309;
+  --chip: #eef0ff;
+  --code-bg: #f6f7f9;
+  --code-ink: #24292f;
+  --tooltip-bg: #17181c;
+  --tooltip-ink: #ffffff;
+  --radius: 10px;
+  --shadow: 0 10px 34px rgba(23, 24, 28, .07);
+  --font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+}
+/* ============================================================
+   技术蓝图(blueprint)
+   深蓝底 + 浅蓝描边 + 径向光晕,工程图纸感。
+   ============================================================ */
+[data-theme="blueprint"] {
+  --bg: radial-gradient(circle at 18% 8%, rgba(95, 176, 255, .10), transparent 30rem), linear-gradient(160deg, #0b1f3a 0%, #0d2547 100%);
+  --surface: #0e2544;
+  --surface-2: #12305a;
+  --ink: #dcebff;
+  --ink-soft: #b9d4f5;
+  --muted: #7fa3d1;
+  --line: #2c4a77;
+  --accent: #5fb0ff;
+  --on-accent: #04182e;
+  --accent-soft: rgba(95, 176, 255, .14);
+  --ok: #7fd6a0;
+  --warn: #ffc46b;
+  --chip: #12305a;
+  --code-bg: #091a31;
+  --code-ink: #9fd0ff;
+  --tooltip-bg: #dcebff;
+  --tooltip-ink: #0b1f3a;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .35);
+}
+
+/* 顶栏/流程带背景在渐变底上改为毛玻璃,避免出现色块断层 */
+[data-theme="blueprint"] .topbar,
+[data-theme="blueprint"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+/* ============================================================
+   终端 IDE(ide)
+   编辑器暗色调 + 语法高亮配色(蓝 accent / 橙 code / 绿 ok)。
+   ============================================================ */
+[data-theme="ide"] {
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-2: #2d2d30;
+  --ink: #d4d4d4;
+  --ink-soft: #c0c0c0;
+  --muted: #8a8a8a;
+  --line: #3a3a3a;
+  --accent: #569cd6;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(86, 156, 214, .14);
+  --ok: #6a9955;
+  --warn: #ce9178;
+  --chip: #2d2d30;
+  --code-bg: #1b1b1c;
+  --code-ink: #ce9178;
+  --tooltip-bg: #d4d4d4;
+  --tooltip-ink: #1e1e1e;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .45);
+}
+
+/* 暗底上输入框用抬升面色,避免刺眼白底 */
+[data-theme="ide"] .dd-popover textarea { background: var(--surface-2); }
+/* ============================================================
+   白板手绘(whiteboard)
+   暖米底 + 大圆角便签卡片 + 马克笔红强调,轻松易懂。
+   ============================================================ */
+[data-theme="whiteboard"] {
+  --bg: linear-gradient(150deg, #fdf8ee 0%, #f8efdb 100%);
+  --surface: #fffdf6;
+  --surface-2: #fff4c2;
+  --ink: #3a2f1f;
+  --ink-soft: #5a4a33;
+  --muted: #8a7a5c;
+  --line: #e5d9b8;
+  --accent: #c9543f;
+  --on-accent: #fffdf6;
+  --accent-soft: rgba(201, 84, 63, .10);
+  --ok: #4a7c59;
+  --warn: #b07000;
+  --chip: #fff4c2;
+  --code-bg: #f7efdd;
+  --code-ink: #5a4a1f;
+  --tooltip-bg: #3a2f1f;
+  --tooltip-ink: #fffdf6;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(122, 96, 52, .16);
+}
+
+/* 便签质感:卡片描黄边、用米黄面 */
+[data-theme="whiteboard"] .card { border-width: 2px; border-color: #e0b84a; background: var(--surface-2); }
+[data-theme="whiteboard"] .topbar,
+[data-theme="whiteboard"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+button { font: inherit; color: inherit; }
+
+.page {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 56px;
+}
+
+/* ——— 顶栏 ——— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand { font: 800 15px/1.2 var(--font-display); letter-spacing: .02em; }
+.topbar .brand .lens { color: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+.src-toggle {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-display);
+  color: var(--muted);
+  transition: all .2s;
+}
+
+.src-toggle:hover, .src-toggle.active { border-color: var(--accent); color: var(--accent); }
+
+/* 多版本页面切换(渲染多版时由 component_scripts 注入到顶栏;单版页面不出现) */
+.variants { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+.variants .vl { color: var(--muted); font: 600 10.5px/1 var(--font-mono); letter-spacing: .06em; margin-right: 2px; }
+.variants a { color: var(--muted); text-decoration: none; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1 var(--font-display); white-space: nowrap; }
+.variants a:hover { color: var(--accent); border-color: var(--accent); }
+.variants a.cur { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 880px) { .variants .vl { display: none; } }
+@media (max-width: 640px) { .topbar { flex-wrap: wrap; row-gap: 6px; } .variants { order: 9; flex-basis: 100%; margin-right: 0; flex-wrap: wrap; } }
+.topbar .bundle-back { margin-left: 14px; font: 600 12.5px/1 var(--font-mono); color: var(--ink-soft); text-decoration: none; }
+.topbar .bundle-back:hover { color: var(--accent); }
+a.xjump { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+
+.theme-picker {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+}
+
+/* ——— Hero:R 层(何时用这个 skill) ——— */
+.hero { padding: 44px 4px 8px; }
+
+.hero .eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font: 700 13px/1.3 var(--font-display);
+  letter-spacing: .14em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(36px, 5.4vw, 62px);
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.hero .lede {
+  margin: 18px 0 0;
+  max-width: 860px;
+  color: var(--ink-soft);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+
+.hero .thesis {
+  margin-top: 22px;
+  max-width: 860px;
+  border-left: 5px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.hero .thesis strong {
+  display: block;
+  margin-bottom: 6px;
+  font: 800 15px/1.3 var(--font-display);
+  color: var(--accent);
+}
+
+.hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
+
+/* ——— 流程带(workflow rail):节点语义分组,不放渲染元数据 ——— */
+.rail-wrap {
+  position: sticky;
+  top: 49px;
+  z-index: 80;
+  margin: 26px 0 24px;
+  padding: 14px 4px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.rail::-webkit-scrollbar { height: 6px; }
+.rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.rail .group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 20px 10px 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.rail .group::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  color: var(--muted);
+  font: 700 10.5px/1 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.rail .group.main { border-style: solid; border-color: var(--accent); }
+.rail .group.main::before { color: var(--accent); }
+
+.node-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 108px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) - 3px);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  flex: 0 0 auto;
+}
+
+.node-chip .nid { color: var(--muted); font: 700 10.5px/1 var(--font-mono); letter-spacing: .06em; }
+.node-chip .nt { font: 700 13px/1.25 var(--font-display); }
+.node-chip .sub { color: var(--muted); font: 500 10.5px/1.2 var(--font-display); }
+
+.node-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.node-chip.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.node-chip.active .nid, .node-chip.active .sub { color: var(--on-accent); opacity: .75; }
+
+.rail .arrow { align-self: center; color: var(--muted); font: 700 15px/1 var(--font-mono); flex: 0 0 auto; padding: 0 1px; }
+.rail .arrow.big { color: var(--accent); font-size: 19px; }
+
+/* ——— 主体:侧栏 + 详情 ——— */
+.layout {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar { position: sticky; top: 148px; display: grid; gap: 16px; }
+
+/* grid 子项默认 min-width:auto,会被子流程图的 max-content 画布撑破 */
+#panels { min-width: 0; }
+
+.side-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 14px 10px;
+}
+
+.side-card .side-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.toc { display: grid; gap: 2px; }
+
+.toc button {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s;
+}
+
+.toc button:hover, .toc button.active { background: var(--accent-soft); }
+.toc .tid { color: var(--muted); font: 700 11px/1.4 var(--font-mono); }
+.toc button.active .tid { color: var(--accent); }
+.toc .tt { font: 600 13px/1.35 var(--font-display); }
+.toc .tl { color: var(--muted); font: 500 10px/1.4 var(--font-mono); }
+
+.res-list { display: grid; gap: 6px; padding-bottom: 4px; }
+
+.res-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  font: 500 11.5px/1.35 var(--font-mono);
+  word-break: break-all;
+}
+
+.res-item .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--ok); }
+.res-item.missing .dot { background: var(--warn); }
+.res-empty { color: var(--muted); font: 500 12px/1.5 var(--font-display); padding: 2px 2px 6px; }
+
+/* ——— 详情面板 ——— */
+.panel { display: none; animation: rise .32s ease both; min-width: 0; }
+.panel.active { display: block; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-head { margin: 4px 0 18px; position: relative; }
+.panel-head .ph-id { color: var(--accent); font: 700 12px/1.2 var(--font-mono); letter-spacing: .08em; }
+.panel-head h2 { margin: 6px 0 0; font: 900 28px/1.2 var(--font-display); }
+
+.panel-head .lead {
+  margin: 12px 0 0;
+  max-width: 780px;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+
+/* ——— 通用卡片 ——— */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cards.two { grid-template-columns: repeat(2, 1fr); }
+
+.card {
+  position: relative;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card h3 { margin: 0 0 8px; font: 800 16px/1.3 var(--font-display); }
+.card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.75; }
+.card .when { margin-top: 8px; color: var(--muted); font: 500 12px/1.5 var(--font-display); }
+
+/* ——— 入口/条件分叉卡 ——— */
+.forks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.fork {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 22px 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  box-shadow: var(--shadow);
+}
+
+.fork:hover { border-color: var(--accent); transform: translateY(-2px); }
+.fork .fk-tag { color: var(--accent); font: 700 12px/1.2 var(--font-display); letter-spacing: .08em; }
+.fork h3 { margin: 8px 0 8px; font: 900 19px/1.3 var(--font-display); }
+.fork p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+.fork .fk-go { display: block; margin-top: 12px; color: var(--accent); font: 700 13px/1.3 var(--font-display); }
+
+/* ——— 子流程图(subflow:HTML 盒子 + SVG 连线层,环画成真实边) ——— */
+.subflow { overflow-x: auto; padding-bottom: 4px; }
+
+.sf-canvas {
+  position: relative;
+  padding: 56px 6px 10px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.sf-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+.sf-row { display: flex; gap: 30px; }
+
+.sf-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 112px;
+  max-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 12.5px/1.25 var(--font-display);
+  text-align: left;
+  flex: 0 0 auto;
+  transition: border-color .15s, transform .15s;
+  box-shadow: var(--shadow);
+}
+
+.sf-node .sn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; color: var(--muted); font: 700 10px/1 var(--font-mono); }
+.sf-node:hover { border-color: var(--accent); transform: translateY(-1px); }
+.sf-node.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sf-node.active .sn { color: var(--on-accent); opacity: .75; }
+
+.ed-f { stroke: var(--muted); stroke-width: 1.5; }
+.ed-l { stroke: var(--warn); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; animation: dashflow 1.1s linear infinite; }
+.ed-t { fill: var(--warn); font: 700 10.5px var(--font-display); }
+.mk-f { fill: var(--muted); }
+.mk-l { fill: var(--warn); }
+
+@keyframes dashflow { to { stroke-dashoffset: -18; } }
+
+/* ——— step 内交互组件 ——— */
+pre.code {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 12.5px/1.7 var(--font-mono);
+  overflow-x: auto;
+}
+
+code {
+  padding: 1.5px 5px;
+  border-radius: 5px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 92% var(--font-mono);
+}
+
+pre.code code { padding: 0; background: transparent; }
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  cursor: pointer;
+  opacity: 0;
+  transition: all .15s;
+}
+
+pre.code:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.scroll { overflow-x: auto; margin: 10px 0; }
+
+table.tbl { width: 100%; border-collapse: collapse; font: 13.5px/1.6 var(--font-body); }
+.tbl th, .tbl td { padding: 9px 11px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tbl th { background: var(--surface-2); font: 700 12.5px/1.4 var(--font-display); white-space: nowrap; }
+.tbl td { color: var(--ink-soft); }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+
+table.rowsel tbody tr { cursor: pointer; }
+table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+
+.row-echo {
+  margin: 8px 0 2px;
+  padding: 9px 13px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--ink);
+  font: 700 13.5px/1.6 var(--font-display);
+}
+
+.checklist { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.checklist li { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+.checklist label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.checklist input { accent-color: var(--accent); width: 15px; height: 15px; flex: 0 0 auto; }
+.checklist input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.ck-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 700 12px/1.6 var(--font-display);
+}
+
+.ck-badge.done { background: var(--ok); color: #ffffff; }
+
+.acc { margin: 10px 0; display: grid; gap: 6px; }
+.acc details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.acc summary { padding: 10px 14px; cursor: pointer; font: 700 13.5px/1.4 var(--font-display); list-style: none; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary::before { content: "+"; display: inline-block; width: 16px; color: var(--accent); font-weight: 900; }
+.acc details[open] summary::before { content: "−"; }
+.acc .acc-body { padding: 0 14px 12px 30px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+
+.tree { margin: 10px 0; display: grid; gap: 4px; }
+.tree details { border: 1px solid var(--line); border-radius: 7px; background: var(--code-bg); }
+.tree summary { padding: 8px 12px; cursor: pointer; font: 600 12.5px/1.4 var(--font-mono); color: var(--code-ink); list-style: none; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree .tree-desc { padding: 0 12px 10px 26px; color: var(--ink-soft); font: 400 12.5px/1.6 var(--font-display); }
+
+/* ——— 规则列表(错误处理/边界类内容) ——— */
+.rules { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+
+.rules li {
+  position: relative;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.rules li strong { color: var(--ink); }
+.rules li .fb { display: block; margin-top: 7px; }
+
+/* ——— explain-card(子步骤详情) ——— */
+.explain-card {
+  display: none;
+  position: relative;
+  margin-top: 12px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.explain-card.active { display: block; animation: rise .28s ease both; }
+.explain-card h4 { margin: 0 0 10px; font: 800 16px/1.3 var(--font-display); }
+.explain-card p { margin: 0 0 10px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.8; }
+.explain-card ul, .explain-card ol { margin: 0 0 10px; padding-left: 22px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.85; }
+.explain-card li { margin-bottom: 3px; }
+.explain-card .hint { color: var(--muted); font-size: 13px; }
+
+/* ——— 环说明卡与跳转 ——— */
+p.loop-note {
+  padding: 9px 13px;
+  border: 1px dashed var(--warn);
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.jump {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font: 700 12px/1.5 var(--font-display);
+  color: var(--accent);
+  vertical-align: baseline;
+}
+
+.jump:hover { border-color: var(--accent); }
+
+/* ——— 出处标注(A:margin 细条 + tooltip;B:全局开关) ——— */
+[data-source] { position: relative; }
+
+.card[data-source], .explain-card[data-source], .fork[data-source],
+.rules li[data-source], .hero .thesis[data-source], .hero .lede[data-source] {
+  border-left: 3px solid var(--line);
+  transition: border-left-color .2s;
+}
+
+.card[data-source]:hover, .explain-card[data-source]:hover, .fork[data-source]:hover,
+.rules li[data-source]:hover, .hero .thesis[data-source]:hover, .hero .lede[data-source]:hover {
+  border-left-color: var(--accent);
+}
+
+.hero .thesis[data-source] { border-left-width: 5px; border-left-color: var(--accent); }
+
+[data-source]::after {
+  content: attr(data-source);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 5px);
+  padding: 3px 9px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  font: 600 10.5px/1.4 var(--font-mono);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 60;
+}
+
+[data-source]:hover::after { opacity: 1; }
+
+body.show-sources .card[data-source]::before,
+body.show-sources .explain-card[data-source]::before,
+body.show-sources .fork[data-source]::before,
+body.show-sources .rules li[data-source]::before {
+  content: attr(data-source);
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font: 600 10.5px/1.4 var(--font-mono);
+}
+
+/* ——— 追问按钮 + 弹窗 ——— */
+.deep-dive-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-display);
+  opacity: 0;
+  transition: all .2s;
+  z-index: 2;
+}
+
+.card:hover .deep-dive-btn, .explain-card:hover .deep-dive-btn,
+.fork:hover .deep-dive-btn, .rules li:hover .deep-dive-btn { opacity: .7; }
+
+.deep-dive-btn:hover { opacity: 1 !important; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+.dd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, .38);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-overlay.active { display: flex; }
+
+.dd-popover {
+  width: min(540px, calc(100% - 32px));
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.dd-popover .dd-title { margin: 0 0 6px; font: 800 19px/1.3 var(--font-display); }
+.dd-popover .dd-ctx { margin: 0 0 14px; color: var(--muted); font: 500 12.5px/1.6 var(--font-display); }
+
+.dd-popover textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: 14.5px/1.6 var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.dd-actions { display: flex; gap: 8px; }
+
+.dd-submit {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+}
+
+.dd-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  color: var(--muted);
+}
+
+.dd-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 26px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  border-radius: 8px;
+  font: 600 13px/1.4 var(--font-display);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.dd-toast.show { opacity: 1; }
+
+/* ——— 上一步/下一步 ——— */
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 26px; }
+
+.pager button {
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  transition: all .18s;
+  max-width: 48%;
+  text-align: left;
+}
+
+.pager button:hover { border-color: var(--accent); color: var(--accent); }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager button:disabled:hover { border-color: var(--line); color: inherit; }
+.pager .dir { display: block; color: var(--muted); font: 600 10.5px/1.3 var(--font-mono); margin-bottom: 3px; }
+
+/* ——— 页脚 ——— */
+.footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 12.5px/1.8 var(--font-display);
+}
+
+/* ——— 响应式 ——— */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .side-card.toc-card { display: none; }
+  .cards, .cards.two, .forks { grid-template-columns: 1fr; }
+  .rail-wrap { top: 45px; }
+  .hero h1 { font-size: 38px; }
+}
+
+@media (max-width: 520px) {
+  .page { width: calc(100% - 22px); }
+  .hero { padding-top: 26px; }
+  .hero h1 { font-size: 32px; }
+  .panel-head h2 { font-size: 23px; }
+  .sf-row { gap: 22px; }
+}
+
+/* ——— 组件专属附加样式(渲染时按需注入) ——— */
+/* ——— 语义层(s2w-semantics/2)视觉词汇:无语义数据时这些选择器不会出现,对 /1 页面静默 ——— */
+.hero .thesis .wsa { display: inline-block; margin-top: 10px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); font: 700 11.5px/1.4 var(--font-mono); letter-spacing: .04em; }
+.rail-sem { position: relative; display: grid; gap: 16px; width: max-content; min-width: 100%; }
+.rail-main, .rail-sat { display: flex; align-items: stretch; gap: 6px; }
+.rail-sat { position: relative; display: block; padding: 0; }
+.rail-sat::before { content: attr(data-label); position: absolute; left: 6px; top: 50%; transform: translateY(-50%); color: var(--muted); font: 600 10.5px/1.3 var(--font-display); white-space: nowrap; }
+.rail-sat .node-chip { position: absolute; top: 0; border-style: dashed; opacity: .88; }
+.rail-sat .node-chip.active { border-style: solid; opacity: 1; }
+.rail-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rl-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 4; }
+.rail .arrow.cap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.rail .arrow.cap::after { content: attr(data-cap); color: var(--warn); font: 600 9.5px/1.2 var(--font-display); white-space: nowrap; }
+.sf-node .sf-when { display: block; color: var(--accent); font: 600 9.5px/1.2 var(--font-display); }
+.sf-node .sf-type { display: inline-block; margin-left: auto; color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-node .t-tool { color: var(--accent); } .sf-node .t-gate, .sf-node .t-fb { color: var(--warn); } .sf-node .t-out { color: var(--ok); }
+.sf-node .sf-gate { display: block; margin-top: 3px; color: var(--warn); font: 700 10px/1.2 var(--font-display); }
+.sf-node .sf-imp { color: var(--muted); font: 600 9px/1 var(--font-display); }
+.sf-node.implicit { border-style: dashed; }
+.sf-node.active .sf-type, .sf-node.active .sf-gate, .sf-node.active .sf-imp, .sf-node.active .sf-when { color: var(--on-accent); opacity: .85; }
+.sf-end { align-self: center; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--ink-soft); font: 700 20px/1 var(--font-mono); padding: 0 6px; }
+.sf-end small { color: var(--muted); font: 700 9px/1.2 var(--font-mono); letter-spacing: .08em; }
+.sf-lane { position: absolute; left: 0; right: 0; height: 0; }
+.sf-legend { margin: 2px 0 26px 6px; color: var(--muted); font: 600 10px/1.5 var(--font-display); }
+.sf-ext { position: absolute; top: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; max-width: 208px; padding: 7px 10px; border: 1px dotted var(--muted); border-radius: 8px; background: var(--surface); cursor: pointer; text-align: left; font: 700 12px/1.25 var(--font-display); color: var(--ink); box-shadow: var(--shadow); }
+.sf-ext .xid { color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-ext small { color: var(--ink-soft); font: 500 10.5px/1.4 var(--font-display); white-space: normal; }
+.sf-ext:hover { border-color: var(--accent); }
+.sf-ext.out { border: 1px dashed var(--warn); }
+.sf-ext.out .xid { color: var(--warn); }
+.sf-ext.xskill { border-style: dashed; text-decoration: none; }
+.sf-ext.xskill .xid { color: var(--accent); }
+.ed-c { fill: none; stroke: var(--accent); stroke-width: 1.6; } .ed-c.inf { stroke-dasharray: 4 3; }
+.ed-ct { fill: var(--accent); font: 700 10.5px var(--font-display); }
+.ed-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 3; }
+.ed-x { fill: none; stroke: var(--warn); stroke-width: 1.5; } .ed-x.inf { stroke-dasharray: 4 3; }
+.ed-e { fill: none; stroke: var(--ink-soft); stroke-width: 1.4; } .ed-e.inf { stroke-dasharray: 4 3; }
+.ed-et { fill: var(--ink-soft); font: 600 9.5px var(--font-display); }
+.mk-c { fill: var(--accent); } .mk-d { fill: var(--muted); } .mk-x { fill: var(--warn); } .mk-e { fill: var(--ink-soft); }
+
+/* 连线可点选:单击高亮两端,其余淡出(与组合总览页同一套词汇;淡出只动透明度,四主题通用) */
+.sfe { pointer-events: stroke; transition: opacity .12s ease, stroke-width .12s ease; }
+.sfe:hover, .sfe.focus { stroke-width: 2.6; opacity: 1; }
+.sfe.dim, .sfl.dim { opacity: .18; }
+.sfl { transition: opacity .12s ease; }
+.sf-node, .sf-ext, .sf-end, .node-chip { transition: opacity .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.sf-node.dim, .sf-ext.dim, .sf-end.dim, .node-chip.dim { opacity: .35; }
+.sf-node.focus, .sf-ext.focus, .node-chip.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.sf-end.focus { color: var(--accent); }
+.tbadge { display: inline-block; margin-left: 8px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font: 700 10px/1.3 var(--font-mono); letter-spacing: .06em; vertical-align: middle; }
+.tbadge.t-tool { color: var(--accent); border-color: var(--accent); } .tbadge.t-gate, .tbadge.t-fb { color: var(--warn); border-color: var(--warn); } .tbadge.t-out { color: var(--ok); border-color: var(--ok); }
+.gate-badge { display: inline-block; margin-left: 6px; color: var(--warn); font: 700 11px/1.3 var(--font-display); vertical-align: middle; }
+.goal { margin: 4px 0 8px; color: var(--ink); font-size: 14px; line-height: 1.7; }
+.goal strong { color: var(--accent); margin-right: 4px; }
+.sem-h { margin: 12px 0 4px; color: var(--muted); font: 700 10.5px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sem-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+.sem-list li { margin: 2px 0; }
+.sem-list.fail li::marker { content: "⚠ "; color: var(--warn); }
+.sem-list.tips li::marker { content: "✦ "; color: var(--accent); }
+.qt { display: none; margin-left: 6px; color: var(--muted); font: 500 12px/1.5 var(--font-body); }
+body.show-sources .qt { display: inline; }
+.qt::before { content: "\201C"; } .qt::after { content: "\201D"; }
+.inf { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink-soft); font: 600 10px/1.6 var(--font-display); vertical-align: middle; }
+.flow { margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--ink-soft); font-size: 13px; line-height: 1.9; }
+.flow .fk { display: inline-block; min-width: 14px; color: var(--muted); font: 700 11px var(--font-mono); margin-right: 4px; }
+.gov { margin: 6px 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--accent-soft); color: var(--ink-soft); font-size: 13px; line-height: 1.7; border-radius: 0 6px 6px 0; }
+.recon-tbl .w { color: var(--accent); font-weight: 700; } .recon-tbl .nw { color: var(--muted); }
+.recon-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.recon-sum span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1.4 var(--font-display); color: var(--ink-soft); }
+
+/* none */
+</style>
+</head>
+<body data-theme="docs">
+
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand"><span class="lens">◈</span> skill-to-webpage</span>
+    <span class="spacer"></span>
+    <button id="srcToggle" class="src-toggle" title="显示/隐藏出处">显示出处</button>
+    <select id="themePicker" class="theme-picker" title="切换主题">
+      <option value="docs">简洁文档</option>
+      <option value="blueprint">技术蓝图</option>
+      <option value="ide">终端 IDE</option>
+      <option value="whiteboard">白板手绘</option>
+    </select>
+  </div>
+
+  <!-- Hero:R 层(skill 名 + description 原文 + 执行总纲) -->
+  <header class="hero">
+    <p class="eyebrow">SKILL WORKFLOW · 11 NODES · SKILL.md 296 LINES · SEMANTICS BY MERGE(AGENT) · 216 CLAIMS VERIFIED</p>
+    <h1>systematic-debugging</h1>
+    <p class="lede" data-source="SKILL.md:3">遇到任何 bug、测试失败或非预期行为时,先走一遍系统调试的四阶段,而不是直接提修复方案:查根因 → 找模式 → 立单一假设最小验证 → 只改一处修根因。<strong>何时用:</strong>在你准备说出「问题应该是 X,改一下试试」之前——尤其是在赶时间、已经试过几次修复、或者自己还没完全搞懂的时候。</p>
+    <div class="thesis" data-source="SKILL.md:19">
+      <strong>执行总纲:任何 bug 都先走四阶段:查根因 → 找模式 → 单一假设最小验证 → 只改一处修根因;没做完 Phase 1 就不许提修复,连修三次不成就停下来质疑架构</strong>
+      <span>这份 skill 的执行形态是一条带硬闸口和多条回退边的四阶段主线:铁律 <code>NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST</code> 守住入口,<code>Phase 1</code> 读错误 / 复现 / 查改动、多组件系统先插桩取证、深栈错误反向追数据流,<code>Phase 2</code> 拿可用样例逐条比差异,<code>Phase 3</code> 一次只立一个假设并用最小改动验证——不成就换新假设而不是叠加修复,<code>Phase 4</code> 先有失败测试再只改一处修根因。修复失败时不许硬上第四刀:少于三次回 Phase 1 重新分析,达到三次就停下来和人类搭档讨论架构。红旗话术与搭档的重定向信号是随时生效的两道守护,命中即 STOP 回到 Phase 1。</span>
+    </div>
+  </header>
+
+  <!-- 流程带:节点按语义分组(理念/执行/支撑),芯片副标题写节点做什么 -->
+  <div class="rail-wrap">
+    <div class="rail" id="rail">
+      <div class="rail-sem" id="railSem"><svg class="rail-svg" id="railSvg"></svg><div class="rail-main"><div class="group" data-label="W · 流程"><button class="node-chip" data-node="n02"><span class="nid">n02 · W</span><span class="nt">无根因不许动手</span><span class="sub">无根因调查不许修</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="R · 触发"><button class="node-chip" data-node="n03"><span class="nid">n03 · R</span><span class="nt">何时该走这套</span><span class="sub">任何技术问题都适用</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group main" data-label="W · 执行主线"><button class="node-chip" data-node="n04"><span class="nid">n04 · W</span><span class="nt">四阶段主线</span><span class="sub">四阶段:查因到实施</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="W · 兜底"><button class="node-chip" data-node="n05"><span class="nid">n05 · W</span><span class="nt">红旗话术即中止</span><span class="sub">红旗话术即中止</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="W · 兜底"><button class="node-chip" data-node="n06"><span class="nid">n06 · W</span><span class="nt">搭档信号即回退</span><span class="sub">搭档信号即回退</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="W · 流程"><button class="node-chip" data-node="n09"><span class="nid">n09 · W</span><span class="nt">确无根因的收尾</span><span class="sub">确无根因时的收尾</span></button></div></div><div class="rail-sat" data-label="支撑层 S / A · 点线 = 依赖边"><button class="node-chip sat" data-node="n01"><span class="nid">n01 · S</span><span class="nt">根因优先的原则</span><span class="sub">根因优先的核心原则 · → Step 1</span></button><button class="node-chip sat" data-node="n07"><span class="nid">n07 · S</span><span class="nt">拆掉常见借口</span><span class="sub">拆掉常见借口</span></button><button class="node-chip sat" data-node="n08"><span class="nid">n08 · S</span><span class="nt">四阶段速查判据</span><span class="sub">四阶段速查判据</span></button><button class="node-chip sat" data-node="n10"><span class="nid">n10 · A</span><span class="nt">配套技法与资源</span><span class="sub">配套技法与外部资源 · → Step 6</span></button><button class="node-chip sat" data-node="n11"><span class="nid">n11 · S</span><span class="nt">系统法的实测收益</span><span class="sub">系统法的实测收益</span></button></div></div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- 侧栏:节点目录(带行号) + 当前节点资源(存在性徽章) -->
+    <aside class="sidebar">
+      <div class="side-card toc-card">
+        <p class="side-title">节点目录</p>
+        <nav class="toc" id="toc">
+          <button data-node="n01"><span class="tid">n01</span><span class="tt">Overview</span><span class="tl">8-15</span></button><button data-node="n02"><span class="tid">n02</span><span class="tt">The Iron Law</span><span class="tl">16-23</span></button><button data-node="n03"><span class="tid">n03</span><span class="tt">When to Use</span><span class="tl">24-45</span></button><button data-node="n04"><span class="tid">n04</span><span class="tt">The Four Phases</span><span class="tl">46-214</span></button><button data-node="n05"><span class="tid">n05</span><span class="tt">Red Flags - STOP and Follow Process</span><span class="tl">215-233</span></button><button data-node="n06"><span class="tid">n06</span><span class="tt">your human partner&#x27;s Signals You&#x27;re Doing It Wrong</span><span class="tl">234-244</span></button><button data-node="n07"><span class="tid">n07</span><span class="tt">Common Rationalizations</span><span class="tl">245-257</span></button><button data-node="n08"><span class="tid">n08</span><span class="tt">Quick Reference</span><span class="tl">258-266</span></button><button data-node="n09"><span class="tid">n09</span><span class="tt">When Process Reveals &quot;No Root Cause&quot;</span><span class="tl">267-277</span></button><button data-node="n10"><span class="tid">n10</span><span class="tt">Supporting Techniques</span><span class="tl">278-289</span></button><button data-node="n11"><span class="tid">n11</span><span class="tt">Real-World Impact</span><span class="tl">290-296</span></button><button data-node="recon"><span class="tid">⊕</span><span class="tt">印证报告</span><span class="tl">merge(agent)</span></button>
+        </nav>
+      </div>
+      <div class="side-card">
+        <p class="side-title">本节点引用的资源</p>
+        <div class="res-list" id="resList"></div>
+      </div>
+    </aside>
+
+    <!-- 详情面板:每个节点一个 <section class="panel" id="p-nXX"> -->
+    <main id="panels">
+      <section class="panel" id="p-n01"><div class="panel-head"><span class="ph-id">n01 · S 层 · 语义/知识 · core_principle</span><h2>Overview</h2><p class="lead">整份 skill 的公理写在这里:乱修既浪费时间又制造新 bug,快速补丁只是把问题盖住;永远先找根因再谈修复,症状式修复本身就算失败。它不是流程步骤,是后面每一步的判据来源。</p></div><div class="card" data-source="SKILL.md:8-15"><p>Random fixes waste time and create new bugs. Quick patches mask underlying issues.</p>
+<p><strong>Core principle:</strong> ALWAYS find root cause before attempting fixes. Symptom fixes are failure.</p>
+<p><strong>Violating the letter of this process is violating the spirit of debugging.</strong></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Overview','SKILL.md:8-15')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:14">违反流程的字面就是违反调试的精神,不存在「形式上走个过场」 <q class="qt">Violating the letter of this process is violating the spirit of debugging</q> → <button class="jump" onclick="showStep('n02','e21')">Step 1 认铁律</button></li><li class="claim" data-source="SKILL.md:10">乱修浪费时间还制造新 bug;快速补丁只是把问题盖住 <q class="qt">Random fixes waste time and create new bugs.</q> → <button class="jump" onclick="showStep('n02','e21')">Step 1 认铁律</button></li></ul><p class="flow"><span class="fk">◂</span>核心原则支撑铁律 → <button class="jump" onclick="showStep('n02','e21')">Step 1 认铁律</button> <span class="inf">推断</span></p><div class="pager"></div></section>
+<section class="panel" id="p-n02"><div class="panel-head"><span class="ph-id">n02 · W 层 · 流程 · constraints</span><h2>The Iron Law</h2><p class="lead">进入主线前的硬闸口:没做根因调查就不许提修复。Phase 1 没完成,任何修复方案都不具备提出的资格——这条铁律是所有回退边最终指向的地方。</p></div><div class="card" data-source="SKILL.md:17-23"><pre class="code">NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST</pre>
+<p>If you haven&#x27;t completed Phase 1, you cannot propose fixes.</p></div><div class="stepper" id="st-n02"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e21"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">NOTE</span></span><span class="st">认铁律</span></button><button class="sf-node implicit" data-x="e22"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type t-gate">VALIDATE</span></span><span class="st">提修复前先验闸</span><span class="sf-gate">◆ 验证闸口</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e21" data-inf="1" onclick="showNode('n01')"><span class="xid">n01 · S</span><span class="xt">根因优先的原则</span><small>核心原则支撑铁律 → Step 1 (推断)</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e21" data-source="SKILL.md:18-20"><h4>Step 1 · 认铁律 <span class="tbadge ">NOTE</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:19"><strong>目标</strong> 先立规矩:没有根因调查就没有修复 <q class="qt">NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:14">违反流程的字面就是违反调试的精神,不存在「形式上走个过场」 <q class="qt">Violating the letter of this process is violating the spirit of debugging</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:10">乱修浪费时间还制造新 bug;快速补丁只是把问题盖住 <q class="qt">Random fixes waste time and create new bugs.</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:18-20</summary><div class="acc-body"><pre class="code">NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST</pre></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n01')">n01 根因优先的原则</button>(核心原则支撑铁律) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 认铁律','SKILL.md:18-20')">?</button></div><div class="explain-card" id="e22" data-source="SKILL.md:22"><h4>Step 2 · 提修复前先验闸 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:22"><strong>目标</strong> Phase 1 没完成,就没有资格提出任何修复方案 <q class="qt">If you haven&#x27;t completed Phase 1, you cannot propose fixes.</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck22c">0/1</span></p><ul class="checklist" id="ckl22c"><li data-source="SKILL.md:52"><label><input type="checkbox"><span>通过条件:根因调查已完成(读错误、可复现、查变更、取证据) <q class="qt">BEFORE attempting ANY fix</q></span></label></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:48">四个阶段必须逐个做完才能进入下一个 <q class="qt">You MUST complete each phase before proceeding to the next.</q></div><div class="acc"><details><summary>原文 · SKILL.md:22</summary><div class="acc-body"><p>If you haven&#x27;t completed Phase 1, you cannot propose fixes.</p></div></details></div><p class="flow"><span class="fk">◂</span>未完成 Phase 1 不得提修复 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 提修复前先验闸','SKILL.md:22')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-n03"><div class="panel-head"><span class="ph-id">n03 · R 层 · 路由/激活 · activation</span><h2>When to Use</h2><p class="lead">路由层:任何技术问题都走这套——测试失败、线上 bug、非预期行为、性能问题、构建失败、集成问题。越是赶时间、越是「就一个快修很明显」、越是已经试过好几次,越要走;而「问题看起来简单」「在赶时间」「老板要马上修好」都不构成跳过的理由。</p></div><div class="card" data-source="SKILL.md:24-45"><p>Use for ANY technical issue:</p>
+<ul><li>Test failures</li><li>Bugs in production</li><li>Unexpected behavior</li><li>Performance problems</li><li>Build failures</li><li>Integration issues</li></ul>
+<p><strong>Use this ESPECIALLY when:</strong></p>
+<ul><li>Under time pressure (emergencies make guessing tempting)</li><li>&quot;Just one quick fix&quot; seems obvious</li><li>You&#x27;ve already tried multiple fixes</li><li>Previous fix didn&#x27;t work</li><li>You don&#x27;t fully understand the issue</li></ul>
+<p><strong>Don&#x27;t skip when:</strong></p>
+<ul><li>Issue seems simple (simple bugs have root causes too)</li><li>You&#x27;re in a hurry (rushing guarantees rework)</li><li>Manager wants it fixed NOW (systematic is faster than thrashing)</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('When to Use','SKILL.md:24-45')">?</button></div><p class="sem-h">触发条件(R 层)</p><ul class="rules"><li class="claim" data-source="SKILL.md:3">遇到任何 bug、测试失败或非预期行为时,先于提出修复方案 <q class="qt">encountering any bug, test failure, or unexpected behavior</q></li><li class="claim" data-source="SKILL.md:3">在提出修复之前就要进入本流程 <q class="qt">before proposing fixes</q></li><li class="claim" data-source="SKILL.md:26-29">适用于任何技术问题:测试失败、线上 bug、非预期行为 <q class="qt">Use for ANY technical issue:</q></li><li class="claim" data-source="SKILL.md:30-32">性能问题、构建失败、集成问题同样适用 <q class="qt">- Performance problems</q></li><li class="claim" data-source="SKILL.md:35">时间压力下尤其要用——紧急状态最容易诱发瞎猜 <q class="qt">Under time pressure (emergencies make guessing tempting)</q></li><li class="claim" data-source="SKILL.md:36">「就一个快修」看起来很明显时,尤其要用 <q class="qt">&quot;Just one quick fix&quot; seems obvious</q></li><li class="claim" data-source="SKILL.md:37-38">已经试过多次修复、上一次修复没生效时,尤其要用 <q class="qt">You&#x27;ve already tried multiple fixes</q></li><li class="claim" data-source="SKILL.md:39">自己还没完全搞懂问题时,尤其要用 <q class="qt">You don&#x27;t fully understand the issue</q></li></ul><p class="flow"><span class="fk">◂</span>任何技术问题都进入四阶段主线 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button> <span class="inf">推断</span></p><div class="pager"></div></section>
+<section class="panel" id="p-n04"><div class="panel-head"><span class="ph-id">n04 · W 层 · 流程 · main_flow</span><h2>The Four Phases</h2><p class="lead">执行主线本身:Phase 1 查根因 → Phase 2 找模式做对照 → Phase 3 立单一假设最小验证 → Phase 4 先造失败测试再只改一处,每个阶段必须做完才能进下一个。步骤链前四格是四个阶段,后十格是各阶段内部被展开的子动作(相邻不代表相接,执行顺序看边):多组件系统先插桩取证、深栈错误反向追数据流、验证不过就换新假设、修不好先数次数——少于三次回 Phase 1,达到三次停下来和人类搭档讨论架构。</p></div><div class="card" data-source="SKILL.md:47-49"><p>You MUST complete each phase before proceeding to the next.</p></div><div class="stepper" id="st-n04"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node" data-x="e41"><span class="sn">1<span class="sf-type ">RETRIEVE</span></span><span class="st">Phase 1: Root Cause Investigation</span></button><button class="sf-node" data-x="e42"><span class="sn">2<span class="sf-type ">REVIEW</span></span><span class="st">Phase 2: Pattern Analysis</span></button><button class="sf-node" data-x="e43"><span class="sn">3<span class="sf-type ">PLAN</span></span><span class="st">Phase 3: Hypothesis and Testing</span></button><button class="sf-node" data-x="e44"><span class="sn">4<span class="sf-type ">TRANSFORM</span></span><span class="st">Phase 4: Implementation</span></button><button class="sf-node implicit" data-x="e45"><span class="sn">5<span class="sf-imp">隐含</span><span class="sf-type t-tool">TOOL_CALL</span></span><span class="st">多组件系统:先插桩取证</span></button><button class="sf-node implicit" data-x="e46"><span class="sn">6<span class="sf-imp">隐含</span><span class="sf-type ">RETRIEVE</span></span><span class="st">深栈错误:反向追数据流</span></button><button class="sf-node implicit" data-x="e47"><span class="sn">7<span class="sf-imp">隐含</span><span class="sf-type t-tool">TOOL_CALL</span></span><span class="st">最小改动验假设</span></button><button class="sf-node implicit" data-x="e48"><span class="sn">8<span class="sf-imp">隐含</span><span class="sf-type t-gate">VALIDATE</span></span><span class="st">验证后才继续</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node implicit" data-x="e49"><span class="sn">9<span class="sf-imp">隐含</span><span class="sf-type t-gate">ASK_USER</span></span><span class="st">不懂就明说并求助</span></button><button class="sf-node implicit" data-x="e410"><span class="sn">10<span class="sf-imp">隐含</span><span class="sf-type ">DISPATCH</span></span><span class="st">先造复现的失败测试</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node implicit" data-x="e411"><span class="sn">11<span class="sf-imp">隐含</span><span class="sf-type ">TRANSFORM</span></span><span class="st">只改一处修根因</span></button><button class="sf-node implicit" data-x="e412"><span class="sn">12<span class="sf-imp">隐含</span><span class="sf-type t-gate">VALIDATE</span></span><span class="st">验证修复</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node implicit" data-x="e413"><span class="sn">13<span class="sf-imp">隐含</span><span class="sf-type ">DECIDE</span></span><span class="st">修不好就停下计数</span></button><button class="sf-node implicit" data-x="e414"><span class="sn">14<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="sf-when">⇢ 已试修复 ≥ 3 次 → 停下质疑架构</span><span class="st">三次失败:质疑架构</span><span class="sf-gate">⏸ 需用户确认</span></button><span class="sf-end">⦿<small>END</small></span></div><div class="sf-lane"><button class="sf-ext in" data-at="e41" data-inf="0" onclick="showStep('n02','e21')"><span class="xid">n02 · W</span><span class="xt">无根因不许动手</span><small>未完成 Phase 1 不得提修复 → Step 1</small></button><button class="sf-ext in" data-at="e41" data-inf="1" onclick="showNode('n03')"><span class="xid">n03 · R</span><span class="xt">何时该走这套</span><small>任何技术问题都进入四阶段主线 → Step 1 (推断)</small></button><button class="sf-ext in" data-at="e41" data-inf="0" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">红旗话术即中止</span><small>命中红旗 → 回到 Phase 1 → Step 1</small></button><button class="sf-ext in" data-at="e41" data-inf="0" onclick="showStep('n06','e61')"><span class="xid">n06 · W</span><span class="xt">搭档信号即回退</span><small>看到搭档信号 → 回到 Phase 1 → Step 1</small></button><button class="sf-ext in" data-at="e41" data-inf="1" onclick="showStep('n09','e91')"><span class="xid">n09 · W</span><span class="xt">确无根因的收尾</span><small>多半是调查没做完 → 回 Phase 1 继续查 → Step 1 (推断)</small></button><button class="sf-ext in" data-at="e46" data-inf="0" onclick="showNode('n10')"><span class="xid">n10 · A</span><span class="xt">配套技法与资源</span><small>反向追踪技法支撑 Trace Data Flow → Step 6</small></button><button class="sf-ext out" data-from="e41" data-inf="1" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">红旗话术即中止</span><small>← Step 1 任何时刻察觉红旗话术 (推断)</small></button><button class="sf-ext out" data-from="e41" data-inf="1" onclick="showStep('n06','e61')"><span class="xid">n06 · W</span><span class="xt">搭档信号即回退</span><small>← Step 1 人类搭档发出重定向信号 (推断)</small></button><a class="sf-ext xskill out" data-from="e410" data-inf="0" href="../test-driven-development/test-driven-development-workflow.html#n04"><span class="xid">⧉ test-driven-development</span><span class="xt">n04</span><small>← Step 10 写正经的失败测试交给 TDD 的红-绿-重构</small></a><a class="sf-ext xskill out" data-from="e412" data-inf="0" href="../verification-before-completion/verification-before-completion-workflow.html#n03"><span class="xid">⧉ verification-before-completion</span><span class="xt">n03</span><small>← Step 12 验证修复需要真实证据而非自我宣称</small></a></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · ⧉ = 其他 skill(点击跨页) · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e41" data-source="SKILL.md:50-121"><h4>Step 1 · Phase 1: Root Cause Investigation <span class="tbadge ">RETRIEVE</span></h4><p class="goal" data-source="SKILL.md:52"><strong>目标</strong> 动手改任何东西之前,先把根因查清楚 <q class="qt">BEFORE attempting ANY fix</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:54-56">逐字读错误信息与告警,别跳过——里面常常直接写着解法 <q class="qt">They often contain the exact solution</q></li><li class="claim" data-source="SKILL.md:57-58">完整读栈回溯,记下行号、文件路径、错误码 <q class="qt">Note line numbers, file paths, error codes</q></li><li class="claim" data-source="SKILL.md:60-63">稳定复现:能否可靠触发?确切步骤是什么?是否每次都发生? <q class="qt">Can you trigger it reliably?</q></li><li class="claim" data-source="SKILL.md:66-70">查最近改动:git diff、近期提交、新依赖、配置变更、环境差异 <q class="qt">Git diff, recent commits</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck41c">0/1</span></p><ul class="checklist" id="ckl41c"><li data-source="SKILL.md:262"><label><input type="checkbox"><span>本阶段做到位的标志:说得清 WHAT 和 WHY <q class="qt">Understand WHAT and WHY</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:64">复现不了就去补数据,绝不靠猜 <q class="qt">If not reproducible → gather more data, don&#x27;t guess</q></li><li class="claim" data-source="SKILL.md:55">跳过错误与告警是典型翻车点 <q class="qt">Don&#x27;t skip past errors or warnings</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:50-121</summary><div class="acc-body"><p><strong>BEFORE attempting ANY fix:</strong></p>
+<ol><li><strong>Read Error Messages Carefully</strong></li><li>Don&#x27;t skip past errors or warnings</li><li>They often contain the exact solution</li><li>Read stack traces completely</li><li>Note line numbers, file paths, error codes</li></ol>
+<ol><li><strong>Reproduce Consistently</strong></li><li>Can you trigger it reliably?</li><li>What are the exact steps?</li><li>Does it happen every time?</li><li>If not reproducible → gather more data, don&#x27;t guess</li></ol>
+<ol><li><strong>Check Recent Changes</strong></li><li>What changed that could cause this?</li><li>Git diff, recent commits</li><li>New dependencies, config changes</li><li>Environmental differences</li></ol>
+<ol><li><strong>Gather Evidence in Multi-Component Systems</strong></li></ol>
+<p>   <strong>WHEN system has multiple components (CI → build → signing, API → service → database):</strong></p>
+<p>   <strong>BEFORE proposing fixes, add diagnostic instrumentation:</strong>    ```    For EACH component boundary:</p>
+<ul><li>Log what data enters component</li><li>Log what data exits component</li><li>Verify environment/config propagation</li><li>Check state at each layer</li></ul>
+<p>   Run once to gather evidence showing WHERE it breaks    THEN analyze evidence to identify failing component    THEN investigate that specific component    ```</p>
+<p>   <strong>Example (multi-layer system):</strong>    ```bash    # Layer 1: Workflow    echo &quot;=== Secrets available in workflow: ===&quot;    echo &quot;IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}&quot;</p>
+<p>   # Layer 2: Build script    echo &quot;=== Env vars in build script: ===&quot;    env | grep IDENTITY || echo &quot;IDENTITY not in environment&quot;</p>
+<p>   # Layer 3: Signing script    echo &quot;=== Keychain state: ===&quot;    security list-keychains    security find-identity -v</p>
+<p>   # Layer 4: Actual signing    codesign --sign &quot;$IDENTITY&quot; --verbose=4 &quot;$APP&quot;    ```</p>
+<p>   <strong>This reveals:</strong> Which layer fails (secrets → workflow ✓, workflow → build ✗)</p>
+<ol><li><strong>Trace Data Flow</strong></li></ol>
+<p>   <strong>WHEN error is deep in call stack:</strong></p>
+<p>   See <code>root-cause-tracing.md</code> in this directory for the complete backward tracing technique.</p>
+<p>   <strong>Quick version:</strong></p>
+<ul><li>Where does bad value originate?</li><li>What called this with bad value?</li><li>Keep tracing up until you find the source</li><li>Fix at source, not at symptom</li></ul></div></details></div><p class="flow"><span class="fk">⤓</span>任何时刻察觉红旗话术 → <button class="jump" onclick="showStep('n05','e51')">Step 1 自检红旗话术</button> <span class="inf">推断</span><br><span class="fk">⤓</span>人类搭档发出重定向信号 → <button class="jump" onclick="showStep('n06','e61')">Step 1 读搭档的重定向信号</button> <span class="inf">推断</span><br><span class="fk">⇢</span>系统调查显示问题确属环境/时序/外部 → <button class="jump" onclick="showStep('n09','e91')">Step 1 确认流程已走完</button> <span class="inf">推断</span><br><span class="fk">⇢</span>系统由多个组件串起来 → 先插桩取证 → <button class="jump" onclick="showStep('n04','e45')">Step 5 多组件系统:先插桩取证</button><br><span class="fk">⇢</span>错误埋在调用栈深处 → 反向追数据流 → <button class="jump" onclick="showStep('n04','e46')">Step 6 深栈错误:反向追数据流</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e22')">Step 2 提修复前先验闸</button>(未完成 Phase 1 不得提修复)、<button class="jump" onclick="showNode('n03')">n03 何时该走这套</button>(任何技术问题都进入四阶段主线) <span class="inf">推断</span>、<button class="jump" onclick="showStep('n05','e52')">Step 2 命中即停回 Phase 1</button>(命中红旗 → 回到 Phase 1)、<button class="jump" onclick="showStep('n06','e62')">Step 2 见到信号即回 Phase 1</button>(看到搭档信号 → 回到 Phase 1)、<button class="jump" onclick="showStep('n09','e91')">Step 1 确认流程已走完</button>(多半是调查没做完 → 回 Phase 1 继续查) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 Phase 1: Root Cause Investigation','SKILL.md:50-121')">?</button></div><div class="explain-card" id="e42" data-source="SKILL.md:122-144"><h4>Step 2 · Phase 2: Pattern Analysis <span class="tbadge ">REVIEW</span></h4><p class="goal" data-source="SKILL.md:124"><strong>目标</strong> 动手前先找出模式:拿能跑通的例子和坏掉的做对照 <q class="qt">Find the pattern before fixing</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:126-128">在同一代码库里找到相似且能正常工作的代码 <q class="qt">Locate similar working code in same codebase</q></li><li class="claim" data-source="SKILL.md:130-133">若在照搬某个模式,把参考实现完整读完,不许略读 <q class="qt">read reference implementation COMPLETELY</q></li><li class="claim" data-source="SKILL.md:135-137">列出可用与坏掉之间的每一处差异,再小也写下来 <q class="qt">List every difference, however small</q></li><li class="claim" data-source="SKILL.md:140-143">厘清依赖:还需要哪些组件、什么配置与环境、隐含了什么假设 <q class="qt">What other components does this need?</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck42c">0/1</span></p><ul class="checklist" id="ckl42c"><li data-source="SKILL.md:263"><label><input type="checkbox"><span>本阶段做到位的标志:能指认出差异 <q class="qt">Identify differences</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:138">「这个不可能有影响」这种默认判断是翻车点 <q class="qt">Don&#x27;t assume &quot;that can&#x27;t matter&quot;</q></li><li class="claim" data-source="SKILL.md:254">略读参考实现 = 部分理解 = 必然出 bug <q class="qt">Partial understanding guarantees bugs. Read it completely.</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:122-144</summary><div class="acc-body"><p><strong>Find the pattern before fixing:</strong></p>
+<ol><li><strong>Find Working Examples</strong></li><li>Locate similar working code in same codebase</li><li>What works that&#x27;s similar to what&#x27;s broken?</li></ol>
+<ol><li><strong>Compare Against References</strong></li><li>If implementing pattern, read reference implementation COMPLETELY</li><li>Don&#x27;t skim - read every line</li><li>Understand the pattern fully before applying</li></ol>
+<ol><li><strong>Identify Differences</strong></li><li>What&#x27;s different between working and broken?</li><li>List every difference, however small</li><li>Don&#x27;t assume &quot;that can&#x27;t matter&quot;</li></ol>
+<ol><li><strong>Understand Dependencies</strong></li><li>What other components does this need?</li><li>What settings, config, environment?</li><li>What assumptions does it make?</li></ol></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 Phase 2: Pattern Analysis','SKILL.md:122-144')">?</button></div><div class="explain-card" id="e43" data-source="SKILL.md:145-169"><h4>Step 3 · Phase 3: Hypothesis and Testing <span class="tbadge ">PLAN</span></h4><p class="goal" data-source="SKILL.md:150"><strong>目标</strong> 按科学方法只立一个假设,写清楚「我认为 X 是根因,因为 Y」 <q class="qt">State clearly: &quot;I think X is the root cause because Y&quot;</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:151-152">把假设写下来,具体、不含糊 <q class="qt">Be specific, not vague</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:149">一次只立一个假设 <q class="qt">Form Single Hypothesis</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck43c">0/1</span></p><ul class="checklist" id="ckl43c"><li data-source="SKILL.md:264"><label><input type="checkbox"><span>本阶段的产出:假设被证实,或换出一个新假设 <q class="qt">Confirmed or new hypothesis</q></span></label></li></ul><div class="acc"><details><summary>原文 · SKILL.md:145-169</summary><div class="acc-body"><p><strong>Scientific method:</strong></p>
+<ol><li><strong>Form Single Hypothesis</strong></li><li>State clearly: &quot;I think X is the root cause because Y&quot;</li><li>Write it down</li><li>Be specific, not vague</li></ol>
+<ol><li><strong>Test Minimally</strong></li><li>Make the SMALLEST possible change to test hypothesis</li><li>One variable at a time</li><li>Don&#x27;t fix multiple things at once</li></ol>
+<ol><li><strong>Verify Before Continuing</strong></li><li>Did it work? Yes → Phase 4</li><li>Didn&#x27;t work? Form NEW hypothesis</li><li>DON&#x27;T add more fixes on top</li></ol>
+<ol><li><strong>When You Don&#x27;t Know</strong></li><li>Say &quot;I don&#x27;t understand X&quot;</li><li>Don&#x27;t pretend to know</li><li>Ask for help</li><li>Research more</li></ol></div></details></div><p class="flow"><span class="fk">◂</span>先把假设写清楚,再用最小改动去验 → <button class="jump" onclick="showStep('n04','e47')">Step 7 最小改动验假设</button><br><span class="fk">⤓</span>自己都没搞懂 → 明说并求助,别硬猜 → <button class="jump" onclick="showStep('n04','e49')">Step 9 不懂就明说并求助</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 Phase 3: Hypothesis and Testing','SKILL.md:145-169')">?</button></div><div class="explain-card" id="e44" data-source="SKILL.md:170-214"><h4>Step 4 · Phase 4: Implementation <span class="tbadge ">TRANSFORM</span></h4><p class="goal" data-source="SKILL.md:172"><strong>目标</strong> 修根因,不修症状 <q class="qt">Fix the root cause, not the symptom</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck44c">0/1</span></p><ul class="checklist" id="ckl44c"><li data-source="SKILL.md:265"><label><input type="checkbox"><span>本阶段做到位的标志:bug 解决、测试全过 <q class="qt">Bug resolved, tests pass</q></span></label></li></ul><div class="acc"><details><summary>原文 · SKILL.md:170-214</summary><div class="acc-body"><p><strong>Fix the root cause, not the symptom:</strong></p>
+<ol><li><strong>Create Failing Test Case</strong></li><li>Simplest possible reproduction</li><li>Automated test if possible</li><li>One-off test script if no framework</li><li>MUST have before fixing</li><li>Use the <code>superpowers:test-driven-development</code> skill for writing proper failing tests</li></ol>
+<ol><li><strong>Implement Single Fix</strong></li><li>Address the root cause identified</li><li>ONE change at a time</li><li>No &quot;while I&#x27;m here&quot; improvements</li><li>No bundled refactoring</li></ol>
+<ol><li><strong>Verify Fix</strong></li><li>Test passes now?</li><li>No other tests broken?</li><li>Issue actually resolved?</li></ol>
+<ol><li><strong>If Fix Doesn&#x27;t Work</strong></li><li>STOP</li><li>Count: How many fixes have you tried?</li><li>If &lt; 3: Return to Phase 1, re-analyze with new information</li><li><strong>If ≥ 3: STOP and question the architecture (step 5 below)</strong></li><li>DON&#x27;T attempt Fix #4 without architectural discussion</li></ol>
+<ol><li><strong>If 3+ Fixes Failed: Question Architecture</strong></li></ol>
+<p>   <strong>Pattern indicating architectural problem:</strong></p>
+<ul><li>Each fix reveals new shared state/coupling/problem in different place</li><li>Fixes require &quot;massive refactoring&quot; to implement</li><li>Each fix creates new symptoms elsewhere</li></ul>
+<p>   <strong>STOP and question fundamentals:</strong></p>
+<ul><li>Is this pattern fundamentally sound?</li><li>Are we &quot;sticking with it through sheer inertia&quot;?</li><li>Should we refactor architecture vs. continue fixing symptoms?</li></ul>
+<p>   <strong>Discuss with your human partner before attempting more fixes</strong></p>
+<p>   This is NOT a failed hypothesis - this is a wrong architecture.</p></div></details></div><p class="flow"><span class="fk">◂</span>Phase 4 从造失败测试开始,修之前必须先有它 → <button class="jump" onclick="showStep('n04','e410')">Step 10 先造复现的失败测试</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 4 Phase 4: Implementation','SKILL.md:170-214')">?</button></div><div class="explain-card" id="e45" data-source="SKILL.md:72-108"><h4>Step 5 · 多组件系统:先插桩取证 <span class="tbadge t-tool">TOOL_CALL</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:76"><strong>目标</strong> 系统跨多个组件时,提修复前先加诊断埋点把证据打出来 <q class="qt">BEFORE proposing fixes, add diagnostic instrumentation</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:78-80">对每个组件边界:记录进入的数据、离开的数据 <q class="qt">Log what data enters component</q></li><li class="claim" data-source="SKILL.md:81-82">校验环境/配置是否正确传递,检查每一层的状态 <q class="qt">Verify environment/config propagation</q></li><li class="claim" data-source="SKILL.md:84">先跑一次收集证据,定位它在哪里断掉 <q class="qt">Run once to gather evidence showing WHERE it breaks</q></li><li class="claim" data-source="SKILL.md:85-86">再分析证据锁定失败组件,然后只调查那个组件 <q class="qt">THEN analyze evidence to identify failing component</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck45c">0/1</span></p><ul class="checklist" id="ckl45c"><li data-source="SKILL.md:74"><label><input type="checkbox"><span>适用条件:系统由多个组件串起来(CI → build → signing、API → service → database) <q class="qt">WHEN system has multiple components</q></span></label></li></ul><p class="sem-h">质量标准 <span class="ck-badge" id="ck45q">0/1</span></p><ul class="checklist" id="ckl45q"><li data-source="SKILL.md:108"><label><input type="checkbox"><span>产出应能指出是哪一层断的(secrets → workflow ✓,workflow → build ✗) <q class="qt">Which layer fails</q></span></label></li></ul><p class="sem-h">示例</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:92-93">分层打印示例:workflow 层确认 secret 是否可见 <q class="qt">echo &quot;=== Secrets available in workflow: ===&quot;</q></li><li class="claim" data-source="SKILL.md:97">build 脚本层查环境变量:env | grep IDENTITY <q class="qt">env | grep IDENTITY || echo &quot;IDENTITY not in environment&quot;</q></li><li class="claim" data-source="SKILL.md:100-102">签名层查 keychain 状态:security list-keychains <q class="qt">security list-keychains</q></li><li class="claim" data-source="SKILL.md:105">最后一层实际签名并开 verbose <q class="qt">codesign --sign &quot;$IDENTITY&quot; --verbose=4 &quot;$APP&quot;</q></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:90-105">分层 echo / env / security / codesign 诊断脚本</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:84">一次运行得到的跨层证据,指明失败发生在哪个边界 <q class="qt">Run once to gather evidence showing WHERE it breaks</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:72-108</summary><div class="acc-body"><ol><li><strong>Gather Evidence in Multi-Component Systems</strong></li></ol>
+<p>   <strong>WHEN system has multiple components (CI → build → signing, API → service → database):</strong></p>
+<p>   <strong>BEFORE proposing fixes, add diagnostic instrumentation:</strong>    ```    For EACH component boundary:</p>
+<ul><li>Log what data enters component</li><li>Log what data exits component</li><li>Verify environment/config propagation</li><li>Check state at each layer</li></ul>
+<p>   Run once to gather evidence showing WHERE it breaks    THEN analyze evidence to identify failing component    THEN investigate that specific component    ```</p>
+<p>   <strong>Example (multi-layer system):</strong>    ```bash    # Layer 1: Workflow    echo &quot;=== Secrets available in workflow: ===&quot;    echo &quot;IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}&quot;</p>
+<p>   # Layer 2: Build script    echo &quot;=== Env vars in build script: ===&quot;    env | grep IDENTITY || echo &quot;IDENTITY not in environment&quot;</p>
+<p>   # Layer 3: Signing script    echo &quot;=== Keychain state: ===&quot;    security list-keychains    security find-identity -v</p>
+<p>   # Layer 4: Actual signing    codesign --sign &quot;$IDENTITY&quot; --verbose=4 &quot;$APP&quot;    ```</p>
+<p>   <strong>This reveals:</strong> Which layer fails (secrets → workflow ✓, workflow → build ✗)</p></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 5 多组件系统:先插桩取证','SKILL.md:72-108')">?</button></div><div class="explain-card" id="e46" data-source="SKILL.md:110-120"><h4>Step 6 · 深栈错误:反向追数据流 <span class="tbadge ">RETRIEVE</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:119"><strong>目标</strong> 错误埋在调用栈深处时,沿数据流往上追到坏值的源头 <q class="qt">Keep tracing up until you find the source</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:117-118">问:坏值从哪来?是谁带着坏值调用了这里? <q class="qt">Where does bad value originate?</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:120">在源头修,不在症状处修 <q class="qt">Fix at source, not at symptom</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck46c">0/1</span></p><ul class="checklist" id="ckl46c"><li data-source="SKILL.md:112"><label><input type="checkbox"><span>适用条件:错误出现在调用栈深处 <q class="qt">WHEN error is deep in call stack</q></span></label></li></ul><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:114">同目录 root-cause-tracing.md 给出完整的反向追踪技法 <q class="qt">See `root-cause-tracing.md` in this directory</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:110-120</summary><div class="acc-body"><ol><li><strong>Trace Data Flow</strong></li></ol>
+<p>   <strong>WHEN error is deep in call stack:</strong></p>
+<p>   See <code>root-cause-tracing.md</code> in this directory for the complete backward tracing technique.</p>
+<p>   <strong>Quick version:</strong></p>
+<ul><li>Where does bad value originate?</li><li>What called this with bad value?</li><li>Keep tracing up until you find the source</li><li>Fix at source, not at symptom</li></ul></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n10')">n10 配套技法与资源</button>(反向追踪技法支撑 Trace Data Flow)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 6 深栈错误:反向追数据流','SKILL.md:110-120')">?</button></div><div class="explain-card" id="e47" data-source="SKILL.md:154-158"><h4>Step 7 · 最小改动验假设 <span class="tbadge t-tool">TOOL_CALL</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:155"><strong>目标</strong> 用能想到的最小改动去验证假设 <q class="qt">Make the SMALLEST possible change to test hypothesis</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:156">一次只动一个变量 <q class="qt">One variable at a time</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:157">一次修一堆:分不清哪个起作用,还会引入新 bug <q class="qt">Don&#x27;t fix multiple things at once</q></li><li class="claim" data-source="SKILL.md:253">「一次多修几个省时间」是假象——无法隔离到底是哪一处生效 <q class="qt">Can&#x27;t isolate what worked. Causes new bugs.</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:154-158</summary><div class="acc-body"><ol><li><strong>Test Minimally</strong></li><li>Make the SMALLEST possible change to test hypothesis</li><li>One variable at a time</li><li>Don&#x27;t fix multiple things at once</li></ol></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n04','e43')">Step 3 Phase 3: Hypothesis and Testing</button>(先把假设写清楚,再用最小改动去验)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 7 最小改动验假设','SKILL.md:154-158')">?</button></div><div class="explain-card" id="e48" data-source="SKILL.md:159-163"><h4>Step 8 · 验证后才继续 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:160"><strong>目标</strong> 成了就进 Phase 4;没成就换新假设,绝不在旧修复上继续叠加 <q class="qt">Did it work? Yes → Phase 4</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck48c">0/1</span></p><ul class="checklist" id="ckl48c"><li data-source="SKILL.md:161"><label><input type="checkbox"><span>没成的正确反应是形成新假设,而不是再补一刀 <q class="qt">Didn&#x27;t work? Form NEW hypothesis</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:162">在已有修复之上继续加修复 <q class="qt">DON&#x27;T add more fixes on top</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:159-163</summary><div class="acc-body"><ol><li><strong>Verify Before Continuing</strong></li><li>Did it work? Yes → Phase 4</li><li>Didn&#x27;t work? Form NEW hypothesis</li><li>DON&#x27;T add more fixes on top</li></ol></div></details></div><p class="flow"><span class="fk">⇢</span>假设成立 → 进入 Phase 4 → <button class="jump" onclick="showStep('n04','e44')">Step 4 Phase 4: Implementation</button><br><span class="fk">↻</span>没成 → 回去形成新假设 → <button class="jump" onclick="showStep('n04','e43')">Step 3 Phase 3: Hypothesis and Testing</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 8 验证后才继续','SKILL.md:159-163')">?</button></div><div class="explain-card" id="e49" data-source="SKILL.md:164-168"><h4>Step 9 · 不懂就明说并求助 <span class="tbadge t-gate">ASK_USER</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:165"><strong>目标</strong> 不懂就直说「我不理解 X」,别装懂 <q class="qt">Say &quot;I don&#x27;t understand X&quot;</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:167-168">求助、补做功课,而不是硬猜 <q class="qt">Ask for help</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:166">假装知道 <q class="qt">Don&#x27;t pretend to know</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:164-168</summary><div class="acc-body"><ol><li><strong>When You Don&#x27;t Know</strong></li><li>Say &quot;I don&#x27;t understand X&quot;</li><li>Don&#x27;t pretend to know</li><li>Ask for help</li><li>Research more</li></ol></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n04','e43')">Step 3 Phase 3: Hypothesis and Testing</button>(自己都没搞懂 → 明说并求助,别硬猜)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 9 不懂就明说并求助','SKILL.md:164-168')">?</button></div><div class="explain-card" id="e410" data-source="SKILL.md:174-179"><h4>Step 10 · 先造复现的失败测试 <span class="tbadge ">DISPATCH</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:178"><strong>目标</strong> 动手修之前必须先有一个能复现问题的失败测试 <q class="qt">MUST have before fixing</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:175-177">用最简复现;能自动化就自动化,没有框架就写一次性脚本 <q class="qt">Simplest possible reproduction</q></li></ol><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:252">「先确认修好再补测试」——未经测试的修复留不住 <q class="qt">Untested fixes don&#x27;t stick. Test first proves it.</q></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:179">写正经的失败测试交给 superpowers:test-driven-development <q class="qt">superpowers:test-driven-development` skill for writing proper failing tests</q></div><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:287">superpowers:test-driven-development(Phase 4 第 1 步专用) <q class="qt">For creating failing test case (Phase 4, Step 1)</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:174-179</summary><div class="acc-body"><ol><li><strong>Create Failing Test Case</strong></li><li>Simplest possible reproduction</li><li>Automated test if possible</li><li>One-off test script if no framework</li><li>MUST have before fixing</li><li>Use the <code>superpowers:test-driven-development</code> skill for writing proper failing tests</li></ol></div></details></div><p class="flow"><span class="fk">⧉</span>写正经的失败测试交给 TDD 的红-绿-重构 → <a class="xjump" href="../test-driven-development/test-driven-development-workflow.html#n04">⧉ test-driven-development · n04</a><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n04','e44')">Step 4 Phase 4: Implementation</button>(Phase 4 从造失败测试开始,修之前必须先有它)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 10 先造复现的失败测试','SKILL.md:174-179')">?</button></div><div class="explain-card" id="e411" data-source="SKILL.md:181-186"><h4>Step 11 · 只改一处修根因 <span class="tbadge ">TRANSFORM</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:182-183"><strong>目标</strong> 针对已确认的根因,一次只做一个改动 <q class="qt">Address the root cause identified</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:183">一次一个改动 <q class="qt">ONE change at a time</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:184-185">顺手改进、捆绑重构都不允许 <q class="qt">No &quot;while I&#x27;m here&quot; improvements</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:181-186</summary><div class="acc-body"><ol><li><strong>Implement Single Fix</strong></li><li>Address the root cause identified</li><li>ONE change at a time</li><li>No &quot;while I&#x27;m here&quot; improvements</li><li>No bundled refactoring</li></ol></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 11 只改一处修根因','SKILL.md:181-186')">?</button></div><div class="explain-card" id="e412" data-source="SKILL.md:187-190"><h4>Step 12 · 验证修复 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:188-190"><strong>目标</strong> 确认测试现在通过、没弄坏别的测试、问题确实解决 <q class="qt">Test passes now?</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck412c">0/1</span></p><ul class="checklist" id="ckl412c"><li data-source="SKILL.md:189-190"><label><input type="checkbox"><span>三问缺一不可:通过?没破坏别的?问题真的没了? <q class="qt">No other tests broken?</q></span></label></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:288">宣称成功之前先验证修复确实生效 <q class="qt">Verify fix worked before claiming success</q></div><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:288">superpowers:verification-before-completion <q class="qt">superpowers:verification-before-completion</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:187-190</summary><div class="acc-body"><ol><li><strong>Verify Fix</strong></li><li>Test passes now?</li><li>No other tests broken?</li><li>Issue actually resolved?</li></ol></div></details></div><p class="flow"><span class="fk">⦿</span>测试通过、无其他测试被破坏、问题确实解决 → END <span class="inf">推断</span><br><span class="fk">◂</span>验证修复需要真实证据而非自我宣称 → <a class="xjump" href="../verification-before-completion/verification-before-completion-workflow.html#n03">⧉ verification-before-completion · n03</a></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 12 验证修复','SKILL.md:187-190')">?</button></div><div class="explain-card" id="e413" data-source="SKILL.md:192-197"><h4>Step 13 · 修不好就停下计数 <span class="tbadge ">DECIDE</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:193-194"><strong>目标</strong> 修复无效时先 STOP,数一数已经试过几次 <q class="qt">Count: How many fixes have you tried?</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck413c">0/2</span></p><ul class="checklist" id="ckl413c"><li data-source="SKILL.md:195"><label><input type="checkbox"><span>少于 3 次:带着新信息回到 Phase 1 重新分析 <q class="qt">If &lt; 3: Return to Phase 1, re-analyze with new information</q></span></label></li><li data-source="SKILL.md:196"><label><input type="checkbox"><span>达到或超过 3 次:停下来质疑架构 <q class="qt">If ≥ 3: STOP and question the architecture</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:197">没有架构讨论就直接上第 4 次修复 <q class="qt">DON&#x27;T attempt Fix #4 without architectural discussion</q></li><li class="claim" data-source="SKILL.md:227">「再试一次就好」在已失败 2 次以上时就是危险信号 <q class="qt">&quot;One more fix attempt&quot; (when already tried 2+)</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:192-197</summary><div class="acc-body"><ol><li><strong>If Fix Doesn&#x27;t Work</strong></li><li>STOP</li><li>Count: How many fixes have you tried?</li><li>If &lt; 3: Return to Phase 1, re-analyze with new information</li><li><strong>If ≥ 3: STOP and question the architecture (step 5 below)</strong></li><li>DON&#x27;T attempt Fix #4 without architectural discussion</li></ol></div></details></div><p class="flow"><span class="fk">↻</span>已试修复 &lt; 3 次 → 带新信息回 Phase 1 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button><br><span class="fk">⇢</span>已试修复 ≥ 3 次 → 停下质疑架构 → <button class="jump" onclick="showStep('n04','e414')">Step 14 三次失败:质疑架构</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 13 修不好就停下计数','SKILL.md:192-197')">?</button></div><div class="explain-card" id="e414" data-source="SKILL.md:199-213"><h4>Step 14 · 三次失败:质疑架构 <span class="tbadge ">REVIEW</span> <span class="gate-badge">⏸ 需用户确认</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:206-207"><strong>目标</strong> 停下来质疑根本前提:这个模式本身是不是就不成立 <q class="qt">Is this pattern fundamentally sound?</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:213">这不是假设失败,这是架构错了 <q class="qt">This is NOT a failed hypothesis - this is a wrong architecture.</q></li><li class="claim" data-source="SKILL.md:256">3 次以上失败 = 架构问题,该质疑模式而不是再修一次 <q class="qt">3+ failures = architectural problem. Question pattern, don&#x27;t fix again.</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck414c">0/3</span></p><ul class="checklist" id="ckl414c"><li data-source="SKILL.md:202"><label><input type="checkbox"><span>架构问题的征兆:每次修都在别处冒出新的共享状态/耦合问题 <q class="qt">Each fix reveals new shared state/coupling/problem in different place</q></span></label></li><li data-source="SKILL.md:203"><label><input type="checkbox"><span>征兆:修复需要「大规模重构」才能落地 <q class="qt">Fixes require &quot;massive refactoring&quot; to implement</q></span></label></li><li data-source="SKILL.md:204"><label><input type="checkbox"><span>征兆:每次修复都在别处引出新症状 <q class="qt">Each fix creates new symptoms elsewhere</q></span></label></li></ul><p class="sem-h">技巧</p><ul class="sem-list tips"><li class="claim" data-source="SKILL.md:208">问自己:是不是纯靠惯性在硬扛着这个方案 <q class="qt">Are we &quot;sticking with it through sheer inertia&quot;?</q></li><li class="claim" data-source="SKILL.md:209">该重构架构,还是继续修症状?这是要摆上台面的选择 <q class="qt">Should we refactor architecture vs. continue fixing symptoms?</q></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:211">架构讨论是继续修复的前置审批 <q class="qt">Discuss with your human partner before attempting more fixes</q></div><div class="acc"><details><summary>原文 · SKILL.md:199-213</summary><div class="acc-body"><ol><li><strong>If 3+ Fixes Failed: Question Architecture</strong></li></ol>
+<p>   <strong>Pattern indicating architectural problem:</strong></p>
+<ul><li>Each fix reveals new shared state/coupling/problem in different place</li><li>Fixes require &quot;massive refactoring&quot; to implement</li><li>Each fix creates new symptoms elsewhere</li></ul>
+<p>   <strong>STOP and question fundamentals:</strong></p>
+<ul><li>Is this pattern fundamentally sound?</li><li>Are we &quot;sticking with it through sheer inertia&quot;?</li><li>Should we refactor architecture vs. continue fixing symptoms?</li></ul>
+<p>   <strong>Discuss with your human partner before attempting more fixes</strong></p>
+<p>   This is NOT a failed hypothesis - this is a wrong architecture.</p></div></details></div><p class="flow"><span class="fk">⏸</span>与人类搭档讨论过架构后才允许再修 → <button class="jump" onclick="showStep('n04','e44')">Step 4 Phase 4: Implementation</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 14 三次失败:质疑架构','SKILL.md:199-213')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:52">通过条件:根因调查已完成(读错误、可复现、查变更、取证据) <q class="qt">BEFORE attempting ANY fix</q> → <button class="jump" onclick="showStep('n02','e22')">Step 2 提修复前先验闸</button></li><li class="claim" data-source="SKILL.md:48">四个阶段必须逐个做完才能进入下一个 <q class="qt">You MUST complete each phase before proceeding to the next.</q> → <button class="jump" onclick="showStep('n02','e22')">Step 2 提修复前先验闸</button></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n05"><div class="panel-head"><span class="ph-id">n05 · W 层 · 流程 · fallback</span><h2>Red Flags - STOP and Follow Process</h2><p class="lead">主线之上的看门人:十一条红旗话术,任意一条在心里冒出来,含义都一样——已经不是系统调试了,停下,回到 Phase 1;若已经失败三次以上,则不是回 Phase 1,而是转去质疑架构。</p></div><div class="card" data-source="SKILL.md:216-233"><p>If you catch yourself thinking:</p>
+<ul><li>&quot;Quick fix for now, investigate later&quot;</li><li>&quot;Just try changing X and see if it works&quot;</li><li>&quot;Add multiple changes, run tests&quot;</li><li>&quot;Skip the test, I&#x27;ll manually verify&quot;</li><li>&quot;It&#x27;s probably X, let me fix that&quot;</li><li>&quot;I don&#x27;t fully understand but this might work&quot;</li><li>&quot;Pattern says X but I&#x27;ll adapt it differently&quot;</li><li>&quot;Here are the main problems: [lists fixes without investigation]&quot;</li><li>Proposing solutions before tracing data flow</li><li><strong>&quot;One more fix attempt&quot; (when already tried 2+)</strong></li><li><strong>Each fix reveals new problem in different place</strong></li></ul>
+<p><strong>ALL of these mean: STOP. Return to Phase 1.</strong></p>
+<p><strong>If 3+ fixes failed:</strong> Question the architecture (see Phase 4.5)</p></div><div class="stepper" id="st-n05"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e51"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="st">自检红旗话术</span></button><button class="sf-node implicit" data-x="e52"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type t-fb">FALLBACK</span></span><span class="st">命中即停回 Phase 1</span></button><button class="sf-node implicit" data-x="e53"><span class="sn">3<span class="sf-imp">隐含</span><span class="sf-type ">DECIDE</span></span><span class="st">三次失败改问架构</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e51" data-inf="1" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">四阶段主线</span><small>任何时刻察觉红旗话术 → Step 1 (推断)</small></button><button class="sf-ext out" data-from="e52" data-inf="0" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">四阶段主线</span><small>← Step 2 命中红旗 → 回到 Phase 1</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e51" data-source="SKILL.md:217-228"><h4>Step 1 · 自检红旗话术 <span class="tbadge ">REVIEW</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:217"><strong>目标</strong> 察觉自己心里冒出这些念头,就是已经脱离流程了 <q class="qt">If you catch yourself thinking:</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck51c">0/10</span></p><ul class="checklist" id="ckl51c"><li data-source="SKILL.md:218"><label><input type="checkbox"><span>「先快修,回头再查」 <q class="qt">&quot;Quick fix for now, investigate later&quot;</q></span></label></li><li data-source="SKILL.md:219"><label><input type="checkbox"><span>「改改 X 试试看行不行」 <q class="qt">&quot;Just try changing X and see if it works&quot;</q></span></label></li><li data-source="SKILL.md:220"><label><input type="checkbox"><span>「一口气多改几处,跑一遍测试」 <q class="qt">&quot;Add multiple changes, run tests&quot;</q></span></label></li><li data-source="SKILL.md:221"><label><input type="checkbox"><span>「跳过测试,我手动验一下」 <q class="qt">&quot;Skip the test, I&#x27;ll manually verify&quot;</q></span></label></li><li data-source="SKILL.md:222"><label><input type="checkbox"><span>「大概是 X 吧,我改一下」 <q class="qt">&quot;It&#x27;s probably X, let me fix that&quot;</q></span></label></li><li data-source="SKILL.md:223"><label><input type="checkbox"><span>「我没完全搞懂,但这样也许能行」 <q class="qt">&quot;I don&#x27;t fully understand but this might work&quot;</q></span></label></li><li data-source="SKILL.md:224"><label><input type="checkbox"><span>「模式是 X,但我按自己的改法来」 <q class="qt">&quot;Pattern says X but I&#x27;ll adapt it differently&quot;</q></span></label></li><li data-source="SKILL.md:225"><label><input type="checkbox"><span>没做调查就先列一串「主要问题 = 修复清单」 <q class="qt">[lists fixes without investigation]</q></span></label></li><li data-source="SKILL.md:226"><label><input type="checkbox"><span>还没追数据流就开始提方案 <q class="qt">Proposing solutions before tracing data flow</q></span></label></li><li data-source="SKILL.md:228"><label><input type="checkbox"><span>每次修复都在别处引出新问题 <q class="qt">Each fix reveals new problem in different place</q></span></label></li></ul><div class="acc"><details><summary>原文 · SKILL.md:217-228</summary><div class="acc-body"><p>If you catch yourself thinking:</p>
+<ul><li>&quot;Quick fix for now, investigate later&quot;</li><li>&quot;Just try changing X and see if it works&quot;</li><li>&quot;Add multiple changes, run tests&quot;</li><li>&quot;Skip the test, I&#x27;ll manually verify&quot;</li><li>&quot;It&#x27;s probably X, let me fix that&quot;</li><li>&quot;I don&#x27;t fully understand but this might work&quot;</li><li>&quot;Pattern says X but I&#x27;ll adapt it differently&quot;</li><li>&quot;Here are the main problems: [lists fixes without investigation]&quot;</li><li>Proposing solutions before tracing data flow</li><li><strong>&quot;One more fix attempt&quot; (when already tried 2+)</strong></li><li><strong>Each fix reveals new problem in different place</strong></li></ul></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button>(任何时刻察觉红旗话术) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 自检红旗话术','SKILL.md:217-228')">?</button></div><div class="explain-card" id="e52" data-source="SKILL.md:230"><h4>Step 2 · 命中即停回 Phase 1 <span class="tbadge t-fb">FALLBACK</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:230"><strong>目标</strong> 任意一条红旗成立,含义都一样:停下,回到 Phase 1 <q class="qt">ALL of these mean: STOP. Return to Phase 1.</q></p><div class="acc"><details><summary>原文 · SKILL.md:230</summary><div class="acc-body"><p><strong>ALL of these mean: STOP. Return to Phase 1.</strong></p></div></details></div><p class="flow"><span class="fk">⤓</span>命中红旗 → 回到 Phase 1 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 命中即停回 Phase 1','SKILL.md:230')">?</button></div><div class="explain-card" id="e53" data-source="SKILL.md:232"><h4>Step 3 · 三次失败改问架构 <span class="tbadge ">DECIDE</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:232"><strong>目标</strong> 已经失败 3 次以上的,不回 Phase 1,而是去质疑架构 <q class="qt">Question the architecture (see Phase 4.5)</q></p><div class="acc"><details><summary>原文 · SKILL.md:232</summary><div class="acc-body"><p><strong>If 3+ fixes failed:</strong> Question the architecture (see Phase 4.5)</p></div></details></div><p class="flow"><span class="fk">⇢</span>3 次以上失败 → 转去质疑架构 → <button class="jump" onclick="showStep('n04','e414')">Step 14 三次失败:质疑架构</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 三次失败改问架构','SKILL.md:232')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:227">「再试一次就好」在已失败 2 次以上时就是危险信号 <q class="qt">&quot;One more fix attempt&quot; (when already tried 2+)</q> → <button class="jump" onclick="showStep('n04','e413')">Step 13 修不好就停下计数</button></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n06"><div class="panel-head"><span class="ph-id">n06 · W 层 · 流程 · fallback</span><h2>your human partner&#x27;s Signals You&#x27;re Doing It Wrong</h2><p class="lead">另一道看门人,信号来自人类搭档:「那件事没发生吗?」「别猜了」「Ultrathink 一下」「我们卡住了?」——这些都是在说你做错了,同样是停下并回到 Phase 1。</p></div><div class="card" data-source="SKILL.md:235-244"><p><strong>Watch for these redirections:</strong></p>
+<ul><li>&quot;Is that not happening?&quot; - You assumed without verifying</li><li>&quot;Will it show us...?&quot; - You should have added evidence gathering</li><li>&quot;Stop guessing&quot; - You&#x27;re proposing fixes without understanding</li><li>&quot;Ultrathink this&quot; - Question fundamentals, not just symptoms</li><li>&quot;We&#x27;re stuck?&quot; (frustrated) - Your approach isn&#x27;t working</li></ul>
+<p><strong>When you see these:</strong> STOP. Return to Phase 1.</p></div><div class="stepper" id="st-n06"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e61"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="st">读搭档的重定向信号</span></button><button class="sf-node implicit" data-x="e62"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type t-fb">FALLBACK</span></span><span class="st">见到信号即回 Phase 1</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e61" data-inf="1" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">四阶段主线</span><small>人类搭档发出重定向信号 → Step 1 (推断)</small></button><button class="sf-ext out" data-from="e62" data-inf="0" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">四阶段主线</span><small>← Step 2 看到搭档信号 → 回到 Phase 1</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e61" data-source="SKILL.md:236-241"><h4>Step 1 · 读搭档的重定向信号 <span class="tbadge ">REVIEW</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:236"><strong>目标</strong> 把人类搭档的这几句话当成「你做错了」的信号 <q class="qt">Watch for these redirections</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck61c">0/5</span></p><ul class="checklist" id="ckl61c"><li data-source="SKILL.md:237"><label><input type="checkbox"><span>「那件事没发生吗?」= 你没验证就下了假设 <q class="qt">&quot;Is that not happening?&quot; - You assumed without verifying</q></span></label></li><li data-source="SKILL.md:238"><label><input type="checkbox"><span>「它会显示给我们看吗?」= 你本该加取证手段 <q class="qt">You should have added evidence gathering</q></span></label></li><li data-source="SKILL.md:239"><label><input type="checkbox"><span>「别猜了」= 你在没搞懂的情况下提修复 <q class="qt">&quot;Stop guessing&quot; - You&#x27;re proposing fixes without understanding</q></span></label></li><li data-source="SKILL.md:240"><label><input type="checkbox"><span>「Ultrathink 一下」= 该质疑根本前提,而不是只看症状 <q class="qt">Question fundamentals, not just symptoms</q></span></label></li><li data-source="SKILL.md:241"><label><input type="checkbox"><span>「我们卡住了?」(带着挫败)= 你这条路走不通 <q class="qt">(frustrated) - Your approach isn&#x27;t working</q></span></label></li></ul><div class="acc"><details><summary>原文 · SKILL.md:236-241</summary><div class="acc-body"><p><strong>Watch for these redirections:</strong></p>
+<ul><li>&quot;Is that not happening?&quot; - You assumed without verifying</li><li>&quot;Will it show us...?&quot; - You should have added evidence gathering</li><li>&quot;Stop guessing&quot; - You&#x27;re proposing fixes without understanding</li><li>&quot;Ultrathink this&quot; - Question fundamentals, not just symptoms</li><li>&quot;We&#x27;re stuck?&quot; (frustrated) - Your approach isn&#x27;t working</li></ul></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button>(人类搭档发出重定向信号) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 读搭档的重定向信号','SKILL.md:236-241')">?</button></div><div class="explain-card" id="e62" data-source="SKILL.md:243"><h4>Step 2 · 见到信号即回 Phase 1 <span class="tbadge t-fb">FALLBACK</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:243"><strong>目标</strong> 看到这些信号就停下,回到 Phase 1 <q class="qt">STOP. Return to Phase 1.</q></p><div class="acc"><details><summary>原文 · SKILL.md:243</summary><div class="acc-body"><p><strong>When you see these:</strong> STOP. Return to Phase 1.</p></div></details></div><p class="flow"><span class="fk">⤓</span>看到搭档信号 → 回到 Phase 1 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 见到信号即回 Phase 1','SKILL.md:243')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-n07"><div class="panel-head"><span class="ph-id">n07 · S 层 · 语义/知识 · counter_arguments</span><h2>Common Rationalizations</h2><p class="lead">不是流程节点:八行「借口 vs 现实」对照表,是听见自己说出某句话时的现成回击,尤其是「紧急、没时间走流程」和「再试一次修复」。</p></div><div class="card" data-source="SKILL.md:245-257"><div class="scroll"><table class="tbl"><thead><tr><th>Excuse</th><th>Reality</th></tr></thead><tbody><tr><td>&quot;Issue is simple, don&#x27;t need process&quot;</td><td>Simple issues have root causes too. Process is fast for simple bugs.</td></tr><tr><td>&quot;Emergency, no time for process&quot;</td><td>Systematic debugging is FASTER than guess-and-check thrashing.</td></tr><tr><td>&quot;Just try this first, then investigate&quot;</td><td>First fix sets the pattern. Do it right from the start.</td></tr><tr><td>&quot;I&#x27;ll write test after confirming fix works&quot;</td><td>Untested fixes don&#x27;t stick. Test first proves it.</td></tr><tr><td>&quot;Multiple fixes at once saves time&quot;</td><td>Can&#x27;t isolate what worked. Causes new bugs.</td></tr><tr><td>&quot;Reference too long, I&#x27;ll adapt the pattern&quot;</td><td>Partial understanding guarantees bugs. Read it completely.</td></tr><tr><td>&quot;I see the problem, let me fix it&quot;</td><td>Seeing symptoms ≠ understanding root cause.</td></tr><tr><td>&quot;One more fix attempt&quot; (after 2+ failures)</td><td>3+ failures = architectural problem. Question pattern, don&#x27;t fix again.</td></tr></tbody></table></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Common Rationalizations','SKILL.md:245-257')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:254">略读参考实现 = 部分理解 = 必然出 bug <q class="qt">Partial understanding guarantees bugs. Read it completely.</q> → <button class="jump" onclick="showStep('n04','e42')">Step 2 Phase 2: Pattern Analysis</button></li><li class="claim" data-source="SKILL.md:253">「一次多修几个省时间」是假象——无法隔离到底是哪一处生效 <q class="qt">Can&#x27;t isolate what worked. Causes new bugs.</q> → <button class="jump" onclick="showStep('n04','e47')">Step 7 最小改动验假设</button></li><li class="claim" data-source="SKILL.md:252">「先确认修好再补测试」——未经测试的修复留不住 <q class="qt">Untested fixes don&#x27;t stick. Test first proves it.</q> → <button class="jump" onclick="showStep('n04','e410')">Step 10 先造复现的失败测试</button></li><li class="claim" data-source="SKILL.md:256">3 次以上失败 = 架构问题,该质疑模式而不是再修一次 <q class="qt">3+ failures = architectural problem. Question pattern, don&#x27;t fix again.</q> → <button class="jump" onclick="showStep('n04','e414')">Step 14 三次失败:质疑架构</button></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n08"><div class="panel-head"><span class="ph-id">n08 · S 层 · 语义/知识 · quality_standards</span><h2>Quick Reference</h2><p class="lead">不是流程节点:四阶段速查表,给每个阶段列出关键动作与成功判据——讲清 WHAT 和 WHY、指认出差异、证实或换新假设、bug 解决且测试全过。</p></div><div class="card" data-source="SKILL.md:258-266"><div class="scroll"><table class="tbl"><thead><tr><th>Phase</th><th>Key Activities</th><th>Success Criteria</th></tr></thead><tbody><tr><td><strong>1. Root Cause</strong></td><td>Read errors, reproduce, check changes, gather evidence</td><td>Understand WHAT and WHY</td></tr><tr><td><strong>2. Pattern</strong></td><td>Find working examples, compare</td><td>Identify differences</td></tr><tr><td><strong>3. Hypothesis</strong></td><td>Form theory, test minimally</td><td>Confirmed or new hypothesis</td></tr><tr><td><strong>4. Implementation</strong></td><td>Create test, fix, verify</td><td>Bug resolved, tests pass</td></tr></tbody></table></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Quick Reference','SKILL.md:258-266')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:262">本阶段做到位的标志:说得清 WHAT 和 WHY <q class="qt">Understand WHAT and WHY</q> → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button></li><li class="claim" data-source="SKILL.md:263">本阶段做到位的标志:能指认出差异 <q class="qt">Identify differences</q> → <button class="jump" onclick="showStep('n04','e42')">Step 2 Phase 2: Pattern Analysis</button></li><li class="claim" data-source="SKILL.md:264">本阶段的产出:假设被证实,或换出一个新假设 <q class="qt">Confirmed or new hypothesis</q> → <button class="jump" onclick="showStep('n04','e43')">Step 3 Phase 3: Hypothesis and Testing</button></li><li class="claim" data-source="SKILL.md:265">本阶段做到位的标志:bug 解决、测试全过 <q class="qt">Bug resolved, tests pass</q> → <button class="jump" onclick="showStep('n04','e44')">Step 4 Phase 4: Implementation</button></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n09"><div class="panel-head"><span class="ph-id">n09 · W 层 · 流程 · termination_branch</span><h2>When Process Reveals &quot;No Root Cause&quot;</h2><p class="lead">主线的一条出口分支:系统调查后确属环境、时序或外部因素时,记录调查内容、实现兜底处理、补上监控与日志即可收尾;但先提醒自己 95% 的「查不出根因」其实是调查没做完。</p></div><div class="card" data-source="SKILL.md:268-277"><p>If systematic investigation reveals issue is truly environmental, timing-dependent, or external:</p>
+<ol><li>You&#x27;ve completed the process</li><li>Document what you investigated</li><li>Implement appropriate handling (retry, timeout, error message)</li><li>Add monitoring/logging for future investigation</li></ol>
+<p><strong>But:</strong> 95% of &quot;no root cause&quot; cases are incomplete investigation.</p></div><div class="stepper" id="st-n09"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e91"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type t-gate">VALIDATE</span></span><span class="st">确认流程已走完</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node implicit" data-x="e92"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type t-out">OUTPUT</span></span><span class="st">记录调查内容</span></button><button class="sf-node implicit" data-x="e93"><span class="sn">3<span class="sf-imp">隐含</span><span class="sf-type ">TRANSFORM</span></span><span class="st">实现相应的兜底处理</span></button><button class="sf-node implicit" data-x="e94"><span class="sn">4<span class="sf-imp">隐含</span><span class="sf-type ">SETUP</span></span><span class="st">补监控与日志</span></button><span class="sf-end">⦿<small>END</small></span></div><div class="sf-lane"><button class="sf-ext out" data-from="e91" data-inf="1" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">四阶段主线</span><small>← Step 1 多半是调查没做完 → 回 Phase 1 继续查 (推断)</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e91" data-source="SKILL.md:269-271"><h4>Step 1 · 确认流程已走完 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:271"><strong>目标</strong> 系统调查后确属环境/时序/外部因素,才算走完了流程 <q class="qt">You&#x27;ve completed the process</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck91c">0/1</span></p><ul class="checklist" id="ckl91c"><li data-source="SKILL.md:269"><label><input type="checkbox"><span>适用条件:问题确实是环境性、时序性或外部的 <q class="qt">issue is truly environmental, timing-dependent, or external</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:276">95% 的「查不出根因」其实是调查没做完 <q class="qt">95% of &quot;no root cause&quot; cases are incomplete investigation.</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:269-271</summary><div class="acc-body"><p>If systematic investigation reveals issue is truly environmental, timing-dependent, or external:</p>
+<ol><li>You&#x27;ve completed the process</li></ol></div></details></div><p class="flow"><span class="fk">⤓</span>多半是调查没做完 → 回 Phase 1 继续查 → <button class="jump" onclick="showStep('n04','e41')">Step 1 Phase 1: Root Cause Investigation</button> <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 确认流程已走完','SKILL.md:269-271')">?</button></div><div class="explain-card" id="e92" data-source="SKILL.md:272"><h4>Step 2 · 记录调查内容 <span class="tbadge t-out">OUTPUT</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:272"><strong>目标</strong> 把调查过什么写下来 <q class="qt">Document what you investigated</q></p><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:272">调查记录 <q class="qt">Document what you investigated</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:272</summary><div class="acc-body"><ol><li>Document what you investigated</li></ol></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 记录调查内容','SKILL.md:272')">?</button></div><div class="explain-card" id="e93" data-source="SKILL.md:273"><h4>Step 3 · 实现相应的兜底处理 <span class="tbadge ">TRANSFORM</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:273"><strong>目标</strong> 上重试、超时或明确的错误信息等适当处理 <q class="qt">Implement appropriate handling (retry, timeout, error message)</q></p><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:284">condition-based-waiting.md:用条件轮询取代拍脑袋的超时 <q class="qt">Replace arbitrary timeouts with condition polling</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:273</summary><div class="acc-body"><ol><li>Implement appropriate handling (retry, timeout, error message)</li></ol></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 实现相应的兜底处理','SKILL.md:273')">?</button></div><div class="explain-card" id="e94" data-source="SKILL.md:274"><h4>Step 4 · 补监控与日志 <span class="tbadge ">SETUP</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:274"><strong>目标</strong> 为将来的调查加上监控与日志 <q class="qt">Add monitoring/logging for future investigation</q></p><div class="acc"><details><summary>原文 · SKILL.md:274</summary><div class="acc-body"><ol><li>Add monitoring/logging for future investigation</li></ol></div></details></div><p class="flow"><span class="fk">⦿</span>记录 + 兜底处理 + 监控到位后收尾 → END <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 4 补监控与日志','SKILL.md:274')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-n10"><div class="panel-head"><span class="ph-id">n10 · A 层 · 附件/工具 · resources</span><h2>Supporting Techniques</h2><p class="lead">附件层:同目录三个技法文件(反向追踪、纵深校验、条件轮询)加两个相关 skill——写失败测试交给 test-driven-development,宣称修好之前交给 verification-before-completion。</p></div><div class="card" data-source="SKILL.md:278-289"><p>These techniques are part of systematic debugging and available in this directory:</p>
+<ul><li><strong><code>root-cause-tracing.md</code></strong> - Trace bugs backward through call stack to find original trigger</li><li><strong><code>defense-in-depth.md</code></strong> - Add validation at multiple layers after finding root cause</li><li><strong><code>condition-based-waiting.md</code></strong> - Replace arbitrary timeouts with condition polling</li></ul>
+<p><strong>Related skills:</strong></p>
+<ul><li><strong>superpowers:test-driven-development</strong> - For creating failing test case (Phase 4, Step 1)</li><li><strong>superpowers:verification-before-completion</strong> - Verify fix worked before claiming success</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Supporting Techniques','SKILL.md:278-289')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:287">superpowers:test-driven-development(Phase 4 第 1 步专用) <q class="qt">For creating failing test case (Phase 4, Step 1)</q> → <button class="jump" onclick="showStep('n04','e410')">Step 10 先造复现的失败测试</button></li><li class="claim" data-source="SKILL.md:288">宣称成功之前先验证修复确实生效 <q class="qt">Verify fix worked before claiming success</q> → <button class="jump" onclick="showStep('n04','e412')">Step 12 验证修复</button></li><li class="claim" data-source="SKILL.md:288">superpowers:verification-before-completion <q class="qt">superpowers:verification-before-completion</q> → <button class="jump" onclick="showStep('n04','e412')">Step 12 验证修复</button></li><li class="claim" data-source="SKILL.md:284">condition-based-waiting.md:用条件轮询取代拍脑袋的超时 <q class="qt">Replace arbitrary timeouts with condition polling</q> → <button class="jump" onclick="showStep('n09','e93')">Step 3 实现相应的兜底处理</button></li></ul><p class="flow"><span class="fk">◂</span>反向追踪技法支撑 Trace Data Flow → <button class="jump" onclick="showStep('n04','e46')">Step 6 深栈错误:反向追数据流</button><br><span class="fk">⧉</span>Phase 4 第 1 步造失败测试 → <a class="xjump" href="../test-driven-development/test-driven-development-workflow.html#n04">⧉ test-driven-development · n04</a><br><span class="fk">⧉</span>宣称成功前先跑验证闸门 → <a class="xjump" href="../verification-before-completion/verification-before-completion-workflow.html#n03">⧉ verification-before-completion · n03</a></p><div class="pager"></div></section>
+<section class="panel" id="p-n11"><div class="panel-head"><span class="ph-id">n11 · S 层 · 语义/知识 · rationale</span><h2>Real-World Impact</h2><p class="lead">语义/知识节点,不是流程步骤。</p></div><div class="card" data-source="SKILL.md:290-296"><p>From debugging sessions:</p>
+<ul><li>Systematic approach: 15-30 minutes to fix</li><li>Random fixes approach: 2-3 hours of thrashing</li><li>First-time fix rate: 95% vs 40%</li><li>New bugs introduced: Near zero vs common</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Real-World Impact','SKILL.md:290-296')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-recon"><div class="panel-head"><span class="ph-id">印证 · 静态目录 vs 语义流程 · merge(agent)</span><h2>印证报告</h2><p class="lead">结构拆解的目录是坐标系;语义层只能叠加。这里列出两者对不上的地方,以及多个解析器之间的一致与冲突。</p></div><div class="recon-sum"><span>schema s2w-semantics/3 · merge(agent)</span><span>断言 216:explicit 203 · inferred 13</span><span>解析器:agent · 一致 0 · 独有 15 · 冲突 0</span></div><p class="sem-h">目录(静态 ## 标题)vs 分层(语义)</p><div class="scroll"><table class="tbl recon-tbl"><thead><tr><th>节点</th><th>标题</th><th>行号</th><th>### 步数</th><th>归属 / 角色</th><th>印证结论</th></tr></thead><tbody><tr><td>n01</td><td>Overview</td><td>8-15</td><td>0</td><td>S / core_principle</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n02</td><td>The Iron Law</td><td>16-23</td><td>0</td><td>W / constraints</td><td class="w">流程节点</td></tr><tr><td>n03</td><td>When to Use</td><td>24-45</td><td>0</td><td>R / activation</td><td class="nw">非流程标题 → R 层</td></tr><tr><td>n04</td><td>The Four Phases</td><td>46-214</td><td>4</td><td>W / main_flow</td><td class="w">流程节点</td></tr><tr><td>n05</td><td>Red Flags - STOP and Follow Process</td><td>215-233</td><td>0</td><td>W / fallback</td><td class="w">流程节点</td></tr><tr><td>n06</td><td>your human partner&#x27;s Signals You&#x27;re Doing It Wrong</td><td>234-244</td><td>0</td><td>W / fallback</td><td class="w">流程节点</td></tr><tr><td>n07</td><td>Common Rationalizations</td><td>245-257</td><td>0</td><td>S / counter_arguments</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n08</td><td>Quick Reference</td><td>258-266</td><td>0</td><td>S / quality_standards</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n09</td><td>When Process Reveals &quot;No Root Cause&quot;</td><td>267-277</td><td>0</td><td>W / termination_branch</td><td class="w">流程节点</td></tr><tr><td>n10</td><td>Supporting Techniques</td><td>278-289</td><td>0</td><td>A / resources</td><td class="nw">非流程标题 → A 层</td></tr><tr><td>n11</td><td>Real-World Impact</td><td>290-296</td><td>0</td><td>S / rationale</td><td class="nw">非流程标题 → S 层</td></tr></tbody></table></div><p class="sem-h">非流程标题(6)</p><ul class="sem-list"><li><code>n01</code> → S 层:核心原则陈述,不是可执行步骤;跨锚定到 n02.1 与全局 heuristics</li><li><code>n03</code> → R 层:何时用/尤其要用/不许跳过三张清单,是路由判据不是流程步骤</li><li><code>n07</code> → S 层:八行「借口 vs 现实」对照表,是判据表,不拆成子步骤</li><li><code>n08</code> → S 层:四阶段速查表,给每个阶段的成功判据;跨锚定到 n04 各步的 criteria</li><li><code>n10</code> → A 层:三个同目录技法文件 + 两个相关 skill 的指针,是附件不是步骤</li><li><code>n11</code> → S 层:实测收益数据,是理据;跨锚定到全局 heuristics</li></ul><p class="sem-h">隐含步骤(文本有、目录无)(5)</p><ul class="sem-list"><li>锚 <button class="jump" onclick="showNode('n02')">n02 无根因不许动手</button>,2 步(SKILL.md:18-22)</li><li>锚 <button class="jump" onclick="showNode('n04')">n04 四阶段主线</button>,10 步(SKILL.md:72-213)</li><li>锚 <button class="jump" onclick="showNode('n05')">n05 红旗话术即中止</button>,3 步(SKILL.md:217-232)</li><li>锚 <button class="jump" onclick="showNode('n06')">n06 搭档信号即回退</button>,2 步(SKILL.md:236-243)</li><li>锚 <button class="jump" onclick="showNode('n09')">n09 确无根因的收尾</button>,4 步(SKILL.md:271-274)</li></ul><p class="sem-h">顺序偏差(文档顺序 ≠ 执行顺序)(4)</p><ul class="sem-list"><li>n05 红旗与 n06 搭档信号在文档里排在四阶段之后,执行上贯穿全程:随时命中即中止并回到 Phase 1(SKILL.md:230)</li><li>n08 速查表排在最后,执行上是 n04 每个阶段的验收判据(SKILL.md:262)</li><li>n09「查不出根因」排在正文末尾,执行上是 Phase 1 之后的一条分支出口(SKILL.md:269)</li><li>n10 列出的 root-cause-tracing.md 在 Phase 1 第 5 小步就被引用,资源说明写在远处(SKILL.md:114)</li></ul><p class="sem-h">跨锚定(知识写在别处)(9)</p><ul class="sem-list"><li>n04.1/n04.2/n04.3/n04.4 的 criteria(四阶段成功判据) ← <code>n08</code>(SKILL.md:262-265)</li><li>n04.7 failure_modes(一次多修分不清谁生效) ← <code>n07</code>(SKILL.md:253)</li><li>n04.10 failure_modes(修好再补测试留不住) ← <code>n07</code>(SKILL.md:252)</li><li>n04.12 governance + resources(宣称成功前先验证) ← <code>n10</code>(SKILL.md:288)</li><li>n04.13 failure_modes(再试一次 = 危险信号) ← <code>n05</code>(SKILL.md:227)</li><li>n04.14 domain_rules(3+ 次失败 = 架构问题) ← <code>n07</code>(SKILL.md:256)</li><li>n04.6 resources(root-cause-tracing.md) ← <code>n10</code>(SKILL.md:282)</li><li>n09.3 resources(condition-based-waiting.md) ← <code>n10</code>(SKILL.md:284)</li><li>n02.1 domain_rules(字面即精神) ← <code>n01</code>(SKILL.md:14)</li></ul><p class="sem-h">裁定记录(5)</p><ul class="sem-list"><li><code>n04</code> 四个 ### Phase 保留为静态步骤;各 Phase 内的编号小项凡属条件分支或有独立回边的(取证插桩、反向追踪、最小验证、验证后继续、造失败测试、单一修复、验证修复、计数决策、质疑架构)提升为隐含步骤,其余归入该阶段的 procedure(SKILL.md:48)</li><li><code>n05</code> 11 条红旗是检测判据(criteria),不拆成 11 个子步骤;整节归 W 层 fallback 是因为末两行给出明确动作(SKILL.md:230)</li><li><code>n06</code> 5 条搭档话术同样是判据表,只有末行「STOP. Return to Phase 1.」是动作(SKILL.md:243)</li><li><code>n09</code> 该节 4 个编号项是真正按序执行的收尾动作,故立为隐含步骤并带一条终止;但首步同时带回退边,因为 95% 的情形其实是调查不彻底(SKILL.md:276)</li><li><code>n03</code> 「Don&#x27;t skip when」三条不是排除条件而是反排除(禁止跳过),故 routing.exclusions 为空,三条收进 global.domain_rules(SKILL.md:41)</li></ul><p class="sem-h">备注</p><ul class="sem-list"><li>本 skill 的 3 条出向 cross-ref 全部判为调用:SKILL.md:179(Phase 4 第 1 步写失败测试)→ delegate test-driven-development:n04;SKILL.md:287(Related skills 复述同一调用)→ delegate test-driven-development:n04(端点对不同,不与前者冲突);SKILL.md:288 → delegate verification-before-completion:n03。判为「非调用」的 cross-ref 数为 0。</li><li>另加一条 n04.12 → verification-before-completion:n03 的 dependency:正文在 Phase 4「Verify Fix」处并未点名该 skill,依据取自 n10 的第 288 行,属跨锚定,故用 dependency 而非 delegate。</li><li>跨 skill 目标节点选择:test-driven-development:n04(Red-Green-Refactor,该 skill 的 W 主线)对应「写正经的失败测试」;verification-before-completion:n03(The Gate Function,该 skill 的 W 主线)对应「宣称成功前先验证」。</li><li>n04.1 → n05.1 与 n04.1 → n06.1 两条 fallback 是推断:原文只说命中即 STOP 回 Phase 1,未说守护挂在哪一步,选择挂在主线入口 Phase 1。</li><li>n05.2 → n04.1 与 n06.2 → n04.1 同为 fallback 且语义相同(回到 Phase 1),但来自两个不同节点,端点对不同,不构成冲突。</li><li>步骤编号按 merge_semantics.py 的输出顺序给定:该脚本恒把静态 ### 步骤排在前(n04.1-4 = Phase 1-4),隐含步骤按解析器顺序追加在后(n04.5-14),因此本文件的 subflows 数组也按同一顺序书写,edges/checkpoints/loops/jumps/guards 的步号才能与渲染页对齐;执行顺序请以边为准,不以步骤相邻为准。</li></ul><p class="sem-h">校验</p><ul class="sem-list"><li>merged:作废 0 条</li></ul><div class="pager"></div></section>
+    </main>
+  </div>
+
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>systematic-debugging/SKILL.md</code>(296 行,11 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/superpowers/systematic-debugging</code> · 拆解零 LLM · 语义层由 <code>merge(agent)</code> 产出,216 条断言经 <code>validate_semantics.py</code> 逐条回读核对(解析器 agent,冲突 0 处) · 渲染 Agent 负责排版与衔接文案 · 带出处行号的内容为 SKILL.md 原文,开启「显示出处」可见每条断言的逐字引文 · 2026-08-24</footer>
+</div>
+
+<!-- 追问弹窗 -->
+<div class="dd-overlay" id="ddOverlay">
+  <div class="dd-popover">
+    <p class="dd-title" id="ddTitle"></p>
+    <p class="dd-ctx" id="ddCtx"></p>
+    <textarea id="ddInput" placeholder="输入你想追问的细节…"></textarea>
+    <div class="dd-actions">
+      <button class="dd-submit" id="ddSubmit">打包复制追问到剪贴板</button>
+      <button class="dd-cancel" id="ddCancel">取消</button>
+    </div>
+  </div>
+</div>
+<div class="dd-toast" id="ddToast"></div>
+
+<script>
+/* JS 安全规则(CRITICAL):var / function() / DOM 前 null 守卫 / 字符串内无中文弯引号 */
+
+/* ——— 渲染时注入的页面数据 ——— */
+var SKILL_NAME = "systematic-debugging";
+var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/systematic-debugging";
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/superpowers/systematic-debugging/static";
+var NODES = ["n01", "n02", "n03", "n04", "n05", "n06", "n07", "n08", "n09", "n10", "n11", "recon"];
+var NODE_TITLES = {"n01": "根因优先的原则", "n02": "无根因不许动手", "n03": "何时该走这套", "n04": "四阶段主线", "n05": "红旗话术即中止", "n06": "搭档信号即回退", "n07": "拆掉常见借口", "n08": "四阶段速查判据", "n09": "确无根因的收尾", "n10": "配套技法与资源", "n11": "系统法的实测收益", "recon": "印证报告"};
+var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "n06": [], "n07": [], "n08": [], "n09": [], "n10": [], "n11": [], "recon": []};
+var SUBFLOW_LOOPS = {"st-n04": [{"from": "e48", "to": "e43", "label": "没成 → 立新假设"}, {"from": "e413", "to": "e41", "label": "< 3 次 → 回 Phase 1"}]};
+var SEM_EDGES = {};   /* 语义层(可选):{"st-nXX": {arcs: [{from,to,label,inf}], end: {from,label,inf}}},渲染时经 component_scripts 赋值 */
+var RAIL_LINKS = [];  /* 语义层(可选):流程带支撑行 → 主线的依赖弧 [{from,to}] */
+
+/* ——— 侧栏资源渲染 ——— */
+function renderResources(nodeId) {
+  var box = document.getElementById("resList");
+  if (!box) { return; }
+  var list = NODE_RES[nodeId] || [];
+  if (list.length === 0) {
+    box.innerHTML = '<p class="res-empty">本节点未引用资源文件</p>';
+    return;
+  }
+  var html = "";
+  var i;
+  for (i = 0; i < list.length; i++) {
+    var cls = list[i][1] ? "res-item" : "res-item missing";
+    var label = list[i][1] ? "存在" : "缺失";
+    html += '<div class="' + cls + '" title="' + label + '"><span class="dot"></span>' + list[i][0] + "</div>";
+  }
+  box.innerHTML = html;
+}
+
+/* ——— 上一步/下一步 ——— */
+function renderPager(nodeId) {
+  var idx = -1;
+  var i;
+  for (i = 0; i < NODES.length; i++) { if (NODES[i] === nodeId) { idx = i; } }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var pager = panel.querySelector(".pager");
+  if (!pager) { return; }
+  var html = "";
+  if (idx > 0) {
+    var prev = NODES[idx - 1];
+    html += '<button onclick="showNode(\'' + prev + '\')"><span class="dir">← 上一节点</span>' + prev + " · " + NODE_TITLES[prev] + "</button>";
+  } else {
+    html += "<button disabled><span class=\"dir\">← 上一节点</span>已是起点</button>";
+  }
+  if (idx < NODES.length - 1) {
+    var next = NODES[idx + 1];
+    html += '<button onclick="showNode(\'' + next + '\')" style="text-align:right"><span class="dir">下一节点 →</span>' + next + " · " + NODE_TITLES[next] + "</button>";
+  } else {
+    html += "<button disabled style=\"text-align:right\"><span class=\"dir\">下一节点 →</span>已是终点</button>";
+  }
+  pager.innerHTML = html;
+}
+
+/* ——— 节点切换 ——— */
+function showNode(nodeId) {
+  var panels = document.querySelectorAll(".panel");
+  var i;
+  for (i = 0; i < panels.length; i++) { panels[i].classList.remove("active"); }
+  var target = document.getElementById("p-" + nodeId);
+  if (target) { target.classList.add("active"); }
+
+  var chips = document.querySelectorAll(".node-chip");
+  for (i = 0; i < chips.length; i++) {
+    if (chips[i].getAttribute("data-node") === nodeId) { chips[i].classList.add("active"); }
+    else { chips[i].classList.remove("active"); }
+  }
+  var tocBtns = document.querySelectorAll(".toc button");
+  for (i = 0; i < tocBtns.length; i++) {
+    if (tocBtns[i].getAttribute("data-node") === nodeId) { tocBtns[i].classList.add("active"); }
+    else { tocBtns[i].classList.remove("active"); }
+  }
+  renderResources(nodeId);
+  renderPager(nodeId);
+  redrawActiveSubflows();
+  var rail = document.getElementById("rail");
+  if (rail) {
+    var activeChip = rail.querySelector(".node-chip.active");
+    if (activeChip && activeChip.scrollIntoView) {
+      activeChip.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    }
+  }
+}
+
+/* ——— 跳到某节点的某个子步骤 ——— */
+function showStep(nodeId, explainId) {
+  showNode(nodeId);
+  if (!explainId) { return; }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var btns = panel.querySelectorAll(".sf-node");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute("data-x") === explainId && btns[i].onclick) { btns[i].onclick(); }
+  }
+}
+
+(function bindNav() {
+  var btns = document.querySelectorAll("[data-node]");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    (function (btn) {
+      btn.onclick = function () { showNode(btn.getAttribute("data-node")); };
+    })(btns[i]);
+  }
+})();
+
+/* ——— 布局工具(语义层共用;无语义数据时不会被调用) ——— */
+/* 一维放置:每个盒子想居中于其关联盒子正下方;与邻居重叠则并成一簇共同居中;簇不越过左界 minLeft */
+function semPlace1D(items, minLeft, gap) {
+  items.sort(function (p, q) { return p.want - q.want; });
+  var clusters = [];
+  var i, k;
+  for (i = 0; i < items.length; i++) {
+    items[i].off = 0;
+    var c = { items: [items[i]], w: items[i].w, sum: items[i].want, left: Math.max(minLeft, items[i].want) };
+    while (clusters.length > 0 && clusters[clusters.length - 1].left + clusters[clusters.length - 1].w + gap > c.left) {
+      var p = clusters.pop();
+      for (k = 0; k < c.items.length; k++) { c.items[k].off += p.w + gap; p.items.push(c.items[k]); }
+      p.sum += c.sum - c.items.length * (p.w + gap);
+      p.w += gap + c.w;
+      p.left = Math.max(minLeft, p.sum / p.items.length);
+      c = p;
+    }
+    clusters.push(c);
+  }
+  for (i = 0; i < clusters.length; i++) {
+    for (k = 0; k < clusters[i].items.length; k++) { clusters[i].items[k].left = clusters[i].left + clusters[i].items[k].off; }
+  }
+}
+
+/* 正交折线:(x0,y0) 先竖直到轨道 yt,再水平,再竖直到 (x1,y1);拐角圆弧半径 r */
+function orthoPath(x0, y0, x1, y1, yt, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var dx = x1 - x0;
+  if (Math.abs(dx) < 2) { return "M " + f(x0) + " " + f(y0) + " L " + f(x1) + " " + f(y1); }
+  var sx = dx > 0 ? 1 : -1;
+  var s0 = yt > y0 ? 1 : -1;
+  var s1 = y1 > yt ? 1 : -1;
+  var rr = Math.min(r, Math.abs(dx) / 2, Math.abs(yt - y0), Math.abs(y1 - yt));
+  return "M " + f(x0) + " " + f(y0) + " L " + f(x0) + " " + f(yt - s0 * rr) + " Q " + f(x0) + " " + f(yt) + " " + f(x0 + sx * rr) + " " + f(yt) +
+    " L " + f(x1 - sx * rr) + " " + f(yt) + " Q " + f(x1) + " " + f(yt) + " " + f(x1) + " " + f(yt + s1 * rr) + " L " + f(x1) + " " + f(y1);
+}
+
+/* 卫星栏布线:主行在上、卫星栏在下,轨道夹在两者之间(yTop..yBot)。
+   links = [{rowBox, satBox, rowKey, satKey, dir:"up"|"down"}]:up = 箭头汇入主行盒子(依赖来源),down = 箭头汇入卫星盒子(兜底去向)。
+   端口沿盒边按对侧盒子的横向位置排序分散;每条线独占一条水平轨道;轨道次序取交叉最少者(≤8 条穷举,更多用邻换贪心)。 */
+function semRouteLane(links, yTop, yBot) {
+  var i, j, g, cc;
+  function spread(keyName, boxName, otherName, portName) {
+    var groups = {};
+    for (i = 0; i < links.length; i++) {
+      if (!groups[links[i][keyName]]) { groups[links[i][keyName]] = []; }
+      groups[links[i][keyName]].push(links[i]);
+    }
+    for (g in groups) {
+      if (!groups.hasOwnProperty(g)) { continue; }
+      var arr = groups[g];
+      arr.sort(function (p, q) { return (p[otherName].l + p[otherName].w / 2) - (q[otherName].l + q[otherName].w / 2); });
+      for (j = 0; j < arr.length; j++) { arr[j][portName] = arr[j][boxName].l + arr[j][boxName].w * (j + 1) / (arr.length + 1); }
+    }
+  }
+  spread("rowKey", "rowBox", "satBox", "xs");
+  spread("satKey", "satBox", "rowBox", "xe");
+  for (i = 0; i < links.length; i++) {
+    links[i].lo = Math.min(links[i].xs, links[i].xe);
+    links[i].hi = Math.max(links[i].xs, links[i].xe);
+    links[i].span = links[i].hi - links[i].lo;
+  }
+  /* up 在上轨、dn 在下轨时的交叉数:dn 的上竖段穿过 up 的横段 / up 的下竖段穿过 dn 的横段 */
+  function pairCross(up, dn) {
+    var c = 0;
+    if (dn.xs > up.lo + 0.5 && dn.xs < up.hi - 0.5) { c++; }
+    if (up.xe > dn.lo + 0.5 && up.xe < dn.hi - 0.5) { c++; }
+    return c;
+  }
+  function cost(order) {
+    var c = 0, a, b;
+    for (a = 0; a < order.length; a++) { for (b = a + 1; b < order.length; b++) { c += pairCross(order[a], order[b]); } }
+    return c;
+  }
+  function drift(order) { var s = 0, a; for (a = 0; a < order.length; a++) { s += a * order[a].span; } return s; }
+  var best = links.slice().sort(function (p, q) { return q.span - p.span; });
+  var bestC = cost(best), bestD = drift(best);
+  var n = best.length;
+  if (n > 1 && n <= 8) {
+    var arr2 = best.slice(), cnt = [], k = 0, tmp, sw;
+    for (i = 0; i < n; i++) { cnt[i] = 0; }
+    while (k < n) {
+      if (cnt[k] < k) {
+        sw = (k % 2 === 0) ? 0 : cnt[k];
+        tmp = arr2[sw]; arr2[sw] = arr2[k]; arr2[k] = tmp;
+        cc = cost(arr2);
+        if (cc < bestC || (cc === bestC && drift(arr2) < bestD)) { best = arr2.slice(); bestC = cc; bestD = drift(arr2); }
+        cnt[k] += 1; k = 0;
+      } else { cnt[k] = 0; k += 1; }
+    }
+  } else if (n > 8) {
+    var pass, improved = true;
+    for (pass = 0; pass < 30 && improved; pass++) {
+      improved = false;
+      for (i = 0; i + 1 < n; i++) {
+        var t1 = best[i]; best[i] = best[i + 1]; best[i + 1] = t1;
+        cc = cost(best);
+        if (cc < bestC) { bestC = cc; improved = true; } else { best[i + 1] = best[i]; best[i] = t1; }
+      }
+    }
+  }
+  for (i = 0; i < n; i++) {
+    var lk = best[i];
+    var yt = yTop + (yBot - yTop) * (i + 1) / (n + 1);
+    if (lk.dir === "down") {
+      lk.d = orthoPath(lk.xs, lk.rowBox.t + lk.rowBox.h + 1, lk.xe, lk.satBox.t - 2, yt, 8);
+    } else {
+      lk.d = orthoPath(lk.xe, lk.satBox.t - 1, lk.xs, lk.rowBox.t + lk.rowBox.h + 3, yt, 8);
+    }
+  }
+  return best;
+}
+
+/* ——— 连线选中:单击一条线,高亮它的两端,同一张图里的其它线与盒子淡出 ———
+   选中态按容器(每个 stepper / 流程带)分别记,重画(展开、换窗宽)后由 sfApplyFocus 复原 */
+var SF_FOCUS = {};
+
+function sfRootKey(root) { return root.id || "sf-root"; }
+
+function sfSetCls(el, name, want) {
+  var cur = el.getAttribute("class") || "";
+  var has = (" " + cur + " ").indexOf(" " + name + " ") >= 0;
+  if (want === has) { return; }
+  el.setAttribute("class", want ? (cur + " " + name)
+    : (" " + cur + " ").replace(" " + name + " ", " ").replace(/^\s+|\s+$/g, ""));
+}
+
+/* 盒子的端点键:步骤盒子用 data-x,外部卡片 / END 用 data-extkey,流程带芯片用 rail:<节点 id> */
+function sfBoxKey(el) {
+  if (!el || !el.getAttribute) { return null; }
+  if (el.getAttribute("data-x")) { return el.getAttribute("data-x"); }
+  if (el.getAttribute("data-extkey")) { return el.getAttribute("data-extkey"); }
+  if (el.getAttribute("data-node")) { return "rail:" + el.getAttribute("data-node"); }
+  return null;
+}
+
+function sfApplyFocus(root) {
+  if (!root) { return; }
+  var f = SF_FOCUS[sfRootKey(root)] || null;
+  var edges = root.querySelectorAll("[data-efrom]");   /* 线 + 线上的标签 */
+  var boxes = root.querySelectorAll(".sf-node, .sf-ext, .sf-end, .node-chip");
+  var i;
+  for (i = 0; i < edges.length; i++) {
+    var hit = f !== null && edges[i].getAttribute("data-efrom") === f.from && edges[i].getAttribute("data-eto") === f.to;
+    sfSetCls(edges[i], "focus", f !== null && hit);
+    sfSetCls(edges[i], "dim", f !== null && !hit);
+  }
+  for (i = 0; i < boxes.length; i++) {
+    var k = sfBoxKey(boxes[i]);
+    var on = f !== null && k !== null && (k === f.from || k === f.to);
+    sfSetCls(boxes[i], "focus", f !== null && on);
+    sfSetCls(boxes[i], "dim", f !== null && !on);
+  }
+}
+
+function sfClearFocus() {
+  SF_FOCUS = {};
+  var roots = document.querySelectorAll(".stepper, #railSem"), i;
+  for (i = 0; i < roots.length; i++) { sfApplyFocus(roots[i]); }
+}
+
+(function bindSfFocus() {
+  document.addEventListener("click", function (ev) {
+    var el = ev.target, edge = null, root = null;
+    while (el && el !== document.body) {
+      if (!edge && el.getAttribute && el.getAttribute("data-efrom") !== null && el.getAttribute("data-eto") !== null) { edge = el; }
+      if (el.className !== undefined && el.id === "railSem") { root = el; break; }
+      if (el.classList && el.classList.contains && el.classList.contains("stepper")) { root = el; break; }
+      el = el.parentNode;
+    }
+    if (!root) { return; }
+    var key = sfRootKey(root), cur = SF_FOCUS[key] || null;
+    if (!edge) { SF_FOCUS[key] = null; }          /* 点空白 / 点盒子:清掉选中,节点自身的点击行为不变 */
+    else {
+      var f = { from: edge.getAttribute("data-efrom"), to: edge.getAttribute("data-eto") };
+      SF_FOCUS[key] = (cur && cur.from === f.from && cur.to === f.to) ? null : f;
+    }
+    sfApplyFocus(root);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" || ev.keyCode === 27) { sfClearFocus(); }
+  });
+})();
+
+/* ——— 子流程图绘制:顺序边直线 + 上方弧线(回边 / 自环 / 条件跳转,按跨度分层避让)+ 外部节点栏(依赖来源 / 兜底去向,正交布线)+ 终止标记 ——— */
+function semLayoutLane(stepper, canvas) {
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (!lane || !row) { canvas.style.paddingBottom = ""; return; }
+  var exts = lane.querySelectorAll(".sf-ext");
+  var i, j, nLinks = 0, natMax = 0, maxH = 0;
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = ""; exts[i].style.height = ""; }
+  for (i = 0; i < exts.length; i++) {
+    nLinks += (exts[i].getAttribute("data-at") || exts[i].getAttribute("data-from") || "").split(",").length;
+    if (exts[i].offsetWidth > natMax) { natMax = exts[i].offsetWidth; }
+  }
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = natMax + "px"; }
+  var gap = Math.max(36, 18 + 10 * nLinks);
+  var rowBottom = row.offsetTop + row.offsetHeight;
+  lane.style.top = (rowBottom + gap) + "px";
+  var items = [];
+  for (i = 0; i < exts.length; i++) {
+    var ex = exts[i];
+    var refs = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+    var sum = 0, n = 0;
+    for (j = 0; j < refs.length; j++) {
+      var b = stepper.querySelector('.sf-node[data-x="' + refs[j] + '"]');
+      if (b) { sum += b.offsetLeft + b.offsetWidth / 2; n++; }
+    }
+    items.push({ el: ex, want: (n > 0 ? sum / n : 0) - ex.offsetWidth / 2, w: ex.offsetWidth });
+    if (ex.offsetHeight > maxH) { maxH = ex.offsetHeight; }
+  }
+  semPlace1D(items, 0, 12);
+  for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+  lane.style.height = maxH + "px";
+  canvas.style.paddingBottom = (gap + maxH + 16) + "px";
+}
+
+function drawSubflow(stepperId) {
+  var stepper = document.getElementById(stepperId);
+  if (!stepper) { return; }
+  var canvas = stepper.querySelector(".sf-canvas");
+  var svg = stepper.querySelector(".sf-svg");
+  var nodes = stepper.querySelectorAll(".sf-node");
+  if (!canvas || !svg || nodes.length === 0) { return; }
+  var i, j;
+  var idx = {};
+  for (i = 0; i < nodes.length; i++) { idx[nodes[i].getAttribute("data-x")] = i; }
+
+  /* 同行盒子等宽:自然宽取最大(CSS 夹在 112–200px),高度随行拉伸、内容垂直居中 */
+  var natMax = 0;
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = ""; }
+  for (i = 0; i < nodes.length; i++) { var nw = nodes[i].getBoundingClientRect().width; if (nw > natMax) { natMax = nw; } }
+  natMax = Math.ceil(natMax) + 2; /* 留 2px 余量:编号行是可换行 flex,正好贴边时会因亚像素取整折行 */
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = natMax + "px"; }
+
+  /* 上方弧线分层:跨度短的在下;与已放置弧线重叠则抬一层 */
+  var sem = SEM_EDGES[stepperId] || {};
+  var arcs = [];
+  var loops = SUBFLOW_LOOPS[stepperId] || [];
+  for (i = 0; i < loops.length; i++) { arcs.push({ kind: "loop", e: loops[i] }); }
+  var skips = sem.arcs || [];
+  for (i = 0; i < skips.length; i++) { arcs.push({ kind: "skip", e: skips[i] }); }
+  var maxLevel = 0;
+  for (i = 0; i < arcs.length; i++) {
+    var ia = idx[arcs[i].e.from], ib = idx[arcs[i].e.to];
+    if (ia === undefined || ib === undefined) { arcs[i].bad = true; continue; }
+    arcs[i].lo = Math.min(ia, ib);
+    arcs[i].hi = Math.max(ia, ib);
+    arcs[i].span = arcs[i].hi - arcs[i].lo;
+  }
+  arcs.sort(function (p, q) { return p.span - q.span; });
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var level = 1;
+    for (j = 0; j < i; j++) {
+      if (arcs[j].bad) { continue; }
+      var overlap = !(arcs[i].hi < arcs[j].lo || arcs[i].lo > arcs[j].hi);
+      if (overlap && arcs[j].level >= level) { level = arcs[j].level + 1; }
+    }
+    arcs[i].level = level;
+    if (level > maxLevel) { maxLevel = level; }
+  }
+  canvas.style.paddingTop = Math.max(56, 30 + 26 * maxLevel) + "px";
+  semLayoutLane(stepper, canvas);
+
+  var W = canvas.scrollWidth;
+  var H = canvas.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  function marker(id, cls, size) {
+    return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="' + size + '" markerHeight="' + size + '" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="' + cls + '"></path></marker>';
+  }
+  var parts = ["<defs>" + marker(stepperId + "-mf", "mk-f", 7) + marker(stepperId + "-ml", "mk-l", 6.5) + marker(stepperId + "-mc", "mk-c", 6.5) + marker(stepperId + "-md", "mk-d", 6) + marker(stepperId + "-mx", "mk-x", 6.5) + marker(stepperId + "-me", "mk-e", 6.5) + "</defs>"];
+  var pos = {};
+  for (i = 0; i < nodes.length; i++) {
+    var b = nodes[i];
+    pos[b.getAttribute("data-x")] = { l: b.offsetLeft, t: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight };
+  }
+
+  /* 顺序边 */
+  for (i = 0; i < nodes.length - 1; i++) {
+    var a = pos[nodes[i].getAttribute("data-x")];
+    var c = pos[nodes[i + 1].getAttribute("data-x")];
+    if (!a || !c) { continue; }
+    parts.push('<line x1="' + (a.l + a.w + 1) + '" y1="' + (a.t + a.h / 2) + '" x2="' + (c.l - 3) + '" y2="' + (c.t + c.h / 2) + '" class="ed-f sfe" data-efrom="' + nodes[i].getAttribute("data-x") + '" data-eto="' + nodes[i + 1].getAttribute("data-x") + '" marker-end="url(#' + stepperId + '-mf)"></line>');
+  }
+
+  /* 上方弧线:回边 / 自环(ed-l,橙色流动虚线)与条件跳转(ed-c,蓝色;推断为虚线) */
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var e = arcs[i].e;
+    var s = pos[e.from];
+    var t = pos[e.to];
+    if (!s || !t) { continue; }
+    var L = arcs[i].level;
+    var isLoop = arcs[i].kind === "loop";
+    var cls = isLoop ? "ed-l" : ("ed-c" + (e.inf ? " inf" : ""));
+    var d, lx, ly;
+    if (e.from === e.to) {
+      var cx = s.l + s.w / 2;
+      var cy = s.t - (10 + 26 * L);
+      d = "M " + (cx + 16) + " " + (s.t - 1) + " C " + (cx + 44) + " " + cy + ", " + (cx - 44) + " " + cy + ", " + (cx - 16) + " " + (s.t - 1);
+      lx = cx;
+      ly = s.t - (6 + 26 * L);
+    } else {
+      var x1 = s.l + s.w / 2;
+      var x2 = t.l + t.w / 2;
+      var topY = Math.min(s.t, t.t);
+      var py = topY - (14 + 26 * L);
+      d = "M " + x1 + " " + (s.t - 1) + " C " + x1 + " " + py + ", " + x2 + " " + py + ", " + x2 + " " + (t.t - 1);
+      lx = (x1 + x2) / 2;
+      ly = topY - (8 + 26 * L);
+    }
+    parts.push('<path d="' + d + '" class="' + cls + ' sfe" data-efrom="' + e.from + '" data-eto="' + e.to + '" marker-end="url(#' + stepperId + (isLoop ? "-ml" : "-mc") + ')"></path>');
+    var label = e.label + (e.inf ? " · 推断" : "");
+    var halfLabel = label.length * 5.5;
+    if (lx < halfLabel + 4) { lx = halfLabel + 4; }
+    if (lx > W - halfLabel - 4) { lx = W - halfLabel - 4; }
+    parts.push('<text x="' + lx + '" y="' + ly + '" text-anchor="middle" class="' + (isLoop ? "ed-t" : "ed-ct") + ' sfl" data-efrom="' + e.from + '" data-eto="' + e.to + '">' + label + "</text>");
+  }
+
+  /* 外部节点栏:依赖来源(点线,上箭头汇入步骤)/ 兜底去向(橙线,下箭头汇入外部节点);正交布线,每线一轨 */
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (lane && row) {
+    var exts = lane.querySelectorAll(".sf-ext");
+    var links = [];
+    for (i = 0; i < exts.length; i++) {
+      var ex = exts[i];
+      var isOut = ex.classList.contains("out");
+      var exRect = { l: lane.offsetLeft + ex.offsetLeft, t: lane.offsetTop + ex.offsetTop, w: ex.offsetWidth, h: ex.offsetHeight };
+      ex.setAttribute("data-extkey", "ext:x" + i);
+      var refs1 = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+      var infs = (ex.getAttribute("data-inf") || "").split(",");
+      for (j = 0; j < refs1.length; j++) {
+        if (!pos[refs1[j]]) { continue; }
+        links.push({ rowBox: pos[refs1[j]], satBox: exRect, rowKey: refs1[j], satKey: "ext:x" + i, dir: isOut ? "down" : "up",
+                     cls: (isOut ? "ed-x" : "ed-d") + (infs[j] === "1" ? " inf" : ""), mk: isOut ? "-mx" : "-md" });
+      }
+    }
+    var routed = semRouteLane(links, row.offsetTop + row.offsetHeight, lane.offsetTop);
+    for (i = 0; i < routed.length; i++) {
+      /* up = 箭头汇入主行盒子(依赖来源:外部 → 步骤);down = 箭头汇入外部卡片(兜底去向) */
+      var lf = routed[i].dir === "up" ? routed[i].satKey : routed[i].rowKey;
+      var lt = routed[i].dir === "up" ? routed[i].rowKey : routed[i].satKey;
+      parts.push('<path d="' + routed[i].d + '" class="' + routed[i].cls + ' sfe" data-efrom="' + lf + '" data-eto="' + lt + '" marker-end="url(#' + stepperId + routed[i].mk + ')"></path>');
+    }
+  }
+
+  /* 终止标记:最后一步 → ⦿ END */
+  var endEl = stepper.querySelector(".sf-end");
+  if (endEl && sem.end && pos[sem.end.from]) {
+    var se = pos[sem.end.from];
+    var ex1 = endEl.offsetLeft, ey1 = endEl.offsetTop + endEl.offsetHeight / 2;
+    endEl.setAttribute("data-extkey", "ext:END");
+    parts.push('<path d="M ' + (se.l + se.w + 1) + ' ' + (se.t + se.h / 2) + ' L ' + (ex1 - 2) + ' ' + ey1 + '" class="ed-e' + (sem.end.inf ? " inf" : "") + ' sfe" data-efrom="' + sem.end.from + '" data-eto="ext:END" marker-end="url(#' + stepperId + '-me)"></path>');
+    parts.push('<text x="' + (ex1 + endEl.offsetWidth / 2) + '" y="' + (endEl.offsetTop + endEl.offsetHeight + 14) + '" text-anchor="middle" class="ed-et sfl" data-efrom="' + sem.end.from + '" data-eto="ext:END">' + sem.end.label + (sem.end.inf ? " · 推断" : "") + "</text>");
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(stepper);
+}
+
+function redrawActiveSubflows() {
+  var active = document.querySelector(".panel.active");
+  if (!active) { return; }
+  var steppers = active.querySelectorAll(".stepper");
+  var i;
+  for (i = 0; i < steppers.length; i++) { drawSubflow(steppers[i].id); }
+}
+
+/* ——— 子步骤点击绑定 ——— */
+(function bindSubflows() {
+  var steppers = document.querySelectorAll(".stepper");
+  var s;
+  for (s = 0; s < steppers.length; s++) {
+    (function (stepper) {
+      var btns = stepper.querySelectorAll(".sf-node");
+      var i;
+      for (i = 0; i < btns.length; i++) {
+        (function (btn) {
+          btn.onclick = function () {
+            var targetId = btn.getAttribute("data-x");
+            var cards = stepper.querySelectorAll(".explain-card");
+            var j;
+            for (j = 0; j < cards.length; j++) { cards[j].classList.remove("active"); }
+            var allBtns = stepper.querySelectorAll(".sf-node");
+            for (j = 0; j < allBtns.length; j++) { allBtns[j].classList.remove("active"); }
+            btn.classList.add("active");
+            var card = document.getElementById(targetId);
+            if (card) { card.classList.add("active"); }
+          };
+        })(btns[i]);
+      }
+      if (btns.length > 0) { btns[0].onclick(); }
+    })(steppers[s]);
+  }
+})();
+
+window.addEventListener("resize", function () { redrawActiveSubflows(); });
+
+/* ——— 主题切换 + localStorage ——— */
+(function bindTheme() {
+  var picker = document.getElementById("themePicker");
+  if (!picker) { return; }
+  picker.value = document.body.getAttribute("data-theme") || "docs";
+  var saved = null;
+  try { saved = localStorage.getItem("s2w-theme"); } catch (e) { saved = null; }
+  if (saved) {
+    document.body.setAttribute("data-theme", saved);
+    picker.value = saved;
+  }
+  picker.onchange = function () {
+    document.body.setAttribute("data-theme", picker.value);
+    try { localStorage.setItem("s2w-theme", picker.value); } catch (e) {}
+  };
+})();
+
+/* ——— 出处开关 ——— */
+(function bindSrcToggle() {
+  var toggle = document.getElementById("srcToggle");
+  if (!toggle) { return; }
+  toggle.onclick = function () {
+    document.body.classList.toggle("show-sources");
+    toggle.classList.toggle("active");
+    toggle.textContent = document.body.classList.contains("show-sources") ? "隐藏出处" : "显示出处";
+  };
+})();
+
+/* ——— 追问弹窗:提问 + 位置 + 依赖文件,打包复制给 Agent ——— */
+(function bindDeepDive() {
+  var overlay = document.getElementById("ddOverlay");
+  var titleEl = document.getElementById("ddTitle");
+  var ctxEl = document.getElementById("ddCtx");
+  var input = document.getElementById("ddInput");
+  var toast = document.getElementById("ddToast");
+  if (!overlay || !titleEl || !ctxEl || !input || !toast) { return; }
+  var currentRef = "";
+  var currentConcept = "";
+  var currentDeps = [];
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+  window.flashToast = showToast;
+
+  /* 依赖收集:内容块文本里的资源路径 + 当前节点挂载的资源(Phase 1 抽取产物),去重合并 */
+  function findDeps(el) {
+    var out = [];
+    var seen = {};
+    if (el) {
+      var tokens = el.textContent.split(/[^A-Za-z0-9_.\/-]+/);
+      var i;
+      for (i = 0; i < tokens.length; i++) {
+        var tk = tokens[i].replace(/[.,;:]+$/, "");
+        if (/^(scripts|templates|references|examples|assets)\/[A-Za-z0-9_.\/-]*$/.test(tk)) {
+          if (!seen[tk]) { seen[tk] = 1; out.push(tk); }
+        }
+      }
+    }
+    var activePanel = document.querySelector(".panel.active");
+    if (activePanel) {
+      var nodeId = activePanel.id.replace("p-", "");
+      var res = NODE_RES[nodeId] || [];
+      var j;
+      for (j = 0; j < res.length; j++) {
+        if (!seen[res[j][0]]) { seen[res[j][0]] = 1; out.push(res[j][0]); }
+      }
+    }
+    return out;
+  }
+
+  window.openDeepDive = function (conceptName, source) {
+    currentRef = source;
+    currentConcept = conceptName;
+    var block = document.querySelector('.panel.active [data-source="' + source + '"]') || document.querySelector('[data-source="' + source + '"]');
+    currentDeps = findDeps(block);
+    titleEl.textContent = "追问「" + conceptName + "」";
+    var depsHint = currentDeps.length > 0
+      ? " · 依赖:" + currentDeps.slice(0, 3).join("、") + (currentDeps.length > 3 ? " 等 " + currentDeps.length + " 项" : "")
+      : "";
+    ctxEl.textContent = "出处:" + source + depsHint + " | 提交后把提问 + 位置 + 依赖文件打包复制到剪贴板,贴给 Agent 即可。";
+    input.value = "";
+    overlay.classList.add("active");
+    setTimeout(function () { input.focus(); }, 180);
+  };
+
+  var cancelBtn = document.getElementById("ddCancel");
+  if (cancelBtn) { cancelBtn.onclick = function () { overlay.classList.remove("active"); }; }
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) { overlay.classList.remove("active"); }
+  };
+
+  var submitBtn = document.getElementById("ddSubmit");
+  if (submitBtn) {
+    submitBtn.onclick = function () {
+      var q = input.value.replace(/^\s+|\s+$/g, "");
+      if (!q) { showToast("请输入你的问题"); return; }
+      var nodeLoc = "";
+      var activePanel = document.querySelector(".panel.active");
+      if (activePanel) {
+        var phId = activePanel.querySelector(".ph-id");
+        var phTitle = activePanel.querySelector("h2");
+        if (phId && phTitle) { nodeLoc = phId.textContent.split(" · ")[0] + "「" + phTitle.textContent + "」 > "; }
+      }
+      var depLines = "";
+      var i;
+      if (currentDeps.length > 0) {
+        for (i = 0; i < currentDeps.length; i++) {
+          depLines += "  - " + SKILL_DIR + "/" + currentDeps[i] + "\n";
+        }
+      } else {
+        depLines = "  - (该内容块未显式引用依赖文件)\n";
+      }
+      var prompt = "【追问 · 由 skill-to-webpage 页面打包】\n"
+        + "- Skill:" + SKILL_NAME + "(源目录:" + SKILL_DIR + ")\n"
+        + "- 提问对象:" + nodeLoc + "「" + currentConcept + "」\n"
+        + "- 原文位置:" + SKILL_DIR + "/SKILL.md 的 " + currentRef.replace("SKILL.md:", "第 ") + " 行\n"
+        + "- 涉及依赖文件:\n" + depLines
+        + "- 知识库:" + KB_DIR + "(full_text.md 行号与原文位置一致,节点摘要在 nodes/)\n"
+        + "- 我的问题:" + q + "\n\n"
+        + "请先读原文位置与涉及的依赖文件,再回答。";
+      window.__lastPrompt = prompt;
+      function fallbackShow() {
+        input.value = prompt;
+        showToast("剪贴板不可用,已把打包内容放入输入框,请手动全选复制");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(prompt).then(function () {
+          overlay.classList.remove("active");
+          showToast("追问已打包复制(提问 + 位置 + 依赖文件),贴给 Agent 即可");
+        }).catch(fallbackShow);
+      } else {
+        fallbackShow();
+      }
+    };
+  }
+})();
+
+/* ——— 代码块复制按钮 ——— */
+(function bindCopyButtons() {
+  var pres = document.querySelectorAll("pre.code");
+  var i;
+  for (i = 0; i < pres.length; i++) {
+    (function (pre) {
+      var txt = pre.textContent;
+      var btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.type = "button";
+      btn.textContent = "复制";
+      btn.onclick = function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () {
+            btn.textContent = "已复制 ✓";
+            setTimeout(function () { btn.textContent = "复制"; }, 1600);
+          }).catch(function () {
+            if (window.flashToast) { window.flashToast("复制失败"); }
+          });
+        } else {
+          if (window.flashToast) { window.flashToast("当前环境不支持剪贴板"); }
+        }
+      };
+      pre.appendChild(btn);
+    })(pres[i]);
+  }
+})();
+
+/* ——— 决策表格:行点选 → 结论回显(data-echo 模板,{N} 为列号) ——— */
+(function bindRowSelect() {
+  var tables = document.querySelectorAll("table.rowsel");
+  var t;
+  for (t = 0; t < tables.length; t++) {
+    (function (table) {
+      var tpl = table.getAttribute("data-echo") || "{0}";
+      var wrap = table.parentNode;
+      var echo = document.createElement("p");
+      echo.className = "row-echo";
+      echo.textContent = "点击任意一行,查看该行的结论";
+      if (wrap && wrap.parentNode) { wrap.parentNode.insertBefore(echo, wrap.nextSibling); }
+      var rows = table.querySelectorAll("tbody tr");
+      var r;
+      for (r = 0; r < rows.length; r++) {
+        (function (row) {
+          row.onclick = function () {
+            var all = table.querySelectorAll("tbody tr");
+            var k;
+            for (k = 0; k < all.length; k++) { all[k].classList.remove("rowon"); }
+            row.classList.add("rowon");
+            var cells = row.querySelectorAll("td");
+            echo.textContent = tpl.replace(/\{(\d+)\}/g, function (m, idx) {
+              var c = cells[parseInt(idx, 10)];
+              return c ? c.textContent.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "") : "";
+            });
+          };
+        })(rows[r]);
+      }
+    })(tables[t]);
+  }
+})();
+
+/* ——— 自检清单计数(class="checklist" + 对应 .ck-badge,id 由渲染层配对) ——— */
+(function bindChecklists() {
+  var lists = document.querySelectorAll("ul.checklist");
+  var n;
+  for (n = 0; n < lists.length; n++) {
+    (function (list) {
+      var badge = document.getElementById(list.id.replace("ckl", "ck"));
+      if (!badge) { return; }
+      var boxes = list.querySelectorAll("input");
+      function update() {
+        var cnt = 0;
+        var i;
+        for (i = 0; i < boxes.length; i++) { if (boxes[i].checked) { cnt++; } }
+        if (cnt === boxes.length && boxes.length > 0) {
+          badge.textContent = cnt + "/" + boxes.length + " ✓ 全部通过";
+          badge.className = "ck-badge done";
+        } else {
+          badge.textContent = cnt + "/" + boxes.length;
+          badge.className = "ck-badge";
+        }
+      }
+      var i;
+      for (i = 0; i < boxes.length; i++) { boxes[i].onchange = update; }
+      update();
+    })(lists[n]);
+  }
+})();
+
+/* ——— 流程带芯片等宽:主行芯片同宽(自然宽取最大、≤200,装不下时缩到刚好装下、≥108);支撑行芯片同宽 ——— */
+function railFitChips() {
+  var rail = document.getElementById("rail");
+  if (!rail) { return; }
+  var mainRow = rail.querySelector(".rail-main") || rail;
+  var all = rail.querySelectorAll(".node-chip");
+  var mains = [], sats = [], i;
+  for (i = 0; i < all.length; i++) { if (all[i].classList.contains("sat")) { sats.push(all[i]); } else { mains.push(all[i]); } }
+  function natural(list) {
+    var k, m = 0, sum = 0;
+    for (k = 0; k < list.length; k++) { list[k].style.width = ""; }
+    for (k = 0; k < list.length; k++) { var w = list[k].offsetWidth; sum += w; if (w > m) { m = w; } }
+    return { max: m, sum: sum };
+  }
+  function extent(el) {
+    var ch = el.children, first = null, last = null, k;
+    for (k = 0; k < ch.length; k++) {
+      if (ch[k].offsetWidth > 0 && String(ch[k].tagName).toLowerCase() !== "svg") { if (!first) { first = ch[k]; } last = ch[k]; }
+    }
+    return first ? (last.offsetLeft + last.offsetWidth - first.offsetLeft) : 0;
+  }
+  if (mains.length > 0) {
+    var nm = natural(mains);
+    var gaps = extent(mainRow) - nm.sum;
+    var uw = Math.min(200, nm.max);
+    var fit = (rail.clientWidth - gaps) / mains.length;
+    if (uw > fit) { uw = Math.max(108, fit); }
+    for (i = 0; i < mains.length; i++) { mains[i].style.width = Math.floor(uw) + "px"; }
+  }
+  if (sats.length > 0) {
+    var ns = natural(sats);
+    var sw = Math.min(200, ns.max);
+    for (i = 0; i < sats.length; i++) { sats[i].style.width = sw + "px"; }
+  }
+}
+
+/* ——— 流程带支撑行(语义层):S/A 芯片定位到其关联主线节点下方(一维簇放置),依赖线正交布线;无 #railSem 时只做芯片等宽 ——— */
+function semDrawRail() {
+  railFitChips();
+  var wrap = document.getElementById("railSem");
+  var svg = document.getElementById("railSvg");
+  if (!wrap || !svg) { return; }
+  var sat = wrap.querySelector(".rail-sat");
+  var mainRow = wrap.querySelector(".rail-main");
+  var i, j;
+  function rect(el) {
+    var wr = wrap.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return { l: r.left - wr.left, t: r.top - wr.top, w: r.width, h: r.height };
+  }
+  function mainChip(id) { return wrap.querySelector('.rail-main .node-chip[data-node="' + id + '"]'); }
+  function satChip(id) { return wrap.querySelector('.rail-sat .node-chip[data-node="' + id + '"]'); }
+  var nLinks = 0;
+  for (i = 0; i < RAIL_LINKS.length; i++) { if (mainChip(RAIL_LINKS[i].to) && satChip(RAIL_LINKS[i].from)) { nLinks++; } }
+  if (sat && mainRow) {
+    wrap.style.rowGap = Math.max(30, 18 + 10 * nLinks) + "px";
+    var gutter = 160;
+    if (window.getComputedStyle) {
+      var gw = parseFloat(window.getComputedStyle(sat, "::before").width);
+      if (!isNaN(gw) && gw > 0) { gutter = gw + 18; }
+    }
+    var chips = sat.querySelectorAll(".node-chip");
+    var items = [], maxH = 0;
+    for (i = 0; i < chips.length; i++) {
+      var ch = chips[i];
+      ch.style.height = "";
+      var nid = ch.getAttribute("data-node"), sum = 0, cnt = 0;
+      for (j = 0; j < RAIL_LINKS.length; j++) {
+        if (RAIL_LINKS[j].from !== nid) { continue; }
+        var tg = mainChip(RAIL_LINKS[j].to);
+        if (tg) { var tr = rect(tg); sum += tr.l + tr.w / 2; cnt++; }
+      }
+      items.push({ el: ch, want: cnt > 0 ? sum / cnt - ch.offsetWidth / 2 : gutter, w: ch.offsetWidth });
+      if (ch.offsetHeight > maxH) { maxH = ch.offsetHeight; }
+    }
+    semPlace1D(items, gutter, 12);
+    for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+    sat.style.height = maxH + "px";
+  }
+  var W = wrap.scrollWidth, H = wrap.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var parts = ['<defs><marker id="rl-md" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="mk-d"></path></marker></defs>'];
+  if (sat && mainRow) {
+    var links = [];
+    for (i = 0; i < RAIL_LINKS.length; i++) {
+      var a = satChip(RAIL_LINKS[i].from);
+      var b = mainChip(RAIL_LINKS[i].to);
+      if (!a || !b) { continue; }
+      links.push({ rowBox: rect(b), satBox: rect(a), rowKey: RAIL_LINKS[i].to, satKey: RAIL_LINKS[i].from, dir: "up" });
+    }
+    var mr = rect(mainRow), sr = rect(sat);
+    var routed = semRouteLane(links, mr.t + mr.h, sr.t);
+    for (i = 0; i < routed.length; i++) {
+      parts.push('<path d="' + routed[i].d + '" class="rl-d sfe" data-efrom="rail:' + routed[i].satKey + '" data-eto="rail:' + routed[i].rowKey + '" marker-end="url(#rl-md)"></path>');
+    }
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(wrap);
+}
+window.addEventListener("resize", function () { semDrawRail(); });
+window.addEventListener("load", function () { semDrawRail(); redrawActiveSubflows(); });
+setTimeout(function () { semDrawRail(); }, 250);
+
+/* ——— 组件专属附加脚本(渲染时按需注入) ——— */
+SEM_EDGES = {"st-n02": {"arcs": []}, "st-n04": {"arcs": [{"from": "e41", "to": "e45", "label": "系统由多个组件串起来 → 先插桩取证", "inf": false}, {"from": "e41", "to": "e46", "label": "错误埋在调用栈深处 → 反向追数据流", "inf": false}, {"from": "e48", "to": "e44", "label": "假设成立 → 进入 Phase 4", "inf": false}], "end": {"from": "e412", "label": "测试通过、无其他测试被破坏、问题确实解决", "inf": true}}, "st-n05": {"arcs": []}, "st-n06": {"arcs": []}, "st-n09": {"arcs": [], "end": {"from": "e94", "label": "记录 + 兜底处理 + 监控到位后收尾", "inf": true}}};
+RAIL_LINKS = [{"from": "n01", "to": "n02"}, {"from": "n10", "to": "n04"}];
+semDrawRail();
+(function () { var host = document.getElementById("srcToggle"); if (!host || !host.parentNode) { return; } var box = document.createElement("span"); box.innerHTML = "<span class=\"variants\"><span class=\"vl\">版本</span><a href=\"merged/systematic-debugging-workflow.html\" class=\"cur\">merged</a><a href=\"static/systematic-debugging-workflow.html\">static</a></span>"; host.parentNode.insertBefore(box.firstChild, host); })();
+(function () { var b = document.querySelector(".topbar .brand"); if (!b || !b.parentNode) { return; } var box = document.createElement("span"); box.innerHTML = "<a class=\"bundle-back\" href=\"../superpowers-workflow.html\">← superpowers 总览</a>"; b.parentNode.insertBefore(box.firstChild, b.nextSibling); })();
+
+/* ——— 初始状态 ——— */
+(function initFromHash() {
+  var want = (location.hash || "").replace("#", "");
+  var start = "n01";
+  if (want && NODES.indexOf(want) >= 0) { start = want; }
+  showNode(start);
+  window.addEventListener("hashchange", function () {
+    var h = (location.hash || "").replace("#", "");
+    if (h && NODES.indexOf(h) >= 0) { showNode(h); }
+  });
+})();
+</script>
+</body>
+</html>

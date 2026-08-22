@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>requesting-code-review · Skill Workflow</title>
+<style>
+/* ============================================================
+   skill-to-webpage 骨架层(base.html)
+   布局:Hero(R层) + 流程带 + 侧栏目录 + 详情面板
+   机制:CSS 变量换肤 / data-source 出处 / 追问打包 / SVG 子流程图
+   槽位 theme_styles(下方,勿在注释里写成双花括号形式)注入全部主题 CSS(docs 的 :root 默认块 +
+        3 个 [data-theme] 覆盖块,见 templates/themes/)
+   ============================================================ */
+
+/* —— 主题层(渲染时整段注入 4 个 themes/*.css)—— */
+/* ============================================================
+   简洁文档(docs · 默认主题)
+   白底大留白,Linear/Notion 风,克制的靛蓝强调。
+   本文件的变量块 = base.html 中 :root 的默认值;
+   其余主题以 [data-theme="X"] 覆盖同名变量。
+   ============================================================ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --ink: #17181c;
+  --ink-soft: #3c3f46;
+  --muted: #7a7e88;
+  --line: #e6e7eb;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(79, 70, 229, .09);
+  --ok: #1a7f4e;
+  --warn: #b45309;
+  --chip: #eef0ff;
+  --code-bg: #f6f7f9;
+  --code-ink: #24292f;
+  --tooltip-bg: #17181c;
+  --tooltip-ink: #ffffff;
+  --radius: 10px;
+  --shadow: 0 10px 34px rgba(23, 24, 28, .07);
+  --font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+}
+/* ============================================================
+   技术蓝图(blueprint)
+   深蓝底 + 浅蓝描边 + 径向光晕,工程图纸感。
+   ============================================================ */
+[data-theme="blueprint"] {
+  --bg: radial-gradient(circle at 18% 8%, rgba(95, 176, 255, .10), transparent 30rem), linear-gradient(160deg, #0b1f3a 0%, #0d2547 100%);
+  --surface: #0e2544;
+  --surface-2: #12305a;
+  --ink: #dcebff;
+  --ink-soft: #b9d4f5;
+  --muted: #7fa3d1;
+  --line: #2c4a77;
+  --accent: #5fb0ff;
+  --on-accent: #04182e;
+  --accent-soft: rgba(95, 176, 255, .14);
+  --ok: #7fd6a0;
+  --warn: #ffc46b;
+  --chip: #12305a;
+  --code-bg: #091a31;
+  --code-ink: #9fd0ff;
+  --tooltip-bg: #dcebff;
+  --tooltip-ink: #0b1f3a;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .35);
+}
+
+/* 顶栏/流程带背景在渐变底上改为毛玻璃,避免出现色块断层 */
+[data-theme="blueprint"] .topbar,
+[data-theme="blueprint"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+/* ============================================================
+   终端 IDE(ide)
+   编辑器暗色调 + 语法高亮配色(蓝 accent / 橙 code / 绿 ok)。
+   ============================================================ */
+[data-theme="ide"] {
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-2: #2d2d30;
+  --ink: #d4d4d4;
+  --ink-soft: #c0c0c0;
+  --muted: #8a8a8a;
+  --line: #3a3a3a;
+  --accent: #569cd6;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(86, 156, 214, .14);
+  --ok: #6a9955;
+  --warn: #ce9178;
+  --chip: #2d2d30;
+  --code-bg: #1b1b1c;
+  --code-ink: #ce9178;
+  --tooltip-bg: #d4d4d4;
+  --tooltip-ink: #1e1e1e;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .45);
+}
+
+/* 暗底上输入框用抬升面色,避免刺眼白底 */
+[data-theme="ide"] .dd-popover textarea { background: var(--surface-2); }
+/* ============================================================
+   白板手绘(whiteboard)
+   暖米底 + 大圆角便签卡片 + 马克笔红强调,轻松易懂。
+   ============================================================ */
+[data-theme="whiteboard"] {
+  --bg: linear-gradient(150deg, #fdf8ee 0%, #f8efdb 100%);
+  --surface: #fffdf6;
+  --surface-2: #fff4c2;
+  --ink: #3a2f1f;
+  --ink-soft: #5a4a33;
+  --muted: #8a7a5c;
+  --line: #e5d9b8;
+  --accent: #c9543f;
+  --on-accent: #fffdf6;
+  --accent-soft: rgba(201, 84, 63, .10);
+  --ok: #4a7c59;
+  --warn: #b07000;
+  --chip: #fff4c2;
+  --code-bg: #f7efdd;
+  --code-ink: #5a4a1f;
+  --tooltip-bg: #3a2f1f;
+  --tooltip-ink: #fffdf6;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(122, 96, 52, .16);
+}
+
+/* 便签质感:卡片描黄边、用米黄面 */
+[data-theme="whiteboard"] .card { border-width: 2px; border-color: #e0b84a; background: var(--surface-2); }
+[data-theme="whiteboard"] .topbar,
+[data-theme="whiteboard"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+button { font: inherit; color: inherit; }
+
+.page {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 56px;
+}
+
+/* ——— 顶栏 ——— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand { font: 800 15px/1.2 var(--font-display); letter-spacing: .02em; }
+.topbar .brand .lens { color: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+.src-toggle {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-display);
+  color: var(--muted);
+  transition: all .2s;
+}
+
+.src-toggle:hover, .src-toggle.active { border-color: var(--accent); color: var(--accent); }
+
+/* 多版本页面切换(渲染多版时由 component_scripts 注入到顶栏;单版页面不出现) */
+.variants { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+.variants .vl { color: var(--muted); font: 600 10.5px/1 var(--font-mono); letter-spacing: .06em; margin-right: 2px; }
+.variants a { color: var(--muted); text-decoration: none; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1 var(--font-display); white-space: nowrap; }
+.variants a:hover { color: var(--accent); border-color: var(--accent); }
+.variants a.cur { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 880px) { .variants .vl { display: none; } }
+@media (max-width: 640px) { .topbar { flex-wrap: wrap; row-gap: 6px; } .variants { order: 9; flex-basis: 100%; margin-right: 0; flex-wrap: wrap; } }
+.topbar .bundle-back { margin-left: 14px; font: 600 12.5px/1 var(--font-mono); color: var(--ink-soft); text-decoration: none; }
+.topbar .bundle-back:hover { color: var(--accent); }
+a.xjump { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+
+.theme-picker {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+}
+
+/* ——— Hero:R 层(何时用这个 skill) ——— */
+.hero { padding: 44px 4px 8px; }
+
+.hero .eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font: 700 13px/1.3 var(--font-display);
+  letter-spacing: .14em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(36px, 5.4vw, 62px);
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.hero .lede {
+  margin: 18px 0 0;
+  max-width: 860px;
+  color: var(--ink-soft);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+
+.hero .thesis {
+  margin-top: 22px;
+  max-width: 860px;
+  border-left: 5px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.hero .thesis strong {
+  display: block;
+  margin-bottom: 6px;
+  font: 800 15px/1.3 var(--font-display);
+  color: var(--accent);
+}
+
+.hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
+
+/* ——— 流程带(workflow rail):节点语义分组,不放渲染元数据 ——— */
+.rail-wrap {
+  position: sticky;
+  top: 49px;
+  z-index: 80;
+  margin: 26px 0 24px;
+  padding: 14px 4px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.rail::-webkit-scrollbar { height: 6px; }
+.rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.rail .group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 20px 10px 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.rail .group::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  color: var(--muted);
+  font: 700 10.5px/1 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.rail .group.main { border-style: solid; border-color: var(--accent); }
+.rail .group.main::before { color: var(--accent); }
+
+.node-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 108px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) - 3px);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  flex: 0 0 auto;
+}
+
+.node-chip .nid { color: var(--muted); font: 700 10.5px/1 var(--font-mono); letter-spacing: .06em; }
+.node-chip .nt { font: 700 13px/1.25 var(--font-display); }
+.node-chip .sub { color: var(--muted); font: 500 10.5px/1.2 var(--font-display); }
+
+.node-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.node-chip.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.node-chip.active .nid, .node-chip.active .sub { color: var(--on-accent); opacity: .75; }
+
+.rail .arrow { align-self: center; color: var(--muted); font: 700 15px/1 var(--font-mono); flex: 0 0 auto; padding: 0 1px; }
+.rail .arrow.big { color: var(--accent); font-size: 19px; }
+
+/* ——— 主体:侧栏 + 详情 ——— */
+.layout {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar { position: sticky; top: 148px; display: grid; gap: 16px; }
+
+/* grid 子项默认 min-width:auto,会被子流程图的 max-content 画布撑破 */
+#panels { min-width: 0; }
+
+.side-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 14px 10px;
+}
+
+.side-card .side-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.toc { display: grid; gap: 2px; }
+
+.toc button {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s;
+}
+
+.toc button:hover, .toc button.active { background: var(--accent-soft); }
+.toc .tid { color: var(--muted); font: 700 11px/1.4 var(--font-mono); }
+.toc button.active .tid { color: var(--accent); }
+.toc .tt { font: 600 13px/1.35 var(--font-display); }
+.toc .tl { color: var(--muted); font: 500 10px/1.4 var(--font-mono); }
+
+.res-list { display: grid; gap: 6px; padding-bottom: 4px; }
+
+.res-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  font: 500 11.5px/1.35 var(--font-mono);
+  word-break: break-all;
+}
+
+.res-item .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--ok); }
+.res-item.missing .dot { background: var(--warn); }
+.res-empty { color: var(--muted); font: 500 12px/1.5 var(--font-display); padding: 2px 2px 6px; }
+
+/* ——— 详情面板 ——— */
+.panel { display: none; animation: rise .32s ease both; min-width: 0; }
+.panel.active { display: block; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-head { margin: 4px 0 18px; position: relative; }
+.panel-head .ph-id { color: var(--accent); font: 700 12px/1.2 var(--font-mono); letter-spacing: .08em; }
+.panel-head h2 { margin: 6px 0 0; font: 900 28px/1.2 var(--font-display); }
+
+.panel-head .lead {
+  margin: 12px 0 0;
+  max-width: 780px;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+
+/* ——— 通用卡片 ——— */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cards.two { grid-template-columns: repeat(2, 1fr); }
+
+.card {
+  position: relative;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card h3 { margin: 0 0 8px; font: 800 16px/1.3 var(--font-display); }
+.card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.75; }
+.card .when { margin-top: 8px; color: var(--muted); font: 500 12px/1.5 var(--font-display); }
+
+/* ——— 入口/条件分叉卡 ——— */
+.forks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.fork {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 22px 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  box-shadow: var(--shadow);
+}
+
+.fork:hover { border-color: var(--accent); transform: translateY(-2px); }
+.fork .fk-tag { color: var(--accent); font: 700 12px/1.2 var(--font-display); letter-spacing: .08em; }
+.fork h3 { margin: 8px 0 8px; font: 900 19px/1.3 var(--font-display); }
+.fork p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+.fork .fk-go { display: block; margin-top: 12px; color: var(--accent); font: 700 13px/1.3 var(--font-display); }
+
+/* ——— 子流程图(subflow:HTML 盒子 + SVG 连线层,环画成真实边) ——— */
+.subflow { overflow-x: auto; padding-bottom: 4px; }
+
+.sf-canvas {
+  position: relative;
+  padding: 56px 6px 10px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.sf-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+.sf-row { display: flex; gap: 30px; }
+
+.sf-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 112px;
+  max-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 12.5px/1.25 var(--font-display);
+  text-align: left;
+  flex: 0 0 auto;
+  transition: border-color .15s, transform .15s;
+  box-shadow: var(--shadow);
+}
+
+.sf-node .sn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; color: var(--muted); font: 700 10px/1 var(--font-mono); }
+.sf-node:hover { border-color: var(--accent); transform: translateY(-1px); }
+.sf-node.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sf-node.active .sn { color: var(--on-accent); opacity: .75; }
+
+.ed-f { stroke: var(--muted); stroke-width: 1.5; }
+.ed-l { stroke: var(--warn); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; animation: dashflow 1.1s linear infinite; }
+.ed-t { fill: var(--warn); font: 700 10.5px var(--font-display); }
+.mk-f { fill: var(--muted); }
+.mk-l { fill: var(--warn); }
+
+@keyframes dashflow { to { stroke-dashoffset: -18; } }
+
+/* ——— step 内交互组件 ——— */
+pre.code {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 12.5px/1.7 var(--font-mono);
+  overflow-x: auto;
+}
+
+code {
+  padding: 1.5px 5px;
+  border-radius: 5px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 92% var(--font-mono);
+}
+
+pre.code code { padding: 0; background: transparent; }
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  cursor: pointer;
+  opacity: 0;
+  transition: all .15s;
+}
+
+pre.code:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.scroll { overflow-x: auto; margin: 10px 0; }
+
+table.tbl { width: 100%; border-collapse: collapse; font: 13.5px/1.6 var(--font-body); }
+.tbl th, .tbl td { padding: 9px 11px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tbl th { background: var(--surface-2); font: 700 12.5px/1.4 var(--font-display); white-space: nowrap; }
+.tbl td { color: var(--ink-soft); }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+
+table.rowsel tbody tr { cursor: pointer; }
+table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+
+.row-echo {
+  margin: 8px 0 2px;
+  padding: 9px 13px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--ink);
+  font: 700 13.5px/1.6 var(--font-display);
+}
+
+.checklist { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.checklist li { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+.checklist label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.checklist input { accent-color: var(--accent); width: 15px; height: 15px; flex: 0 0 auto; }
+.checklist input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.ck-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 700 12px/1.6 var(--font-display);
+}
+
+.ck-badge.done { background: var(--ok); color: #ffffff; }
+
+.acc { margin: 10px 0; display: grid; gap: 6px; }
+.acc details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.acc summary { padding: 10px 14px; cursor: pointer; font: 700 13.5px/1.4 var(--font-display); list-style: none; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary::before { content: "+"; display: inline-block; width: 16px; color: var(--accent); font-weight: 900; }
+.acc details[open] summary::before { content: "−"; }
+.acc .acc-body { padding: 0 14px 12px 30px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+
+.tree { margin: 10px 0; display: grid; gap: 4px; }
+.tree details { border: 1px solid var(--line); border-radius: 7px; background: var(--code-bg); }
+.tree summary { padding: 8px 12px; cursor: pointer; font: 600 12.5px/1.4 var(--font-mono); color: var(--code-ink); list-style: none; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree .tree-desc { padding: 0 12px 10px 26px; color: var(--ink-soft); font: 400 12.5px/1.6 var(--font-display); }
+
+/* ——— 规则列表(错误处理/边界类内容) ——— */
+.rules { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+
+.rules li {
+  position: relative;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.rules li strong { color: var(--ink); }
+.rules li .fb { display: block; margin-top: 7px; }
+
+/* ——— explain-card(子步骤详情) ——— */
+.explain-card {
+  display: none;
+  position: relative;
+  margin-top: 12px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.explain-card.active { display: block; animation: rise .28s ease both; }
+.explain-card h4 { margin: 0 0 10px; font: 800 16px/1.3 var(--font-display); }
+.explain-card p { margin: 0 0 10px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.8; }
+.explain-card ul, .explain-card ol { margin: 0 0 10px; padding-left: 22px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.85; }
+.explain-card li { margin-bottom: 3px; }
+.explain-card .hint { color: var(--muted); font-size: 13px; }
+
+/* ——— 环说明卡与跳转 ——— */
+p.loop-note {
+  padding: 9px 13px;
+  border: 1px dashed var(--warn);
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.jump {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font: 700 12px/1.5 var(--font-display);
+  color: var(--accent);
+  vertical-align: baseline;
+}
+
+.jump:hover { border-color: var(--accent); }
+
+/* ——— 出处标注(A:margin 细条 + tooltip;B:全局开关) ——— */
+[data-source] { position: relative; }
+
+.card[data-source], .explain-card[data-source], .fork[data-source],
+.rules li[data-source], .hero .thesis[data-source], .hero .lede[data-source] {
+  border-left: 3px solid var(--line);
+  transition: border-left-color .2s;
+}
+
+.card[data-source]:hover, .explain-card[data-source]:hover, .fork[data-source]:hover,
+.rules li[data-source]:hover, .hero .thesis[data-source]:hover, .hero .lede[data-source]:hover {
+  border-left-color: var(--accent);
+}
+
+.hero .thesis[data-source] { border-left-width: 5px; border-left-color: var(--accent); }
+
+[data-source]::after {
+  content: attr(data-source);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 5px);
+  padding: 3px 9px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  font: 600 10.5px/1.4 var(--font-mono);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 60;
+}
+
+[data-source]:hover::after { opacity: 1; }
+
+body.show-sources .card[data-source]::before,
+body.show-sources .explain-card[data-source]::before,
+body.show-sources .fork[data-source]::before,
+body.show-sources .rules li[data-source]::before {
+  content: attr(data-source);
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font: 600 10.5px/1.4 var(--font-mono);
+}
+
+/* ——— 追问按钮 + 弹窗 ——— */
+.deep-dive-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-display);
+  opacity: 0;
+  transition: all .2s;
+  z-index: 2;
+}
+
+.card:hover .deep-dive-btn, .explain-card:hover .deep-dive-btn,
+.fork:hover .deep-dive-btn, .rules li:hover .deep-dive-btn { opacity: .7; }
+
+.deep-dive-btn:hover { opacity: 1 !important; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+.dd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, .38);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-overlay.active { display: flex; }
+
+.dd-popover {
+  width: min(540px, calc(100% - 32px));
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.dd-popover .dd-title { margin: 0 0 6px; font: 800 19px/1.3 var(--font-display); }
+.dd-popover .dd-ctx { margin: 0 0 14px; color: var(--muted); font: 500 12.5px/1.6 var(--font-display); }
+
+.dd-popover textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: 14.5px/1.6 var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.dd-actions { display: flex; gap: 8px; }
+
+.dd-submit {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+}
+
+.dd-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  color: var(--muted);
+}
+
+.dd-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 26px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  border-radius: 8px;
+  font: 600 13px/1.4 var(--font-display);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.dd-toast.show { opacity: 1; }
+
+/* ——— 上一步/下一步 ——— */
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 26px; }
+
+.pager button {
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  transition: all .18s;
+  max-width: 48%;
+  text-align: left;
+}
+
+.pager button:hover { border-color: var(--accent); color: var(--accent); }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager button:disabled:hover { border-color: var(--line); color: inherit; }
+.pager .dir { display: block; color: var(--muted); font: 600 10.5px/1.3 var(--font-mono); margin-bottom: 3px; }
+
+/* ——— 页脚 ——— */
+.footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 12.5px/1.8 var(--font-display);
+}
+
+/* ——— 响应式 ——— */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .side-card.toc-card { display: none; }
+  .cards, .cards.two, .forks { grid-template-columns: 1fr; }
+  .rail-wrap { top: 45px; }
+  .hero h1 { font-size: 38px; }
+}
+
+@media (max-width: 520px) {
+  .page { width: calc(100% - 22px); }
+  .hero { padding-top: 26px; }
+  .hero h1 { font-size: 32px; }
+  .panel-head h2 { font-size: 23px; }
+  .sf-row { gap: 22px; }
+}
+
+/* ——— 组件专属附加样式(渲染时按需注入) ——— */
+/* ——— 语义层(s2w-semantics/2)视觉词汇:无语义数据时这些选择器不会出现,对 /1 页面静默 ——— */
+.hero .thesis .wsa { display: inline-block; margin-top: 10px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); font: 700 11.5px/1.4 var(--font-mono); letter-spacing: .04em; }
+.rail-sem { position: relative; display: grid; gap: 16px; width: max-content; min-width: 100%; }
+.rail-main, .rail-sat { display: flex; align-items: stretch; gap: 6px; }
+.rail-sat { position: relative; display: block; padding: 0; }
+.rail-sat::before { content: attr(data-label); position: absolute; left: 6px; top: 50%; transform: translateY(-50%); color: var(--muted); font: 600 10.5px/1.3 var(--font-display); white-space: nowrap; }
+.rail-sat .node-chip { position: absolute; top: 0; border-style: dashed; opacity: .88; }
+.rail-sat .node-chip.active { border-style: solid; opacity: 1; }
+.rail-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rl-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 4; }
+.rail .arrow.cap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.rail .arrow.cap::after { content: attr(data-cap); color: var(--warn); font: 600 9.5px/1.2 var(--font-display); white-space: nowrap; }
+.sf-node .sf-when { display: block; color: var(--accent); font: 600 9.5px/1.2 var(--font-display); }
+.sf-node .sf-type { display: inline-block; margin-left: auto; color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-node .t-tool { color: var(--accent); } .sf-node .t-gate, .sf-node .t-fb { color: var(--warn); } .sf-node .t-out { color: var(--ok); }
+.sf-node .sf-gate { display: block; margin-top: 3px; color: var(--warn); font: 700 10px/1.2 var(--font-display); }
+.sf-node .sf-imp { color: var(--muted); font: 600 9px/1 var(--font-display); }
+.sf-node.implicit { border-style: dashed; }
+.sf-node.active .sf-type, .sf-node.active .sf-gate, .sf-node.active .sf-imp, .sf-node.active .sf-when { color: var(--on-accent); opacity: .85; }
+.sf-end { align-self: center; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--ink-soft); font: 700 20px/1 var(--font-mono); padding: 0 6px; }
+.sf-end small { color: var(--muted); font: 700 9px/1.2 var(--font-mono); letter-spacing: .08em; }
+.sf-lane { position: absolute; left: 0; right: 0; height: 0; }
+.sf-legend { margin: 2px 0 26px 6px; color: var(--muted); font: 600 10px/1.5 var(--font-display); }
+.sf-ext { position: absolute; top: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; max-width: 208px; padding: 7px 10px; border: 1px dotted var(--muted); border-radius: 8px; background: var(--surface); cursor: pointer; text-align: left; font: 700 12px/1.25 var(--font-display); color: var(--ink); box-shadow: var(--shadow); }
+.sf-ext .xid { color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-ext small { color: var(--ink-soft); font: 500 10.5px/1.4 var(--font-display); white-space: normal; }
+.sf-ext:hover { border-color: var(--accent); }
+.sf-ext.out { border: 1px dashed var(--warn); }
+.sf-ext.out .xid { color: var(--warn); }
+.sf-ext.xskill { border-style: dashed; text-decoration: none; }
+.sf-ext.xskill .xid { color: var(--accent); }
+.ed-c { fill: none; stroke: var(--accent); stroke-width: 1.6; } .ed-c.inf { stroke-dasharray: 4 3; }
+.ed-ct { fill: var(--accent); font: 700 10.5px var(--font-display); }
+.ed-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 3; }
+.ed-x { fill: none; stroke: var(--warn); stroke-width: 1.5; } .ed-x.inf { stroke-dasharray: 4 3; }
+.ed-e { fill: none; stroke: var(--ink-soft); stroke-width: 1.4; } .ed-e.inf { stroke-dasharray: 4 3; }
+.ed-et { fill: var(--ink-soft); font: 600 9.5px var(--font-display); }
+.mk-c { fill: var(--accent); } .mk-d { fill: var(--muted); } .mk-x { fill: var(--warn); } .mk-e { fill: var(--ink-soft); }
+
+/* 连线可点选:单击高亮两端,其余淡出(与组合总览页同一套词汇;淡出只动透明度,四主题通用) */
+.sfe { pointer-events: stroke; transition: opacity .12s ease, stroke-width .12s ease; }
+.sfe:hover, .sfe.focus { stroke-width: 2.6; opacity: 1; }
+.sfe.dim, .sfl.dim { opacity: .18; }
+.sfl { transition: opacity .12s ease; }
+.sf-node, .sf-ext, .sf-end, .node-chip { transition: opacity .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.sf-node.dim, .sf-ext.dim, .sf-end.dim, .node-chip.dim { opacity: .35; }
+.sf-node.focus, .sf-ext.focus, .node-chip.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.sf-end.focus { color: var(--accent); }
+.tbadge { display: inline-block; margin-left: 8px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font: 700 10px/1.3 var(--font-mono); letter-spacing: .06em; vertical-align: middle; }
+.tbadge.t-tool { color: var(--accent); border-color: var(--accent); } .tbadge.t-gate, .tbadge.t-fb { color: var(--warn); border-color: var(--warn); } .tbadge.t-out { color: var(--ok); border-color: var(--ok); }
+.gate-badge { display: inline-block; margin-left: 6px; color: var(--warn); font: 700 11px/1.3 var(--font-display); vertical-align: middle; }
+.goal { margin: 4px 0 8px; color: var(--ink); font-size: 14px; line-height: 1.7; }
+.goal strong { color: var(--accent); margin-right: 4px; }
+.sem-h { margin: 12px 0 4px; color: var(--muted); font: 700 10.5px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sem-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+.sem-list li { margin: 2px 0; }
+.sem-list.fail li::marker { content: "⚠ "; color: var(--warn); }
+.sem-list.tips li::marker { content: "✦ "; color: var(--accent); }
+.qt { display: none; margin-left: 6px; color: var(--muted); font: 500 12px/1.5 var(--font-body); }
+body.show-sources .qt { display: inline; }
+.qt::before { content: "\201C"; } .qt::after { content: "\201D"; }
+.inf { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink-soft); font: 600 10px/1.6 var(--font-display); vertical-align: middle; }
+.flow { margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--ink-soft); font-size: 13px; line-height: 1.9; }
+.flow .fk { display: inline-block; min-width: 14px; color: var(--muted); font: 700 11px var(--font-mono); margin-right: 4px; }
+.gov { margin: 6px 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--accent-soft); color: var(--ink-soft); font-size: 13px; line-height: 1.7; border-radius: 0 6px 6px 0; }
+.recon-tbl .w { color: var(--accent); font-weight: 700; } .recon-tbl .nw { color: var(--muted); }
+.recon-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.recon-sum span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1.4 var(--font-display); color: var(--ink-soft); }
+
+/* none */
+</style>
+</head>
+<body data-theme="docs">
+
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand"><span class="lens">◈</span> skill-to-webpage</span>
+    <span class="spacer"></span>
+    <button id="srcToggle" class="src-toggle" title="显示/隐藏出处">显示出处</button>
+    <select id="themePicker" class="theme-picker" title="切换主题">
+      <option value="docs">简洁文档</option>
+      <option value="blueprint">技术蓝图</option>
+      <option value="ide">终端 IDE</option>
+      <option value="whiteboard">白板手绘</option>
+    </select>
+  </div>
+
+  <!-- Hero:R 层(skill 名 + description 原文 + 执行总纲) -->
+  <header class="hero">
+    <p class="eyebrow">SKILL WORKFLOW · 5 NODES · SKILL.md 103 LINES · SEMANTICS BY MERGE(AGENT) · 102 CLAIMS VERIFIED</p>
+    <h1>requesting-code-review</h1>
+    <p class="lede" data-source="SKILL.md:3">在完成任务、实现较大特性、或合并之前,派一个独立的 code reviewer 子 agent 来核对工作是否满足要求。<strong>何时用:</strong>做完一段能交付的工作、准备继续推进或合并时。</p>
+    <div class="thesis" data-source="SKILL.md:8">
+      <strong>执行总纲:每做完一段工作就派一个只拿提交区间与需求、不带会话历史的 code reviewer 子 agent,拿回分级意见后当场处置再继续</strong>
+      <span>这条 skill 的执行总纲是<strong>上下文隔离的分级审查</strong>:用 <code>git rev-parse</code> 框定 <code>BASE_SHA..HEAD_SHA</code>,用 <code>Task</code> 工具起一个 <code>general-purpose</code> 子 agent 并填 <code>code-reviewer.md</code> 模板——它拿到的是为评估裁剪的上下文,而不是你的会话历史;返回的意见按 Critical 立刻修、Important 推进前修、Minor 记账处置,判断有误则带技术依据反驳。审查节奏由所处工作流决定:子 agent 驱动开发每任务一轮,执行计划按任务或检查点,临时开发至少合并前一轮。</span>
+    </div>
+  </header>
+
+  <!-- 流程带:节点按语义分组(理念/执行/支撑),芯片副标题写节点做什么 -->
+  <div class="rail-wrap">
+    <div class="rail" id="rail">
+      <div class="rail-sem" id="railSem"><svg class="rail-svg" id="railSvg"></svg><div class="rail-main"><div class="group" data-label="R · 触发"><button class="node-chip" data-node="n01"><span class="nid">n01 · R</span><span class="nt">何时发起审查</span><span class="sub">判断该不该发起审查</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group main" data-label="W · 执行主线"><button class="node-chip" data-node="n02"><span class="nid">n02 · W</span><span class="nt">取区间·派发·处置</span><span class="sub">取SHA·派发·处理反馈</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="W · 流程"><button class="node-chip" data-node="n04"><span class="nid">n04 · W</span><span class="nt">嵌入各类工作流</span><span class="sub">各工作流的审查节奏</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group" data-label="W · 兜底"><button class="node-chip" data-node="n05"><span class="nid">n05 · W</span><span class="nt">红线与反驳边界</span><span class="sub">红线与反驳的边界</span></button></div></div><div class="rail-sat" data-label="支撑层 S / A · 点线 = 依赖边"><button class="node-chip sat" data-node="n03"><span class="nid">n03 · S</span><span class="nt">一次审查的实例</span><span class="sub">一次完整审查示例 · → Step 1 / Step 2 / Step 3</span></button></div></div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- 侧栏:节点目录(带行号) + 当前节点资源(存在性徽章) -->
+    <aside class="sidebar">
+      <div class="side-card toc-card">
+        <p class="side-title">节点目录</p>
+        <nav class="toc" id="toc">
+          <button data-node="n01"><span class="tid">n01</span><span class="tt">When to Request Review</span><span class="tl">12-23</span></button><button data-node="n02"><span class="tid">n02</span><span class="tt">How to Request</span><span class="tl">24-47</span></button><button data-node="n03"><span class="tid">n03</span><span class="tt">Example</span><span class="tl">48-74</span></button><button data-node="n04"><span class="tid">n04</span><span class="tt">Integration with Workflows</span><span class="tl">75-89</span></button><button data-node="n05"><span class="tid">n05</span><span class="tt">Red Flags</span><span class="tl">90-103</span></button><button data-node="recon"><span class="tid">⊕</span><span class="tt">印证报告</span><span class="tl">merge(agent)</span></button>
+        </nav>
+      </div>
+      <div class="side-card">
+        <p class="side-title">本节点引用的资源</p>
+        <div class="res-list" id="resList"></div>
+      </div>
+    </aside>
+
+    <!-- 详情面板:每个节点一个 <section class="panel" id="p-nXX"> -->
+    <main id="panels">
+      <section class="panel" id="p-n01"><div class="panel-head"><span class="ph-id">n01 · R 层 · 路由/激活 · activation</span><h2>When to Request Review</h2><p class="lead">路由层:这里列出必须审查与值得审查的时机,任一命中就进入主线,不许以“简单”为由跳过。</p></div><div class="card" data-source="SKILL.md:12-23"><p><strong>Mandatory:</strong></p>
+<ul><li>After each task in subagent-driven development</li><li>After completing major feature</li><li>Before merge to main</li></ul>
+<p><strong>Optional but valuable:</strong></p>
+<ul><li>When stuck (fresh perspective)</li><li>Before refactoring (baseline check)</li><li>After fixing complex bug</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('When to Request Review','SKILL.md:12-23')">?</button></div><p class="sem-h">触发条件(R 层)</p><ul class="rules"><li class="claim" data-source="SKILL.md:3">任务完成、实现较大特性、或合并之前,要验证工作是否满足要求 <q class="qt">Use when completing tasks, implementing major features, or before merging</q></li><li class="claim" data-source="SKILL.md:15">强制:子 agent 驱动开发里每完成一个任务 <q class="qt">After each task in subagent-driven development</q></li><li class="claim" data-source="SKILL.md:16">强制:完成一个较大特性之后 <q class="qt">After completing major feature</q></li><li class="claim" data-source="SKILL.md:17">强制:合并进 main 之前 <q class="qt">Before merge to main</q></li><li class="claim" data-source="SKILL.md:20">可选但值得:卡住时换一个视角 <q class="qt">When stuck (fresh perspective)</q></li><li class="claim" data-source="SKILL.md:21">可选但值得:重构之前先取一次基线 <q class="qt">Before refactoring (baseline check)</q></li><li class="claim" data-source="SKILL.md:22">可选但值得:修完一个复杂 bug 之后 <q class="qt">After fixing complex bug</q></li></ul><p class="flow"><span class="fk">◂</span>命中强制或可选触发信号 → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button> <span class="inf">推断</span><br><span class="fk">◂</span>强制触发点之一来自子 agent 驱动开发的每个任务 → <button class="jump" onclick="showStep('n04','e42')">Step 2 子 agent 驱动:每任务后审查</button><br><span class="fk">◂</span>触发节奏依赖子 agent 驱动开发的任务划分 → <a class="xjump" href="../subagent-driven-development/subagent-driven-development-workflow.html#n01">⧉ subagent-driven-development · n01</a><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n05','e51')">Step 1 对照四条红线自查</button>(红线约束触发判断:不许以简单为由跳过)</p><div class="pager"></div></section>
+<section class="panel" id="p-n02"><div class="panel-head"><span class="ph-id">n02 · W 层 · 流程 · main_flow</span><h2>How to Request</h2><p class="lead">执行主线:先框定提交区间,再派一个只拿区间与需求的评审子 agent,最后按严重度处置它的意见。</p></div><div class="card" data-source="SKILL.md:25-47"><p><strong>1. Get git SHAs:</strong></p>
+<pre class="code">BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+HEAD_SHA=$(git rev-parse HEAD)</pre>
+<p><strong>2. Dispatch code reviewer subagent:</strong></p>
+<p>Use Task tool with <code>general-purpose</code> type, fill template at <code>code-reviewer.md</code></p>
+<p><strong>Placeholders:</strong></p>
+<ul><li><code>{DESCRIPTION}</code> - Brief summary of what you built</li><li><code>{PLAN_OR_REQUIREMENTS}</code> - What it should do</li><li><code>{BASE_SHA}</code> - Starting commit</li><li><code>{HEAD_SHA}</code> - Ending commit</li></ul>
+<p><strong>3. Act on feedback:</strong></p>
+<ul><li>Fix Critical issues immediately</li><li>Fix Important issues before proceeding</li><li>Note Minor issues for later</li><li>Push back if reviewer is wrong (with reasoning)</li></ul></div><div class="stepper" id="st-n02"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e21"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">SETUP</span></span><span class="st">取 git SHA 区间</span></button><button class="sf-node implicit" data-x="e22"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type ">DISPATCH</span></span><span class="st">派发 code reviewer 子 agent</span></button><button class="sf-node implicit" data-x="e23"><span class="sn">3<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="st">按严重度处置反馈</span><span class="sf-gate">⏸ 需用户确认</span></button><span class="sf-end">⦿<small>END</small></span></div><div class="sf-lane"><button class="sf-ext in" data-at="e21" data-inf="1" onclick="showNode('n01')"><span class="xid">n01 · R</span><span class="xt">何时发起审查</span><small>命中强制或可选触发信号 → Step 1 (推断)</small></button><button class="sf-ext in" data-at="e21,e22,e23" data-inf="0,0,0" onclick="showNode('n03')"><span class="xid">n03 · S</span><span class="xt">一次审查的实例</span><small>示例给出另一种取基线的办法 → Step 1 · 示例展示四个占位符的填法 → Step 2 · 示例展示按级别处置后继续 → Step 3</small></button><button class="sf-ext in" data-at="e21" data-inf="1" onclick="showStep('n04','e41')"><span class="xid">n04 · W</span><span class="xt">嵌入各类工作流</span><small>合并前或卡住时发起一次 → Step 1 (推断)</small></button><button class="sf-ext in" data-at="e23" data-inf="0" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">红线与反驳边界</span><small>红线约束反馈处置 → Step 3</small></button><button class="sf-ext out" data-from="e23" data-inf="0" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">红线与反驳边界</span><small>← Step 3 评审意见站不住</small></button><a class="sf-ext xskill in" data-at="e21" data-inf="0" href="../subagent-driven-development/subagent-driven-development-workflow.html#n09"><span class="xid">⧉ subagent-driven-development</span><span class="xt">n09</span><small>评审子 agent 复用其代码审查模板 → 此处</small></a></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · ⧉ = 其他 skill(点击跨页) · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e21" data-source="SKILL.md:26-30"><h4>Step 1 · 取 git SHA 区间 <span class="tbadge ">SETUP</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:26"><strong>目标</strong> 先定下要评审的提交区间:BASE_SHA 与 HEAD_SHA <q class="qt">Get git SHAs</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:28">BASE_SHA 取上一个提交,或换成 origin/main <q class="qt">BASE_SHA=$(git rev-parse HEAD~1)</q></li><li class="claim" data-source="SKILL.md:29">HEAD_SHA 取当前 HEAD <q class="qt">HEAD_SHA=$(git rev-parse HEAD)</q></li></ol><p class="sem-h">技巧</p><ul class="sem-list tips"><li class="claim" data-source="SKILL.md:28">基线取 HEAD~1 还是 origin/main,取决于本次要评审多大范围 <q class="qt"># or origin/main</q></li><li class="claim" data-source="SKILL.md:55">任务式开发里可用 git log 搜上一个任务的提交当基线 <q class="qt">BASE_SHA=$(git log --oneline | grep</q> <span class="inf">推断</span></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:28-29">git rev-parse 取提交号</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:39-40">起点提交与终点提交两个值,供模板占位符使用 <q class="qt">`{BASE_SHA}` - Starting commit</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:26-30</summary><div class="acc-body"><p><strong>1. Get git SHAs:</strong></p>
+<pre class="code">BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+HEAD_SHA=$(git rev-parse HEAD)</pre></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n01')">n01 何时发起审查</button>(命中强制或可选触发信号) <span class="inf">推断</span>、<button class="jump" onclick="showNode('n03')">n03 一次审查的实例</button>(示例给出另一种取基线的办法)、<button class="jump" onclick="showStep('n04','e44')">Step 4 临时开发:合并前或卡住时</button>(合并前或卡住时发起一次) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 取 git SHA 区间','SKILL.md:26-30')">?</button></div><div class="explain-card" id="e22" data-source="SKILL.md:32-40"><h4>Step 2 · 派发 code reviewer 子 agent <span class="tbadge ">DISPATCH</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:34"><strong>目标</strong> 用 Task 工具起一个 general-purpose 子 agent,填 code-reviewer.md 模板 <q class="qt">Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`</q></p><p class="sem-h">输入</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:37">DESCRIPTION:你做了什么的简述 <q class="qt">`{DESCRIPTION}` - Brief summary of what you built</q></li><li class="claim" data-source="SKILL.md:38">PLAN_OR_REQUIREMENTS:它本该做到什么 <q class="qt">`{PLAN_OR_REQUIREMENTS}` - What it should do</q></li><li class="claim" data-source="SKILL.md:39">BASE_SHA:起点提交 <q class="qt">`{BASE_SHA}` - Starting commit</q></li><li class="claim" data-source="SKILL.md:40">HEAD_SHA:终点提交 <q class="qt">`{HEAD_SHA}` - Ending commit</q></li></ul><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:34">把模板填好后作为子 agent 的 prompt 交出去 <q class="qt">fill template at `code-reviewer.md`</q></li></ol><p class="sem-h">质量标准 <span class="ck-badge" id="ck22q">0/2</span></p><ul class="checklist" id="ckl22q"><li data-source="SKILL.md:8"><label><input type="checkbox"><span>评审者拿到的是为评估精心裁剪的上下文,绝不是你的会话历史 <q class="qt">never your session&#x27;s history</q></span></label></li><li data-source="SKILL.md:8"><label><input type="checkbox"><span>这样评审者盯的是工作产物,而不是你的思考过程 <q class="qt">focused on the work product, not your thought process</q></span></label></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:8">隔离上下文既保护评审视角,也保住自己继续干活的上下文 <q class="qt">preserves your own context for continued work</q></div><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:34">Task 工具,general-purpose 类型</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:65-69">子 agent 返回 Strengths / Issues / Assessment <q class="qt">Strengths: Clean architecture, real tests</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:32-40</summary><div class="acc-body"><p><strong>2. Dispatch code reviewer subagent:</strong></p>
+<p>Use Task tool with <code>general-purpose</code> type, fill template at <code>code-reviewer.md</code></p>
+<p><strong>Placeholders:</strong></p>
+<ul><li><code>{DESCRIPTION}</code> - Brief summary of what you built</li><li><code>{PLAN_OR_REQUIREMENTS}</code> - What it should do</li><li><code>{BASE_SHA}</code> - Starting commit</li><li><code>{HEAD_SHA}</code> - Ending commit</li></ul></div></details></div><p class="flow"><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n03')">n03 一次审查的实例</button>(示例展示四个占位符的填法)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 派发 code reviewer 子 agent','SKILL.md:32-40')">?</button></div><div class="explain-card" id="e23" data-source="SKILL.md:42-46"><h4>Step 3 · 按严重度处置反馈 <span class="tbadge ">REVIEW</span> <span class="gate-badge">⏸ 需用户确认</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:42"><strong>目标</strong> 拿到评审意见后逐条按级别处置 <q class="qt">Act on feedback</q></p><p class="sem-h">判据 <span class="ck-badge" id="ck23c">0/4</span></p><ul class="checklist" id="ckl23c"><li data-source="SKILL.md:43"><label><input type="checkbox"><span>Critical 立刻修 <q class="qt">Fix Critical issues immediately</q></span></label></li><li data-source="SKILL.md:44"><label><input type="checkbox"><span>Important 在继续推进之前修掉 <q class="qt">Fix Important issues before proceeding</q></span></label></li><li data-source="SKILL.md:45"><label><input type="checkbox"><span>Minor 记下来留到以后 <q class="qt">Note Minor issues for later</q></span></label></li><li data-source="SKILL.md:46"><label><input type="checkbox"><span>评审者判断有误就带着理由反驳 <q class="qt">Push back if reviewer is wrong (with reasoning)</q></span></label></li></ul><p class="sem-h">示例</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:71-72">示例里只需补上进度提示,就可以进入下一个任务 <q class="qt">You: [Fix progress indicators]</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:94">忽略 Critical 问题 <q class="qt">Ignore Critical issues</q></li><li class="claim" data-source="SKILL.md:95">Important 没修就往下推进 <q class="qt">Proceed with unfixed Important issues</q></li><li class="claim" data-source="SKILL.md:96">跟站得住的技术意见争论 <q class="qt">Argue with valid technical feedback</q></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:69">评审结论给出是否可以继续的判定 <q class="qt">Assessment: Ready to proceed</q></div><div class="acc"><details><summary>原文 · SKILL.md:42-46</summary><div class="acc-body"><p><strong>3. Act on feedback:</strong></p>
+<ul><li>Fix Critical issues immediately</li><li>Fix Important issues before proceeding</li><li>Note Minor issues for later</li><li>Push back if reviewer is wrong (with reasoning)</li></ul></div></details></div><p class="flow"><span class="fk">⤓</span>评审意见站不住 → <button class="jump" onclick="showStep('n05','e52')">Step 2 评审有误时用技术依据反驳</button><br><span class="fk">⦿</span>Critical/Important 已修完,继续下一任务 → END <span class="inf">推断</span><br><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n03')">n03 一次审查的实例</button>(示例展示按级别处置后继续)、<button class="jump" onclick="showStep('n05','e51')">Step 1 对照四条红线自查</button>(红线约束反馈处置)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 按严重度处置反馈','SKILL.md:42-46')">?</button></div><p class="flow"><span class="fk">◂</span>来源:<a class="xjump" href="../subagent-driven-development/subagent-driven-development-workflow.html#n09">⧉ subagent-driven-development · n09</a>(评审子 agent 复用其代码审查模板)</p><div class="pager"></div></section>
+<section class="panel" id="p-n03"><div class="panel-head"><span class="ph-id">n03 · S 层 · 语义/知识 · worked_example</span><h2>Example</h2><p class="lead">知识层:一次从取基线到修完 Important 的完整走查,示例里的取基线写法与返回结构回填到主线三步上。</p></div><div class="card" data-source="SKILL.md:48-74"><pre class="code">[Just completed Task 2: Add verification function]
+
+You: Let me request code review before proceeding.
+
+BASE_SHA=$(git log --oneline | grep &quot;Task 1&quot; | head -1 | awk &#x27;{print $1}&#x27;)
+HEAD_SHA=$(git rev-parse HEAD)
+
+[Dispatch code reviewer subagent]
+  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
+  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
+  BASE_SHA: a7981ec
+  HEAD_SHA: 3df7661
+
+[Subagent returns]:
+  Strengths: Clean architecture, real tests
+  Issues:
+    Important: Missing progress indicators
+    Minor: Magic number (100) for reporting interval
+  Assessment: Ready to proceed
+
+You: [Fix progress indicators]
+[Continue to Task 3]</pre><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Example','SKILL.md:48-74')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:55">任务式开发里可用 git log 搜上一个任务的提交当基线 <q class="qt">BASE_SHA=$(git log --oneline | grep</q> <span class="inf">推断</span> → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button></li><li class="claim" data-source="SKILL.md:65-69">子 agent 返回 Strengths / Issues / Assessment <q class="qt">Strengths: Clean architecture, real tests</q> → <button class="jump" onclick="showStep('n02','e22')">Step 2 派发 code reviewer 子 agent</button></li><li class="claim" data-source="SKILL.md:71-72">示例里只需补上进度提示,就可以进入下一个任务 <q class="qt">You: [Fix progress indicators]</q> → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></li><li class="claim" data-source="SKILL.md:69">评审结论给出是否可以继续的判定 <q class="qt">Assessment: Ready to proceed</q> → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></li></ul><p class="flow"><span class="fk">◂</span>示例给出另一种取基线的办法 → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button><br><span class="fk">◂</span>示例展示四个占位符的填法 → <button class="jump" onclick="showStep('n02','e22')">Step 2 派发 code reviewer 子 agent</button><br><span class="fk">◂</span>示例展示按级别处置后继续 → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></p><div class="pager"></div></section>
+<section class="panel" id="p-n04"><div class="panel-head"><span class="ph-id">n04 · W 层 · 流程 · dispatch</span><h2>Integration with Workflows</h2><p class="lead">分派层:同一套请求动作在三种开发工作流里节奏不同,先判断自己处在哪一种,再决定多久回到主线审一轮。</p></div><div class="card" data-source="SKILL.md:76-89"><p><strong>Subagent-Driven Development:</strong></p>
+<ul><li>Review after EACH task</li><li>Catch issues before they compound</li><li>Fix before moving to next task</li></ul>
+<p><strong>Executing Plans:</strong></p>
+<ul><li>Review after each task or at natural checkpoints</li><li>Get feedback, apply, continue</li></ul>
+<p><strong>Ad-Hoc Development:</strong></p>
+<ul><li>Review before merge</li><li>Review when stuck</li></ul></div><div class="stepper" id="st-n04"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e41"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">DECIDE</span></span><span class="st">识别当前所处的工作流</span></button><button class="sf-node implicit" data-x="e42"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="sf-when">⇢ 处于子 agent 驱动开发</span><span class="st">子 agent 驱动:每任务后审查</span></button><button class="sf-node implicit" data-x="e43"><span class="sn">3<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="st">执行计划:任务或检查点后审查</span></button><button class="sf-node implicit" data-x="e44"><span class="sn">4<span class="sf-imp">隐含</span><span class="sf-type ">REVIEW</span></span><span class="st">临时开发:合并前或卡住时</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e42" data-inf="0" onclick="showNode('n01')"><span class="xid">n01 · R</span><span class="xt">何时发起审查</span><small>强制触发点之一来自子 agent 驱动开发的每个任务 → Step 2</small></button><a class="sf-ext xskill out" data-from="e42" data-inf="1" href="../subagent-driven-development/subagent-driven-development-workflow.html#n02"><span class="xid">⧉ subagent-driven-development</span><span class="xt">n02</span><small>← Step 2 审查节奏挂在子 agent 驱动开发的任务循环上 (推断)</small></a><a class="sf-ext xskill out" data-from="e43" data-inf="1" href="../executing-plans/executing-plans-workflow.html#n02"><span class="xid">⧉ executing-plans</span><span class="xt">n02</span><small>← Step 3 审查节奏挂在执行计划的任务与检查点上 (推断)</small></a></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · ⧉ = 其他 skill(点击跨页) · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e41" data-source="SKILL.md:75-88"><h4>Step 1 · 识别当前所处的工作流 <span class="tbadge ">DECIDE</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:75"><strong>目标</strong> 先看自己在哪种开发工作流里,再定审查节奏 <q class="qt">Integration with Workflows</q> <span class="inf">推断</span></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:77-86">三种形态:子 agent 驱动开发、执行计划、临时开发 <q class="qt">**Subagent-Driven Development:**</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:75-88</summary><div class="acc-body"><h3>Integration with Workflows</h3>
+<p><strong>Subagent-Driven Development:</strong></p>
+<ul><li>Review after EACH task</li><li>Catch issues before they compound</li><li>Fix before moving to next task</li></ul>
+<p><strong>Executing Plans:</strong></p>
+<ul><li>Review after each task or at natural checkpoints</li><li>Get feedback, apply, continue</li></ul>
+<p><strong>Ad-Hoc Development:</strong></p>
+<ul><li>Review before merge</li><li>Review when stuck</li></ul></div></details></div><p class="flow"><span class="fk">⇢</span>处于子 agent 驱动开发 → <button class="jump" onclick="showStep('n04','e42')">Step 2 子 agent 驱动:每任务后审查</button><br><span class="fk">⇢</span>处于执行计划 → <button class="jump" onclick="showStep('n04','e43')">Step 3 执行计划:任务或检查点后审查</button><br><span class="fk">⇢</span>处于临时开发 → <button class="jump" onclick="showStep('n04','e44')">Step 4 临时开发:合并前或卡住时</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 识别当前所处的工作流','SKILL.md:75-88')">?</button></div><div class="explain-card" id="e42" data-source="SKILL.md:77-80"><h4>Step 2 · 子 agent 驱动:每任务后审查 <span class="tbadge ">REVIEW</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:78"><strong>目标</strong> 子 agent 驱动开发里,每一个任务做完都审一次 <q class="qt">Review after EACH task</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:79">目的是在问题叠加之前就抓住它 <q class="qt">Catch issues before they compound</q></li><li class="claim" data-source="SKILL.md:80">修完再进入下一个任务 <q class="qt">Fix before moving to next task</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:77-80</summary><div class="acc-body"><p><strong>Subagent-Driven Development:</strong></p>
+<ul><li>Review after EACH task</li><li>Catch issues before they compound</li><li>Fix before moving to next task</li></ul></div></details></div><p class="flow"><span class="fk">↻</span>每完成一个任务再发起一轮审查 → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button><br><span class="fk">◂</span>审查节奏挂在子 agent 驱动开发的任务循环上 → <a class="xjump" href="../subagent-driven-development/subagent-driven-development-workflow.html#n02">⧉ subagent-driven-development · n02</a> <span class="inf">推断</span><br><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n01')">n01 何时发起审查</button>(强制触发点之一来自子 agent 驱动开发的每个任务)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 子 agent 驱动:每任务后审查','SKILL.md:77-80')">?</button></div><div class="explain-card" id="e43" data-source="SKILL.md:82-84"><h4>Step 3 · 执行计划:任务或检查点后审查 <span class="tbadge ">REVIEW</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:83"><strong>目标</strong> 执行计划时,每个任务后或在自然检查点上审查 <q class="qt">Review after each task or at natural checkpoints</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:84">拿到反馈、应用、继续 <q class="qt">Get feedback, apply, continue</q></li></ol><div class="acc"><details><summary>原文 · SKILL.md:82-84</summary><div class="acc-body"><p><strong>Executing Plans:</strong></p>
+<ul><li>Review after each task or at natural checkpoints</li><li>Get feedback, apply, continue</li></ul></div></details></div><p class="flow"><span class="fk">↻</span>每个任务或检查点再发起一轮 → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button><br><span class="fk">◂</span>审查节奏挂在执行计划的任务与检查点上 → <a class="xjump" href="../executing-plans/executing-plans-workflow.html#n02">⧉ executing-plans · n02</a> <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 执行计划:任务或检查点后审查','SKILL.md:82-84')">?</button></div><div class="explain-card" id="e44" data-source="SKILL.md:86-88"><h4>Step 4 · 临时开发:合并前或卡住时 <span class="tbadge ">REVIEW</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:87"><strong>目标</strong> 没有既定流程时,至少在合并前审一次 <q class="qt">Review before merge</q></p><p class="sem-h">技巧</p><ul class="sem-list tips"><li class="claim" data-source="SKILL.md:88">卡住的时候也审一次,借外部视角破局 <q class="qt">Review when stuck</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:86-88</summary><div class="acc-body"><p><strong>Ad-Hoc Development:</strong></p>
+<ul><li>Review before merge</li><li>Review when stuck</li></ul></div></details></div><p class="flow"><span class="fk">◂</span>合并前或卡住时发起一次 → <button class="jump" onclick="showStep('n02','e21')">Step 1 取 git SHA 区间</button> <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 4 临时开发:合并前或卡住时','SKILL.md:86-88')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-n05"><div class="panel-head"><span class="ph-id">n05 · W 层 · 流程 · fallback</span><h2>Red Flags</h2><p class="lead">兜底层:四条绝不允许的行为构成自查闸口;确认评审者判断有误时,走反驳而不是硬扛或硬争。</p></div><div class="card" data-source="SKILL.md:91-103"><p><strong>Never:</strong></p>
+<ul><li>Skip review because &quot;it&#x27;s simple&quot;</li><li>Ignore Critical issues</li><li>Proceed with unfixed Important issues</li><li>Argue with valid technical feedback</li></ul>
+<p><strong>If reviewer wrong:</strong></p>
+<ul><li>Push back with technical reasoning</li><li>Show code/tests that prove it works</li><li>Request clarification</li></ul>
+<p>See template at: requesting-code-review/code-reviewer.md</p></div><div class="stepper" id="st-n05"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e51"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type t-gate">VALIDATE</span></span><span class="st">对照四条红线自查</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node implicit" data-x="e52"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type t-fb">FALLBACK</span></span><span class="st">评审有误时用技术依据反驳</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e52" data-inf="0" onclick="showStep('n02','e21')"><span class="xid">n02 · W</span><span class="xt">取区间·派发·处置</span><small>评审意见站不住 → Step 2</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e51" data-source="SKILL.md:92-96"><h4>Step 1 · 对照四条红线自查 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:92"><strong>目标</strong> 处置反馈时先对照四条绝不允许的行为自查 <q class="qt">Never:</q></p><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:93">不许因为“它很简单”而跳过审查 <q class="qt">Skip review because &quot;it&#x27;s simple&quot;</q></li><li class="claim" data-source="SKILL.md:94">不许忽略 Critical 问题 <q class="qt">Ignore Critical issues</q></li><li class="claim" data-source="SKILL.md:95">不许带着未修的 Important 问题继续推进 <q class="qt">Proceed with unfixed Important issues</q></li><li class="claim" data-source="SKILL.md:96">不许跟站得住的技术反馈硬争 <q class="qt">Argue with valid technical feedback</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:92-96</summary><div class="acc-body"><p><strong>Never:</strong></p>
+<ul><li>Skip review because &quot;it&#x27;s simple&quot;</li><li>Ignore Critical issues</li><li>Proceed with unfixed Important issues</li><li>Argue with valid technical feedback</li></ul></div></details></div><p class="flow"><span class="fk">◂</span>红线约束触发判断:不许以简单为由跳过 → <button class="jump" onclick="showNode('n01')">n01 何时发起审查</button><br><span class="fk">◂</span>红线约束反馈处置 → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 对照四条红线自查','SKILL.md:92-96')">?</button></div><div class="explain-card" id="e52" data-source="SKILL.md:98-101"><h4>Step 2 · 评审有误时用技术依据反驳 <span class="tbadge t-fb">FALLBACK</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:98"><strong>目标</strong> 确认评审者判断错了,才走反驳路径 <q class="qt">If reviewer wrong</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:99">用技术理由回推,而不是情绪或权威 <q class="qt">Push back with technical reasoning</q></li><li class="claim" data-source="SKILL.md:100">拿能证明它可用的代码或测试说话 <q class="qt">Show code/tests that prove it works</q></li><li class="claim" data-source="SKILL.md:101">意见含糊时要求澄清 <q class="qt">Request clarification</q></li></ol><div class="acc"><details><summary>原文 · SKILL.md:98-101</summary><div class="acc-body"><p><strong>If reviewer wrong:</strong></p>
+<ul><li>Push back with technical reasoning</li><li>Show code/tests that prove it works</li><li>Request clarification</li></ul></div></details></div><p class="flow"><span class="fk">↻</span>反驳或澄清之后回到反馈处置 → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button> <span class="inf">推断</span><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button>(评审意见站不住)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 评审有误时用技术依据反驳','SKILL.md:98-101')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:103">code-reviewer.md 评审提示词模板 <q class="qt">requesting-code-review/code-reviewer.md</q> → <button class="jump" onclick="showStep('n02','e22')">Step 2 派发 code reviewer 子 agent</button></li><li class="claim" data-source="SKILL.md:94">忽略 Critical 问题 <q class="qt">Ignore Critical issues</q> → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></li><li class="claim" data-source="SKILL.md:95">Important 没修就往下推进 <q class="qt">Proceed with unfixed Important issues</q> → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></li><li class="claim" data-source="SKILL.md:96">跟站得住的技术意见争论 <q class="qt">Argue with valid technical feedback</q> → <button class="jump" onclick="showStep('n02','e23')">Step 3 按严重度处置反馈</button></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-recon"><div class="panel-head"><span class="ph-id">印证 · 静态目录 vs 语义流程 · merge(agent)</span><h2>印证报告</h2><p class="lead">结构拆解的目录是坐标系;语义层只能叠加。这里列出两者对不上的地方,以及多个解析器之间的一致与冲突。</p></div><div class="recon-sum"><span>schema s2w-semantics/3 · merge(agent)</span><span>断言 102:explicit 90 · inferred 12</span><span>解析器:agent · 一致 0 · 独有 5 · 冲突 0</span></div><p class="sem-h">目录(静态 ## 标题)vs 分层(语义)</p><div class="scroll"><table class="tbl recon-tbl"><thead><tr><th>节点</th><th>标题</th><th>行号</th><th>### 步数</th><th>归属 / 角色</th><th>印证结论</th></tr></thead><tbody><tr><td>n01</td><td>When to Request Review</td><td>12-23</td><td>0</td><td>R / activation</td><td class="nw">非流程标题 → R 层</td></tr><tr><td>n02</td><td>How to Request</td><td>24-47</td><td>0</td><td>W / main_flow</td><td class="w">流程节点</td></tr><tr><td>n03</td><td>Example</td><td>48-74</td><td>0</td><td>S / worked_example</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n04</td><td>Integration with Workflows</td><td>75-89</td><td>0</td><td>W / dispatch</td><td class="w">流程节点</td></tr><tr><td>n05</td><td>Red Flags</td><td>90-103</td><td>0</td><td>W / fallback</td><td class="w">流程节点</td></tr></tbody></table></div><p class="sem-h">非流程标题(2)</p><ul class="sem-list"><li><code>n01</code> → R 层:强制/可选触发清单,是入口条件不是流程步骤</li><li><code>n03</code> → S 层:一次完整对话的演示,不新增执行分支,只印证主线</li></ul><p class="sem-h">隐含步骤(文本有、目录无)(3)</p><ul class="sem-list"><li>锚 <button class="jump" onclick="showNode('n02')">n02 取区间·派发·处置</button>,3 步(SKILL.md:26)</li><li>锚 <button class="jump" onclick="showNode('n04')">n04 嵌入各类工作流</button>,4 步(SKILL.md:77)</li><li>锚 <button class="jump" onclick="showNode('n05')">n05 红线与反驳边界</button>,2 步(SKILL.md:92)</li></ul><p class="sem-h">顺序偏差(文档顺序 ≠ 执行顺序)(2)</p><ul class="sem-list"><li>文档里 Integration 排在 How to Request 之后,但执行时它决定的审查节奏先于每一轮请求(SKILL.md:78)</li><li>Red Flags 排在最末,但其中的 Never 清单在处置反馈时就已生效(SKILL.md:95)</li></ul><p class="sem-h">跨锚定(知识写在别处)(6)</p><ul class="sem-list"><li>n02.1 heuristics(git log 取基线) ← <code>n03</code>(SKILL.md:55)</li><li>n02.2 attachments.outputs(子 agent 返回结构) ← <code>n03</code>(SKILL.md:65-69)</li><li>n02.2 quality_standards / governance(上下文隔离) ← <code>前言(SKILL.md:6-10)</code>(SKILL.md:8)</li><li>n02.2 attachments.templates(code-reviewer.md) ← <code>n05</code>(SKILL.md:103)</li><li>n02.3 failure_modes(三条 Never) ← <code>n05</code>(SKILL.md:94-96)</li><li>n02.3 examples 与 checkpoints(approval) ← <code>n03</code>(SKILL.md:69-72)</li></ul><p class="sem-h">裁定记录(4)</p><ul class="sem-list"><li><code>n05</code> Never 清单与 Placeholders 清单按契约记为 domain_rules / inputs,不拆成子步骤(SKILL.md:92)</li><li><code>n03</code> n03 Example 判为 S 层:它是主线的演示,其知识以跨锚定方式回填到 n02 的三步(SKILL.md:53)</li><li><code>n05</code> n05 判为 W 层 fallback 而非纯 S:后半段给出评审有误时按序执行的反驳动作(SKILL.md:98)</li><li><code>n04</code> 指向 subagent-driven-development / executing-plans 的边判为 dependency 而非 delegate:本文只约定在这些工作流中的审查节奏,不移交控制权(SKILL.md:77)</li></ul><p class="sem-h">备注</p><ul class="sem-list"><li>bundle/static/cross-refs.json 里本 skill 的出边为 0(leaf),故不产出任何 delegate 边(delegate 需 cross-ref 背书)。</li><li>正文第 15 行以自然语言 subagent-driven development、第 77/82 行以标题式 Subagent-Driven Development / Executing Plans 提到同组 skill,静态抽取器按小写连字符 token 匹配未命中这三处;它们语义上是「审查节奏挂靠的宿主工作流」,按 dependency 边收录并标 inferred。</li><li>全文无显式 STOP/DONE 终止词,终止点由示例末尾 [Continue to Task 3] 推断。</li><li>A 层无独立节点:模板 code-reviewer.md 由 n05 末行指出,记入 n02.2 附件与 global.attachments.templates。</li></ul><p class="sem-h">校验</p><ul class="sem-list"><li>merged:作废 0 条</li></ul><div class="pager"></div></section>
+    </main>
+  </div>
+
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>requesting-code-review/SKILL.md</code>(103 行,5 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/superpowers/requesting-code-review</code> · 拆解零 LLM · 语义层由 <code>merge(agent)</code> 产出,102 条断言经 <code>validate_semantics.py</code> 逐条回读核对(解析器 agent,冲突 0 处) · 渲染 Agent 负责排版与衔接文案 · 带出处行号的内容为 SKILL.md 原文,开启「显示出处」可见每条断言的逐字引文 · 2026-08-24</footer>
+</div>
+
+<!-- 追问弹窗 -->
+<div class="dd-overlay" id="ddOverlay">
+  <div class="dd-popover">
+    <p class="dd-title" id="ddTitle"></p>
+    <p class="dd-ctx" id="ddCtx"></p>
+    <textarea id="ddInput" placeholder="输入你想追问的细节…"></textarea>
+    <div class="dd-actions">
+      <button class="dd-submit" id="ddSubmit">打包复制追问到剪贴板</button>
+      <button class="dd-cancel" id="ddCancel">取消</button>
+    </div>
+  </div>
+</div>
+<div class="dd-toast" id="ddToast"></div>
+
+<script>
+/* JS 安全规则(CRITICAL):var / function() / DOM 前 null 守卫 / 字符串内无中文弯引号 */
+
+/* ——— 渲染时注入的页面数据 ——— */
+var SKILL_NAME = "requesting-code-review";
+var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/requesting-code-review";
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/superpowers/requesting-code-review/static";
+var NODES = ["n01", "n02", "n03", "n04", "n05", "recon"];
+var NODE_TITLES = {"n01": "何时发起审查", "n02": "取区间·派发·处置", "n03": "一次审查的实例", "n04": "嵌入各类工作流", "n05": "红线与反驳边界", "recon": "印证报告"};
+var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "recon": []};
+var SUBFLOW_LOOPS = {};
+var SEM_EDGES = {};   /* 语义层(可选):{"st-nXX": {arcs: [{from,to,label,inf}], end: {from,label,inf}}},渲染时经 component_scripts 赋值 */
+var RAIL_LINKS = [];  /* 语义层(可选):流程带支撑行 → 主线的依赖弧 [{from,to}] */
+
+/* ——— 侧栏资源渲染 ——— */
+function renderResources(nodeId) {
+  var box = document.getElementById("resList");
+  if (!box) { return; }
+  var list = NODE_RES[nodeId] || [];
+  if (list.length === 0) {
+    box.innerHTML = '<p class="res-empty">本节点未引用资源文件</p>';
+    return;
+  }
+  var html = "";
+  var i;
+  for (i = 0; i < list.length; i++) {
+    var cls = list[i][1] ? "res-item" : "res-item missing";
+    var label = list[i][1] ? "存在" : "缺失";
+    html += '<div class="' + cls + '" title="' + label + '"><span class="dot"></span>' + list[i][0] + "</div>";
+  }
+  box.innerHTML = html;
+}
+
+/* ——— 上一步/下一步 ——— */
+function renderPager(nodeId) {
+  var idx = -1;
+  var i;
+  for (i = 0; i < NODES.length; i++) { if (NODES[i] === nodeId) { idx = i; } }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var pager = panel.querySelector(".pager");
+  if (!pager) { return; }
+  var html = "";
+  if (idx > 0) {
+    var prev = NODES[idx - 1];
+    html += '<button onclick="showNode(\'' + prev + '\')"><span class="dir">← 上一节点</span>' + prev + " · " + NODE_TITLES[prev] + "</button>";
+  } else {
+    html += "<button disabled><span class=\"dir\">← 上一节点</span>已是起点</button>";
+  }
+  if (idx < NODES.length - 1) {
+    var next = NODES[idx + 1];
+    html += '<button onclick="showNode(\'' + next + '\')" style="text-align:right"><span class="dir">下一节点 →</span>' + next + " · " + NODE_TITLES[next] + "</button>";
+  } else {
+    html += "<button disabled style=\"text-align:right\"><span class=\"dir\">下一节点 →</span>已是终点</button>";
+  }
+  pager.innerHTML = html;
+}
+
+/* ——— 节点切换 ——— */
+function showNode(nodeId) {
+  var panels = document.querySelectorAll(".panel");
+  var i;
+  for (i = 0; i < panels.length; i++) { panels[i].classList.remove("active"); }
+  var target = document.getElementById("p-" + nodeId);
+  if (target) { target.classList.add("active"); }
+
+  var chips = document.querySelectorAll(".node-chip");
+  for (i = 0; i < chips.length; i++) {
+    if (chips[i].getAttribute("data-node") === nodeId) { chips[i].classList.add("active"); }
+    else { chips[i].classList.remove("active"); }
+  }
+  var tocBtns = document.querySelectorAll(".toc button");
+  for (i = 0; i < tocBtns.length; i++) {
+    if (tocBtns[i].getAttribute("data-node") === nodeId) { tocBtns[i].classList.add("active"); }
+    else { tocBtns[i].classList.remove("active"); }
+  }
+  renderResources(nodeId);
+  renderPager(nodeId);
+  redrawActiveSubflows();
+  var rail = document.getElementById("rail");
+  if (rail) {
+    var activeChip = rail.querySelector(".node-chip.active");
+    if (activeChip && activeChip.scrollIntoView) {
+      activeChip.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    }
+  }
+}
+
+/* ——— 跳到某节点的某个子步骤 ——— */
+function showStep(nodeId, explainId) {
+  showNode(nodeId);
+  if (!explainId) { return; }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var btns = panel.querySelectorAll(".sf-node");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute("data-x") === explainId && btns[i].onclick) { btns[i].onclick(); }
+  }
+}
+
+(function bindNav() {
+  var btns = document.querySelectorAll("[data-node]");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    (function (btn) {
+      btn.onclick = function () { showNode(btn.getAttribute("data-node")); };
+    })(btns[i]);
+  }
+})();
+
+/* ——— 布局工具(语义层共用;无语义数据时不会被调用) ——— */
+/* 一维放置:每个盒子想居中于其关联盒子正下方;与邻居重叠则并成一簇共同居中;簇不越过左界 minLeft */
+function semPlace1D(items, minLeft, gap) {
+  items.sort(function (p, q) { return p.want - q.want; });
+  var clusters = [];
+  var i, k;
+  for (i = 0; i < items.length; i++) {
+    items[i].off = 0;
+    var c = { items: [items[i]], w: items[i].w, sum: items[i].want, left: Math.max(minLeft, items[i].want) };
+    while (clusters.length > 0 && clusters[clusters.length - 1].left + clusters[clusters.length - 1].w + gap > c.left) {
+      var p = clusters.pop();
+      for (k = 0; k < c.items.length; k++) { c.items[k].off += p.w + gap; p.items.push(c.items[k]); }
+      p.sum += c.sum - c.items.length * (p.w + gap);
+      p.w += gap + c.w;
+      p.left = Math.max(minLeft, p.sum / p.items.length);
+      c = p;
+    }
+    clusters.push(c);
+  }
+  for (i = 0; i < clusters.length; i++) {
+    for (k = 0; k < clusters[i].items.length; k++) { clusters[i].items[k].left = clusters[i].left + clusters[i].items[k].off; }
+  }
+}
+
+/* 正交折线:(x0,y0) 先竖直到轨道 yt,再水平,再竖直到 (x1,y1);拐角圆弧半径 r */
+function orthoPath(x0, y0, x1, y1, yt, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var dx = x1 - x0;
+  if (Math.abs(dx) < 2) { return "M " + f(x0) + " " + f(y0) + " L " + f(x1) + " " + f(y1); }
+  var sx = dx > 0 ? 1 : -1;
+  var s0 = yt > y0 ? 1 : -1;
+  var s1 = y1 > yt ? 1 : -1;
+  var rr = Math.min(r, Math.abs(dx) / 2, Math.abs(yt - y0), Math.abs(y1 - yt));
+  return "M " + f(x0) + " " + f(y0) + " L " + f(x0) + " " + f(yt - s0 * rr) + " Q " + f(x0) + " " + f(yt) + " " + f(x0 + sx * rr) + " " + f(yt) +
+    " L " + f(x1 - sx * rr) + " " + f(yt) + " Q " + f(x1) + " " + f(yt) + " " + f(x1) + " " + f(yt + s1 * rr) + " L " + f(x1) + " " + f(y1);
+}
+
+/* 卫星栏布线:主行在上、卫星栏在下,轨道夹在两者之间(yTop..yBot)。
+   links = [{rowBox, satBox, rowKey, satKey, dir:"up"|"down"}]:up = 箭头汇入主行盒子(依赖来源),down = 箭头汇入卫星盒子(兜底去向)。
+   端口沿盒边按对侧盒子的横向位置排序分散;每条线独占一条水平轨道;轨道次序取交叉最少者(≤8 条穷举,更多用邻换贪心)。 */
+function semRouteLane(links, yTop, yBot) {
+  var i, j, g, cc;
+  function spread(keyName, boxName, otherName, portName) {
+    var groups = {};
+    for (i = 0; i < links.length; i++) {
+      if (!groups[links[i][keyName]]) { groups[links[i][keyName]] = []; }
+      groups[links[i][keyName]].push(links[i]);
+    }
+    for (g in groups) {
+      if (!groups.hasOwnProperty(g)) { continue; }
+      var arr = groups[g];
+      arr.sort(function (p, q) { return (p[otherName].l + p[otherName].w / 2) - (q[otherName].l + q[otherName].w / 2); });
+      for (j = 0; j < arr.length; j++) { arr[j][portName] = arr[j][boxName].l + arr[j][boxName].w * (j + 1) / (arr.length + 1); }
+    }
+  }
+  spread("rowKey", "rowBox", "satBox", "xs");
+  spread("satKey", "satBox", "rowBox", "xe");
+  for (i = 0; i < links.length; i++) {
+    links[i].lo = Math.min(links[i].xs, links[i].xe);
+    links[i].hi = Math.max(links[i].xs, links[i].xe);
+    links[i].span = links[i].hi - links[i].lo;
+  }
+  /* up 在上轨、dn 在下轨时的交叉数:dn 的上竖段穿过 up 的横段 / up 的下竖段穿过 dn 的横段 */
+  function pairCross(up, dn) {
+    var c = 0;
+    if (dn.xs > up.lo + 0.5 && dn.xs < up.hi - 0.5) { c++; }
+    if (up.xe > dn.lo + 0.5 && up.xe < dn.hi - 0.5) { c++; }
+    return c;
+  }
+  function cost(order) {
+    var c = 0, a, b;
+    for (a = 0; a < order.length; a++) { for (b = a + 1; b < order.length; b++) { c += pairCross(order[a], order[b]); } }
+    return c;
+  }
+  function drift(order) { var s = 0, a; for (a = 0; a < order.length; a++) { s += a * order[a].span; } return s; }
+  var best = links.slice().sort(function (p, q) { return q.span - p.span; });
+  var bestC = cost(best), bestD = drift(best);
+  var n = best.length;
+  if (n > 1 && n <= 8) {
+    var arr2 = best.slice(), cnt = [], k = 0, tmp, sw;
+    for (i = 0; i < n; i++) { cnt[i] = 0; }
+    while (k < n) {
+      if (cnt[k] < k) {
+        sw = (k % 2 === 0) ? 0 : cnt[k];
+        tmp = arr2[sw]; arr2[sw] = arr2[k]; arr2[k] = tmp;
+        cc = cost(arr2);
+        if (cc < bestC || (cc === bestC && drift(arr2) < bestD)) { best = arr2.slice(); bestC = cc; bestD = drift(arr2); }
+        cnt[k] += 1; k = 0;
+      } else { cnt[k] = 0; k += 1; }
+    }
+  } else if (n > 8) {
+    var pass, improved = true;
+    for (pass = 0; pass < 30 && improved; pass++) {
+      improved = false;
+      for (i = 0; i + 1 < n; i++) {
+        var t1 = best[i]; best[i] = best[i + 1]; best[i + 1] = t1;
+        cc = cost(best);
+        if (cc < bestC) { bestC = cc; improved = true; } else { best[i + 1] = best[i]; best[i] = t1; }
+      }
+    }
+  }
+  for (i = 0; i < n; i++) {
+    var lk = best[i];
+    var yt = yTop + (yBot - yTop) * (i + 1) / (n + 1);
+    if (lk.dir === "down") {
+      lk.d = orthoPath(lk.xs, lk.rowBox.t + lk.rowBox.h + 1, lk.xe, lk.satBox.t - 2, yt, 8);
+    } else {
+      lk.d = orthoPath(lk.xe, lk.satBox.t - 1, lk.xs, lk.rowBox.t + lk.rowBox.h + 3, yt, 8);
+    }
+  }
+  return best;
+}
+
+/* ——— 连线选中:单击一条线,高亮它的两端,同一张图里的其它线与盒子淡出 ———
+   选中态按容器(每个 stepper / 流程带)分别记,重画(展开、换窗宽)后由 sfApplyFocus 复原 */
+var SF_FOCUS = {};
+
+function sfRootKey(root) { return root.id || "sf-root"; }
+
+function sfSetCls(el, name, want) {
+  var cur = el.getAttribute("class") || "";
+  var has = (" " + cur + " ").indexOf(" " + name + " ") >= 0;
+  if (want === has) { return; }
+  el.setAttribute("class", want ? (cur + " " + name)
+    : (" " + cur + " ").replace(" " + name + " ", " ").replace(/^\s+|\s+$/g, ""));
+}
+
+/* 盒子的端点键:步骤盒子用 data-x,外部卡片 / END 用 data-extkey,流程带芯片用 rail:<节点 id> */
+function sfBoxKey(el) {
+  if (!el || !el.getAttribute) { return null; }
+  if (el.getAttribute("data-x")) { return el.getAttribute("data-x"); }
+  if (el.getAttribute("data-extkey")) { return el.getAttribute("data-extkey"); }
+  if (el.getAttribute("data-node")) { return "rail:" + el.getAttribute("data-node"); }
+  return null;
+}
+
+function sfApplyFocus(root) {
+  if (!root) { return; }
+  var f = SF_FOCUS[sfRootKey(root)] || null;
+  var edges = root.querySelectorAll("[data-efrom]");   /* 线 + 线上的标签 */
+  var boxes = root.querySelectorAll(".sf-node, .sf-ext, .sf-end, .node-chip");
+  var i;
+  for (i = 0; i < edges.length; i++) {
+    var hit = f !== null && edges[i].getAttribute("data-efrom") === f.from && edges[i].getAttribute("data-eto") === f.to;
+    sfSetCls(edges[i], "focus", f !== null && hit);
+    sfSetCls(edges[i], "dim", f !== null && !hit);
+  }
+  for (i = 0; i < boxes.length; i++) {
+    var k = sfBoxKey(boxes[i]);
+    var on = f !== null && k !== null && (k === f.from || k === f.to);
+    sfSetCls(boxes[i], "focus", f !== null && on);
+    sfSetCls(boxes[i], "dim", f !== null && !on);
+  }
+}
+
+function sfClearFocus() {
+  SF_FOCUS = {};
+  var roots = document.querySelectorAll(".stepper, #railSem"), i;
+  for (i = 0; i < roots.length; i++) { sfApplyFocus(roots[i]); }
+}
+
+(function bindSfFocus() {
+  document.addEventListener("click", function (ev) {
+    var el = ev.target, edge = null, root = null;
+    while (el && el !== document.body) {
+      if (!edge && el.getAttribute && el.getAttribute("data-efrom") !== null && el.getAttribute("data-eto") !== null) { edge = el; }
+      if (el.className !== undefined && el.id === "railSem") { root = el; break; }
+      if (el.classList && el.classList.contains && el.classList.contains("stepper")) { root = el; break; }
+      el = el.parentNode;
+    }
+    if (!root) { return; }
+    var key = sfRootKey(root), cur = SF_FOCUS[key] || null;
+    if (!edge) { SF_FOCUS[key] = null; }          /* 点空白 / 点盒子:清掉选中,节点自身的点击行为不变 */
+    else {
+      var f = { from: edge.getAttribute("data-efrom"), to: edge.getAttribute("data-eto") };
+      SF_FOCUS[key] = (cur && cur.from === f.from && cur.to === f.to) ? null : f;
+    }
+    sfApplyFocus(root);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" || ev.keyCode === 27) { sfClearFocus(); }
+  });
+})();
+
+/* ——— 子流程图绘制:顺序边直线 + 上方弧线(回边 / 自环 / 条件跳转,按跨度分层避让)+ 外部节点栏(依赖来源 / 兜底去向,正交布线)+ 终止标记 ——— */
+function semLayoutLane(stepper, canvas) {
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (!lane || !row) { canvas.style.paddingBottom = ""; return; }
+  var exts = lane.querySelectorAll(".sf-ext");
+  var i, j, nLinks = 0, natMax = 0, maxH = 0;
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = ""; exts[i].style.height = ""; }
+  for (i = 0; i < exts.length; i++) {
+    nLinks += (exts[i].getAttribute("data-at") || exts[i].getAttribute("data-from") || "").split(",").length;
+    if (exts[i].offsetWidth > natMax) { natMax = exts[i].offsetWidth; }
+  }
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = natMax + "px"; }
+  var gap = Math.max(36, 18 + 10 * nLinks);
+  var rowBottom = row.offsetTop + row.offsetHeight;
+  lane.style.top = (rowBottom + gap) + "px";
+  var items = [];
+  for (i = 0; i < exts.length; i++) {
+    var ex = exts[i];
+    var refs = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+    var sum = 0, n = 0;
+    for (j = 0; j < refs.length; j++) {
+      var b = stepper.querySelector('.sf-node[data-x="' + refs[j] + '"]');
+      if (b) { sum += b.offsetLeft + b.offsetWidth / 2; n++; }
+    }
+    items.push({ el: ex, want: (n > 0 ? sum / n : 0) - ex.offsetWidth / 2, w: ex.offsetWidth });
+    if (ex.offsetHeight > maxH) { maxH = ex.offsetHeight; }
+  }
+  semPlace1D(items, 0, 12);
+  for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+  lane.style.height = maxH + "px";
+  canvas.style.paddingBottom = (gap + maxH + 16) + "px";
+}
+
+function drawSubflow(stepperId) {
+  var stepper = document.getElementById(stepperId);
+  if (!stepper) { return; }
+  var canvas = stepper.querySelector(".sf-canvas");
+  var svg = stepper.querySelector(".sf-svg");
+  var nodes = stepper.querySelectorAll(".sf-node");
+  if (!canvas || !svg || nodes.length === 0) { return; }
+  var i, j;
+  var idx = {};
+  for (i = 0; i < nodes.length; i++) { idx[nodes[i].getAttribute("data-x")] = i; }
+
+  /* 同行盒子等宽:自然宽取最大(CSS 夹在 112–200px),高度随行拉伸、内容垂直居中 */
+  var natMax = 0;
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = ""; }
+  for (i = 0; i < nodes.length; i++) { var nw = nodes[i].getBoundingClientRect().width; if (nw > natMax) { natMax = nw; } }
+  natMax = Math.ceil(natMax) + 2; /* 留 2px 余量:编号行是可换行 flex,正好贴边时会因亚像素取整折行 */
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = natMax + "px"; }
+
+  /* 上方弧线分层:跨度短的在下;与已放置弧线重叠则抬一层 */
+  var sem = SEM_EDGES[stepperId] || {};
+  var arcs = [];
+  var loops = SUBFLOW_LOOPS[stepperId] || [];
+  for (i = 0; i < loops.length; i++) { arcs.push({ kind: "loop", e: loops[i] }); }
+  var skips = sem.arcs || [];
+  for (i = 0; i < skips.length; i++) { arcs.push({ kind: "skip", e: skips[i] }); }
+  var maxLevel = 0;
+  for (i = 0; i < arcs.length; i++) {
+    var ia = idx[arcs[i].e.from], ib = idx[arcs[i].e.to];
+    if (ia === undefined || ib === undefined) { arcs[i].bad = true; continue; }
+    arcs[i].lo = Math.min(ia, ib);
+    arcs[i].hi = Math.max(ia, ib);
+    arcs[i].span = arcs[i].hi - arcs[i].lo;
+  }
+  arcs.sort(function (p, q) { return p.span - q.span; });
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var level = 1;
+    for (j = 0; j < i; j++) {
+      if (arcs[j].bad) { continue; }
+      var overlap = !(arcs[i].hi < arcs[j].lo || arcs[i].lo > arcs[j].hi);
+      if (overlap && arcs[j].level >= level) { level = arcs[j].level + 1; }
+    }
+    arcs[i].level = level;
+    if (level > maxLevel) { maxLevel = level; }
+  }
+  canvas.style.paddingTop = Math.max(56, 30 + 26 * maxLevel) + "px";
+  semLayoutLane(stepper, canvas);
+
+  var W = canvas.scrollWidth;
+  var H = canvas.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  function marker(id, cls, size) {
+    return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="' + size + '" markerHeight="' + size + '" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="' + cls + '"></path></marker>';
+  }
+  var parts = ["<defs>" + marker(stepperId + "-mf", "mk-f", 7) + marker(stepperId + "-ml", "mk-l", 6.5) + marker(stepperId + "-mc", "mk-c", 6.5) + marker(stepperId + "-md", "mk-d", 6) + marker(stepperId + "-mx", "mk-x", 6.5) + marker(stepperId + "-me", "mk-e", 6.5) + "</defs>"];
+  var pos = {};
+  for (i = 0; i < nodes.length; i++) {
+    var b = nodes[i];
+    pos[b.getAttribute("data-x")] = { l: b.offsetLeft, t: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight };
+  }
+
+  /* 顺序边 */
+  for (i = 0; i < nodes.length - 1; i++) {
+    var a = pos[nodes[i].getAttribute("data-x")];
+    var c = pos[nodes[i + 1].getAttribute("data-x")];
+    if (!a || !c) { continue; }
+    parts.push('<line x1="' + (a.l + a.w + 1) + '" y1="' + (a.t + a.h / 2) + '" x2="' + (c.l - 3) + '" y2="' + (c.t + c.h / 2) + '" class="ed-f sfe" data-efrom="' + nodes[i].getAttribute("data-x") + '" data-eto="' + nodes[i + 1].getAttribute("data-x") + '" marker-end="url(#' + stepperId + '-mf)"></line>');
+  }
+
+  /* 上方弧线:回边 / 自环(ed-l,橙色流动虚线)与条件跳转(ed-c,蓝色;推断为虚线) */
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var e = arcs[i].e;
+    var s = pos[e.from];
+    var t = pos[e.to];
+    if (!s || !t) { continue; }
+    var L = arcs[i].level;
+    var isLoop = arcs[i].kind === "loop";
+    var cls = isLoop ? "ed-l" : ("ed-c" + (e.inf ? " inf" : ""));
+    var d, lx, ly;
+    if (e.from === e.to) {
+      var cx = s.l + s.w / 2;
+      var cy = s.t - (10 + 26 * L);
+      d = "M " + (cx + 16) + " " + (s.t - 1) + " C " + (cx + 44) + " " + cy + ", " + (cx - 44) + " " + cy + ", " + (cx - 16) + " " + (s.t - 1);
+      lx = cx;
+      ly = s.t - (6 + 26 * L);
+    } else {
+      var x1 = s.l + s.w / 2;
+      var x2 = t.l + t.w / 2;
+      var topY = Math.min(s.t, t.t);
+      var py = topY - (14 + 26 * L);
+      d = "M " + x1 + " " + (s.t - 1) + " C " + x1 + " " + py + ", " + x2 + " " + py + ", " + x2 + " " + (t.t - 1);
+      lx = (x1 + x2) / 2;
+      ly = topY - (8 + 26 * L);
+    }
+    parts.push('<path d="' + d + '" class="' + cls + ' sfe" data-efrom="' + e.from + '" data-eto="' + e.to + '" marker-end="url(#' + stepperId + (isLoop ? "-ml" : "-mc") + ')"></path>');
+    var label = e.label + (e.inf ? " · 推断" : "");
+    var halfLabel = label.length * 5.5;
+    if (lx < halfLabel + 4) { lx = halfLabel + 4; }
+    if (lx > W - halfLabel - 4) { lx = W - halfLabel - 4; }
+    parts.push('<text x="' + lx + '" y="' + ly + '" text-anchor="middle" class="' + (isLoop ? "ed-t" : "ed-ct") + ' sfl" data-efrom="' + e.from + '" data-eto="' + e.to + '">' + label + "</text>");
+  }
+
+  /* 外部节点栏:依赖来源(点线,上箭头汇入步骤)/ 兜底去向(橙线,下箭头汇入外部节点);正交布线,每线一轨 */
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (lane && row) {
+    var exts = lane.querySelectorAll(".sf-ext");
+    var links = [];
+    for (i = 0; i < exts.length; i++) {
+      var ex = exts[i];
+      var isOut = ex.classList.contains("out");
+      var exRect = { l: lane.offsetLeft + ex.offsetLeft, t: lane.offsetTop + ex.offsetTop, w: ex.offsetWidth, h: ex.offsetHeight };
+      ex.setAttribute("data-extkey", "ext:x" + i);
+      var refs1 = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+      var infs = (ex.getAttribute("data-inf") || "").split(",");
+      for (j = 0; j < refs1.length; j++) {
+        if (!pos[refs1[j]]) { continue; }
+        links.push({ rowBox: pos[refs1[j]], satBox: exRect, rowKey: refs1[j], satKey: "ext:x" + i, dir: isOut ? "down" : "up",
+                     cls: (isOut ? "ed-x" : "ed-d") + (infs[j] === "1" ? " inf" : ""), mk: isOut ? "-mx" : "-md" });
+      }
+    }
+    var routed = semRouteLane(links, row.offsetTop + row.offsetHeight, lane.offsetTop);
+    for (i = 0; i < routed.length; i++) {
+      /* up = 箭头汇入主行盒子(依赖来源:外部 → 步骤);down = 箭头汇入外部卡片(兜底去向) */
+      var lf = routed[i].dir === "up" ? routed[i].satKey : routed[i].rowKey;
+      var lt = routed[i].dir === "up" ? routed[i].rowKey : routed[i].satKey;
+      parts.push('<path d="' + routed[i].d + '" class="' + routed[i].cls + ' sfe" data-efrom="' + lf + '" data-eto="' + lt + '" marker-end="url(#' + stepperId + routed[i].mk + ')"></path>');
+    }
+  }
+
+  /* 终止标记:最后一步 → ⦿ END */
+  var endEl = stepper.querySelector(".sf-end");
+  if (endEl && sem.end && pos[sem.end.from]) {
+    var se = pos[sem.end.from];
+    var ex1 = endEl.offsetLeft, ey1 = endEl.offsetTop + endEl.offsetHeight / 2;
+    endEl.setAttribute("data-extkey", "ext:END");
+    parts.push('<path d="M ' + (se.l + se.w + 1) + ' ' + (se.t + se.h / 2) + ' L ' + (ex1 - 2) + ' ' + ey1 + '" class="ed-e' + (sem.end.inf ? " inf" : "") + ' sfe" data-efrom="' + sem.end.from + '" data-eto="ext:END" marker-end="url(#' + stepperId + '-me)"></path>');
+    parts.push('<text x="' + (ex1 + endEl.offsetWidth / 2) + '" y="' + (endEl.offsetTop + endEl.offsetHeight + 14) + '" text-anchor="middle" class="ed-et sfl" data-efrom="' + sem.end.from + '" data-eto="ext:END">' + sem.end.label + (sem.end.inf ? " · 推断" : "") + "</text>");
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(stepper);
+}
+
+function redrawActiveSubflows() {
+  var active = document.querySelector(".panel.active");
+  if (!active) { return; }
+  var steppers = active.querySelectorAll(".stepper");
+  var i;
+  for (i = 0; i < steppers.length; i++) { drawSubflow(steppers[i].id); }
+}
+
+/* ——— 子步骤点击绑定 ——— */
+(function bindSubflows() {
+  var steppers = document.querySelectorAll(".stepper");
+  var s;
+  for (s = 0; s < steppers.length; s++) {
+    (function (stepper) {
+      var btns = stepper.querySelectorAll(".sf-node");
+      var i;
+      for (i = 0; i < btns.length; i++) {
+        (function (btn) {
+          btn.onclick = function () {
+            var targetId = btn.getAttribute("data-x");
+            var cards = stepper.querySelectorAll(".explain-card");
+            var j;
+            for (j = 0; j < cards.length; j++) { cards[j].classList.remove("active"); }
+            var allBtns = stepper.querySelectorAll(".sf-node");
+            for (j = 0; j < allBtns.length; j++) { allBtns[j].classList.remove("active"); }
+            btn.classList.add("active");
+            var card = document.getElementById(targetId);
+            if (card) { card.classList.add("active"); }
+          };
+        })(btns[i]);
+      }
+      if (btns.length > 0) { btns[0].onclick(); }
+    })(steppers[s]);
+  }
+})();
+
+window.addEventListener("resize", function () { redrawActiveSubflows(); });
+
+/* ——— 主题切换 + localStorage ——— */
+(function bindTheme() {
+  var picker = document.getElementById("themePicker");
+  if (!picker) { return; }
+  picker.value = document.body.getAttribute("data-theme") || "docs";
+  var saved = null;
+  try { saved = localStorage.getItem("s2w-theme"); } catch (e) { saved = null; }
+  if (saved) {
+    document.body.setAttribute("data-theme", saved);
+    picker.value = saved;
+  }
+  picker.onchange = function () {
+    document.body.setAttribute("data-theme", picker.value);
+    try { localStorage.setItem("s2w-theme", picker.value); } catch (e) {}
+  };
+})();
+
+/* ——— 出处开关 ——— */
+(function bindSrcToggle() {
+  var toggle = document.getElementById("srcToggle");
+  if (!toggle) { return; }
+  toggle.onclick = function () {
+    document.body.classList.toggle("show-sources");
+    toggle.classList.toggle("active");
+    toggle.textContent = document.body.classList.contains("show-sources") ? "隐藏出处" : "显示出处";
+  };
+})();
+
+/* ——— 追问弹窗:提问 + 位置 + 依赖文件,打包复制给 Agent ——— */
+(function bindDeepDive() {
+  var overlay = document.getElementById("ddOverlay");
+  var titleEl = document.getElementById("ddTitle");
+  var ctxEl = document.getElementById("ddCtx");
+  var input = document.getElementById("ddInput");
+  var toast = document.getElementById("ddToast");
+  if (!overlay || !titleEl || !ctxEl || !input || !toast) { return; }
+  var currentRef = "";
+  var currentConcept = "";
+  var currentDeps = [];
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+  window.flashToast = showToast;
+
+  /* 依赖收集:内容块文本里的资源路径 + 当前节点挂载的资源(Phase 1 抽取产物),去重合并 */
+  function findDeps(el) {
+    var out = [];
+    var seen = {};
+    if (el) {
+      var tokens = el.textContent.split(/[^A-Za-z0-9_.\/-]+/);
+      var i;
+      for (i = 0; i < tokens.length; i++) {
+        var tk = tokens[i].replace(/[.,;:]+$/, "");
+        if (/^(scripts|templates|references|examples|assets)\/[A-Za-z0-9_.\/-]*$/.test(tk)) {
+          if (!seen[tk]) { seen[tk] = 1; out.push(tk); }
+        }
+      }
+    }
+    var activePanel = document.querySelector(".panel.active");
+    if (activePanel) {
+      var nodeId = activePanel.id.replace("p-", "");
+      var res = NODE_RES[nodeId] || [];
+      var j;
+      for (j = 0; j < res.length; j++) {
+        if (!seen[res[j][0]]) { seen[res[j][0]] = 1; out.push(res[j][0]); }
+      }
+    }
+    return out;
+  }
+
+  window.openDeepDive = function (conceptName, source) {
+    currentRef = source;
+    currentConcept = conceptName;
+    var block = document.querySelector('.panel.active [data-source="' + source + '"]') || document.querySelector('[data-source="' + source + '"]');
+    currentDeps = findDeps(block);
+    titleEl.textContent = "追问「" + conceptName + "」";
+    var depsHint = currentDeps.length > 0
+      ? " · 依赖:" + currentDeps.slice(0, 3).join("、") + (currentDeps.length > 3 ? " 等 " + currentDeps.length + " 项" : "")
+      : "";
+    ctxEl.textContent = "出处:" + source + depsHint + " | 提交后把提问 + 位置 + 依赖文件打包复制到剪贴板,贴给 Agent 即可。";
+    input.value = "";
+    overlay.classList.add("active");
+    setTimeout(function () { input.focus(); }, 180);
+  };
+
+  var cancelBtn = document.getElementById("ddCancel");
+  if (cancelBtn) { cancelBtn.onclick = function () { overlay.classList.remove("active"); }; }
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) { overlay.classList.remove("active"); }
+  };
+
+  var submitBtn = document.getElementById("ddSubmit");
+  if (submitBtn) {
+    submitBtn.onclick = function () {
+      var q = input.value.replace(/^\s+|\s+$/g, "");
+      if (!q) { showToast("请输入你的问题"); return; }
+      var nodeLoc = "";
+      var activePanel = document.querySelector(".panel.active");
+      if (activePanel) {
+        var phId = activePanel.querySelector(".ph-id");
+        var phTitle = activePanel.querySelector("h2");
+        if (phId && phTitle) { nodeLoc = phId.textContent.split(" · ")[0] + "「" + phTitle.textContent + "」 > "; }
+      }
+      var depLines = "";
+      var i;
+      if (currentDeps.length > 0) {
+        for (i = 0; i < currentDeps.length; i++) {
+          depLines += "  - " + SKILL_DIR + "/" + currentDeps[i] + "\n";
+        }
+      } else {
+        depLines = "  - (该内容块未显式引用依赖文件)\n";
+      }
+      var prompt = "【追问 · 由 skill-to-webpage 页面打包】\n"
+        + "- Skill:" + SKILL_NAME + "(源目录:" + SKILL_DIR + ")\n"
+        + "- 提问对象:" + nodeLoc + "「" + currentConcept + "」\n"
+        + "- 原文位置:" + SKILL_DIR + "/SKILL.md 的 " + currentRef.replace("SKILL.md:", "第 ") + " 行\n"
+        + "- 涉及依赖文件:\n" + depLines
+        + "- 知识库:" + KB_DIR + "(full_text.md 行号与原文位置一致,节点摘要在 nodes/)\n"
+        + "- 我的问题:" + q + "\n\n"
+        + "请先读原文位置与涉及的依赖文件,再回答。";
+      window.__lastPrompt = prompt;
+      function fallbackShow() {
+        input.value = prompt;
+        showToast("剪贴板不可用,已把打包内容放入输入框,请手动全选复制");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(prompt).then(function () {
+          overlay.classList.remove("active");
+          showToast("追问已打包复制(提问 + 位置 + 依赖文件),贴给 Agent 即可");
+        }).catch(fallbackShow);
+      } else {
+        fallbackShow();
+      }
+    };
+  }
+})();
+
+/* ——— 代码块复制按钮 ——— */
+(function bindCopyButtons() {
+  var pres = document.querySelectorAll("pre.code");
+  var i;
+  for (i = 0; i < pres.length; i++) {
+    (function (pre) {
+      var txt = pre.textContent;
+      var btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.type = "button";
+      btn.textContent = "复制";
+      btn.onclick = function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () {
+            btn.textContent = "已复制 ✓";
+            setTimeout(function () { btn.textContent = "复制"; }, 1600);
+          }).catch(function () {
+            if (window.flashToast) { window.flashToast("复制失败"); }
+          });
+        } else {
+          if (window.flashToast) { window.flashToast("当前环境不支持剪贴板"); }
+        }
+      };
+      pre.appendChild(btn);
+    })(pres[i]);
+  }
+})();
+
+/* ——— 决策表格:行点选 → 结论回显(data-echo 模板,{N} 为列号) ——— */
+(function bindRowSelect() {
+  var tables = document.querySelectorAll("table.rowsel");
+  var t;
+  for (t = 0; t < tables.length; t++) {
+    (function (table) {
+      var tpl = table.getAttribute("data-echo") || "{0}";
+      var wrap = table.parentNode;
+      var echo = document.createElement("p");
+      echo.className = "row-echo";
+      echo.textContent = "点击任意一行,查看该行的结论";
+      if (wrap && wrap.parentNode) { wrap.parentNode.insertBefore(echo, wrap.nextSibling); }
+      var rows = table.querySelectorAll("tbody tr");
+      var r;
+      for (r = 0; r < rows.length; r++) {
+        (function (row) {
+          row.onclick = function () {
+            var all = table.querySelectorAll("tbody tr");
+            var k;
+            for (k = 0; k < all.length; k++) { all[k].classList.remove("rowon"); }
+            row.classList.add("rowon");
+            var cells = row.querySelectorAll("td");
+            echo.textContent = tpl.replace(/\{(\d+)\}/g, function (m, idx) {
+              var c = cells[parseInt(idx, 10)];
+              return c ? c.textContent.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "") : "";
+            });
+          };
+        })(rows[r]);
+      }
+    })(tables[t]);
+  }
+})();
+
+/* ——— 自检清单计数(class="checklist" + 对应 .ck-badge,id 由渲染层配对) ——— */
+(function bindChecklists() {
+  var lists = document.querySelectorAll("ul.checklist");
+  var n;
+  for (n = 0; n < lists.length; n++) {
+    (function (list) {
+      var badge = document.getElementById(list.id.replace("ckl", "ck"));
+      if (!badge) { return; }
+      var boxes = list.querySelectorAll("input");
+      function update() {
+        var cnt = 0;
+        var i;
+        for (i = 0; i < boxes.length; i++) { if (boxes[i].checked) { cnt++; } }
+        if (cnt === boxes.length && boxes.length > 0) {
+          badge.textContent = cnt + "/" + boxes.length + " ✓ 全部通过";
+          badge.className = "ck-badge done";
+        } else {
+          badge.textContent = cnt + "/" + boxes.length;
+          badge.className = "ck-badge";
+        }
+      }
+      var i;
+      for (i = 0; i < boxes.length; i++) { boxes[i].onchange = update; }
+      update();
+    })(lists[n]);
+  }
+})();
+
+/* ——— 流程带芯片等宽:主行芯片同宽(自然宽取最大、≤200,装不下时缩到刚好装下、≥108);支撑行芯片同宽 ——— */
+function railFitChips() {
+  var rail = document.getElementById("rail");
+  if (!rail) { return; }
+  var mainRow = rail.querySelector(".rail-main") || rail;
+  var all = rail.querySelectorAll(".node-chip");
+  var mains = [], sats = [], i;
+  for (i = 0; i < all.length; i++) { if (all[i].classList.contains("sat")) { sats.push(all[i]); } else { mains.push(all[i]); } }
+  function natural(list) {
+    var k, m = 0, sum = 0;
+    for (k = 0; k < list.length; k++) { list[k].style.width = ""; }
+    for (k = 0; k < list.length; k++) { var w = list[k].offsetWidth; sum += w; if (w > m) { m = w; } }
+    return { max: m, sum: sum };
+  }
+  function extent(el) {
+    var ch = el.children, first = null, last = null, k;
+    for (k = 0; k < ch.length; k++) {
+      if (ch[k].offsetWidth > 0 && String(ch[k].tagName).toLowerCase() !== "svg") { if (!first) { first = ch[k]; } last = ch[k]; }
+    }
+    return first ? (last.offsetLeft + last.offsetWidth - first.offsetLeft) : 0;
+  }
+  if (mains.length > 0) {
+    var nm = natural(mains);
+    var gaps = extent(mainRow) - nm.sum;
+    var uw = Math.min(200, nm.max);
+    var fit = (rail.clientWidth - gaps) / mains.length;
+    if (uw > fit) { uw = Math.max(108, fit); }
+    for (i = 0; i < mains.length; i++) { mains[i].style.width = Math.floor(uw) + "px"; }
+  }
+  if (sats.length > 0) {
+    var ns = natural(sats);
+    var sw = Math.min(200, ns.max);
+    for (i = 0; i < sats.length; i++) { sats[i].style.width = sw + "px"; }
+  }
+}
+
+/* ——— 流程带支撑行(语义层):S/A 芯片定位到其关联主线节点下方(一维簇放置),依赖线正交布线;无 #railSem 时只做芯片等宽 ——— */
+function semDrawRail() {
+  railFitChips();
+  var wrap = document.getElementById("railSem");
+  var svg = document.getElementById("railSvg");
+  if (!wrap || !svg) { return; }
+  var sat = wrap.querySelector(".rail-sat");
+  var mainRow = wrap.querySelector(".rail-main");
+  var i, j;
+  function rect(el) {
+    var wr = wrap.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return { l: r.left - wr.left, t: r.top - wr.top, w: r.width, h: r.height };
+  }
+  function mainChip(id) { return wrap.querySelector('.rail-main .node-chip[data-node="' + id + '"]'); }
+  function satChip(id) { return wrap.querySelector('.rail-sat .node-chip[data-node="' + id + '"]'); }
+  var nLinks = 0;
+  for (i = 0; i < RAIL_LINKS.length; i++) { if (mainChip(RAIL_LINKS[i].to) && satChip(RAIL_LINKS[i].from)) { nLinks++; } }
+  if (sat && mainRow) {
+    wrap.style.rowGap = Math.max(30, 18 + 10 * nLinks) + "px";
+    var gutter = 160;
+    if (window.getComputedStyle) {
+      var gw = parseFloat(window.getComputedStyle(sat, "::before").width);
+      if (!isNaN(gw) && gw > 0) { gutter = gw + 18; }
+    }
+    var chips = sat.querySelectorAll(".node-chip");
+    var items = [], maxH = 0;
+    for (i = 0; i < chips.length; i++) {
+      var ch = chips[i];
+      ch.style.height = "";
+      var nid = ch.getAttribute("data-node"), sum = 0, cnt = 0;
+      for (j = 0; j < RAIL_LINKS.length; j++) {
+        if (RAIL_LINKS[j].from !== nid) { continue; }
+        var tg = mainChip(RAIL_LINKS[j].to);
+        if (tg) { var tr = rect(tg); sum += tr.l + tr.w / 2; cnt++; }
+      }
+      items.push({ el: ch, want: cnt > 0 ? sum / cnt - ch.offsetWidth / 2 : gutter, w: ch.offsetWidth });
+      if (ch.offsetHeight > maxH) { maxH = ch.offsetHeight; }
+    }
+    semPlace1D(items, gutter, 12);
+    for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+    sat.style.height = maxH + "px";
+  }
+  var W = wrap.scrollWidth, H = wrap.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var parts = ['<defs><marker id="rl-md" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="mk-d"></path></marker></defs>'];
+  if (sat && mainRow) {
+    var links = [];
+    for (i = 0; i < RAIL_LINKS.length; i++) {
+      var a = satChip(RAIL_LINKS[i].from);
+      var b = mainChip(RAIL_LINKS[i].to);
+      if (!a || !b) { continue; }
+      links.push({ rowBox: rect(b), satBox: rect(a), rowKey: RAIL_LINKS[i].to, satKey: RAIL_LINKS[i].from, dir: "up" });
+    }
+    var mr = rect(mainRow), sr = rect(sat);
+    var routed = semRouteLane(links, mr.t + mr.h, sr.t);
+    for (i = 0; i < routed.length; i++) {
+      parts.push('<path d="' + routed[i].d + '" class="rl-d sfe" data-efrom="rail:' + routed[i].satKey + '" data-eto="rail:' + routed[i].rowKey + '" marker-end="url(#rl-md)"></path>');
+    }
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(wrap);
+}
+window.addEventListener("resize", function () { semDrawRail(); });
+window.addEventListener("load", function () { semDrawRail(); redrawActiveSubflows(); });
+setTimeout(function () { semDrawRail(); }, 250);
+
+/* ——— 组件专属附加脚本(渲染时按需注入) ——— */
+SEM_EDGES = {"st-n02": {"arcs": [], "end": {"from": "e23", "label": "Critical/Important 已修完,继续下一任务", "inf": true}}, "st-n04": {"arcs": [{"from": "e41", "to": "e43", "label": "处于执行计划", "inf": false}, {"from": "e41", "to": "e44", "label": "处于临时开发", "inf": false}]}, "st-n05": {"arcs": []}};
+RAIL_LINKS = [{"from": "n03", "to": "n02"}];
+semDrawRail();
+(function () { var host = document.getElementById("srcToggle"); if (!host || !host.parentNode) { return; } var box = document.createElement("span"); box.innerHTML = "<span class=\"variants\"><span class=\"vl\">版本</span><a href=\"merged/requesting-code-review-workflow.html\" class=\"cur\">merged</a><a href=\"static/requesting-code-review-workflow.html\">static</a></span>"; host.parentNode.insertBefore(box.firstChild, host); })();
+(function () { var b = document.querySelector(".topbar .brand"); if (!b || !b.parentNode) { return; } var box = document.createElement("span"); box.innerHTML = "<a class=\"bundle-back\" href=\"../superpowers-workflow.html\">← superpowers 总览</a>"; b.parentNode.insertBefore(box.firstChild, b.nextSibling); })();
+
+/* ——— 初始状态 ——— */
+(function initFromHash() {
+  var want = (location.hash || "").replace("#", "");
+  var start = "n01";
+  if (want && NODES.indexOf(want) >= 0) { start = want; }
+  showNode(start);
+  window.addEventListener("hashchange", function () {
+    var h = (location.hash || "").replace("#", "");
+    if (h && NODES.indexOf(h) >= 0) { showNode(h); }
+  });
+})();
+</script>
+</body>
+</html>

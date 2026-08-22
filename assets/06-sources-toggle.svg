@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" role="img" aria-labelledby="t d" preserveAspectRatio="xMidYMid meet">
+<title id="t">显示出处开关</title>
+<desc id="d">顶栏「显示出处」一开,每条断言前面出现 SKILL.md 行号,后面接上 SKILL.md 里的逐字引文;再点一次收起。</desc>
+<style>
+@keyframes q_in{0%{opacity:0}16.67%{opacity:0}24.17%{opacity:1}73.33%{opacity:1}79.17%{opacity:0}100%{opacity:0}}
+@keyframes q_out{0%{opacity:1}16.67%{opacity:1}24.17%{opacity:0}73.33%{opacity:0}79.17%{opacity:1}100%{opacity:1}}
+@keyframes q_hit{0%{opacity:0}11.67%{opacity:0}13.67%{opacity:0.9}20.83%{opacity:0}68.33%{opacity:0}70.33%{opacity:0.9}77.5%{opacity:0}100%{opacity:0}}
+@keyframes q_t0{0%{opacity:0}16.67%{opacity:0}23%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q0{0%{opacity:0}18.67%{opacity:0}25.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_t1{0%{opacity:0}18.67%{opacity:0}25%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q1{0%{opacity:0}20.67%{opacity:0}27.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_t2{0%{opacity:0}20.67%{opacity:0}27%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q2{0%{opacity:0}22.67%{opacity:0}29.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_t3{0%{opacity:0}22.67%{opacity:0}29%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q3{0%{opacity:0}24.67%{opacity:0}31.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_t4{0%{opacity:0}24.67%{opacity:0}31%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q4{0%{opacity:0}26.67%{opacity:0}33.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_t5{0%{opacity:0}26.67%{opacity:0}33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+@keyframes q_q5{0%{opacity:0}28.67%{opacity:0}35.33%{opacity:1}73.33%{opacity:1}78.33%{opacity:0}100%{opacity:0}}
+.q_in{animation:q_in 6s linear infinite;}
+.q_out{animation:q_out 6s linear infinite;}
+.q_hit{animation:q_hit 6s linear infinite;}
+.q_t0{animation:q_t0 6s linear infinite;}
+.q_q0{animation:q_q0 6s linear infinite;}
+.q_t1{animation:q_t1 6s linear infinite;}
+.q_q1{animation:q_q1 6s linear infinite;}
+.q_t2{animation:q_t2 6s linear infinite;}
+.q_q2{animation:q_q2 6s linear infinite;}
+.q_t3{animation:q_t3 6s linear infinite;}
+.q_q3{animation:q_q3 6s linear infinite;}
+.q_t4{animation:q_t4 6s linear infinite;}
+.q_q4{animation:q_q4 6s linear infinite;}
+.q_t5{animation:q_t5 6s linear infinite;}
+.q_q5{animation:q_q5 6s linear infinite;}
+</style>
+<rect x="0" y="0" width="1200" height="400" fill="#fafafa"/><rect x="0.5" y="0.5" width="1199" height="399" fill="none" rx="10" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="20" y="14" width="1160" height="57.05" fill="#ffffff" rx="10" stroke="#e3e4e8" stroke-width="1"/>
+<text x="38" y="47.52" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14" fill="#8a8f9b" font-weight="700">◈ skill-to-webpage</text>
+<rect x="991.21" y="27.6" width="88" height="28.9" fill="#ffffff" rx="999" stroke="#4f46e5" stroke-width="1.2" class="q_out"/>
+<text x="1035.21" y="46.64" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#4f46e5" font-weight="600" text-anchor="middle" class="q_out">显示出处</text>
+<rect x="991.21" y="27.6" width="88" height="28.9" fill="#4f46e5" rx="999" stroke="#4f46e5" stroke-width="1.2" class="q_in" opacity="0"/>
+<text x="1035.21" y="46.64" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#ffffff" font-weight="600" text-anchor="middle" class="q_in" opacity="0">隐藏出处</text>
+<circle cx="1035.21" cy="42.04" r="24" fill="rgba(79,70,229,.09)" class="q_hit" opacity="0"/>
+<path d="M0,0 L0,14 L4,10.6 L6.6,16 L9.4,14.6 L6.8,9.4 L11.6,9 Z" fill="#1d1f24" transform="translate(1039.21 44.04)"/>
+<rect x="25" y="92.05" width="4" height="44" fill="#e3e4e8" rx="2"/>
+<text x="40" y="105.38" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#c3c6cf" font-weight="600" class="q_out">n01 · When to Use This Skill · 触发信号</text>
+<text x="40" y="105.38" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_in" opacity="0">SKILL.md:10-20</text>
+<text x="40" y="127.65" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="700" letter-spacing="1.01">触发条件(R 层)</text>
+<line x1="25" y1="138.65" x2="25" y2="181.85" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="40" y="151.98" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t0" opacity="0">SKILL.md:14</text>
+<text x="40" y="175.04" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">问 how do I do X(可能已有 skill)</text>
+<g class="q_q0" opacity="0">
+<line x1="309.86" y1="162.66" x2="309.86" y2="178.04" stroke="#8a8f9b" stroke-width="2"/>
+<text x="319.86" y="175.04" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.4" fill="#8a8f9b" font-weight="500">“how do I do X”</text>
+</g>
+<line x1="25" y1="200.85" x2="25" y2="244.05" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="40" y="214.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t1" opacity="0">SKILL.md:15</text>
+<text x="40" y="237.24" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">直说 find a skill for X</text>
+<g class="q_q1" opacity="0">
+<line x1="228.53" y1="224.86" x2="228.53" y2="240.24" stroke="#8a8f9b" stroke-width="2"/>
+<text x="238.53" y="237.24" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.4" fill="#8a8f9b" font-weight="500">“find a skill for X”</text>
+</g>
+<line x1="25" y1="263.05" x2="25" y2="306.25" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="40" y="276.38" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t2" opacity="0">SKILL.md:16</text>
+<text x="40" y="299.44" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">问 can you do X(专门能力)</text>
+<g class="q_q2" opacity="0">
+<line x1="269.12" y1="287.06" x2="269.12" y2="302.44" stroke="#8a8f9b" stroke-width="2"/>
+<text x="279.12" y="299.44" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.4" fill="#8a8f9b" font-weight="500">“can you do X”</text>
+</g>
+<line x1="613" y1="138.65" x2="613" y2="181.85" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="628" y="151.98" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t3" opacity="0">SKILL.md:17</text>
+<text x="628" y="175.04" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">想扩展 agent 能力</text>
+<g class="q_q3" opacity="0">
+<line x1="792.79" y1="163.09" x2="792.79" y2="178.04" stroke="#8a8f9b" stroke-width="2"/>
+<text x="802.79" y="175.04" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.9" fill="#8a8f9b" font-weight="500">“Expresses interest in extending agent capabilities”</text>
+</g>
+<line x1="613" y1="200.85" x2="613" y2="244.05" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="628" y="214.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t4" opacity="0">SKILL.md:18</text>
+<text x="628" y="237.24" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">想搜工具 / 模板 / 工作流</text>
+<g class="q_q4" opacity="0">
+<line x1="843.97" y1="227.01" x2="843.97" y2="240.24" stroke="#8a8f9b" stroke-width="2"/>
+<text x="853.97" y="237.24" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.9" fill="#8a8f9b" font-weight="500">“Wants to search for tools, templates, or workflows”</text>
+</g>
+<line x1="613" y1="263.05" x2="613" y2="306.25" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="628" y="276.38" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.6" fill="#8a8f9b" font-weight="600" class="q_t5" opacity="0">SKILL.md:19</text>
+<text x="628" y="299.44" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="15.6" fill="#1d1f24" font-weight="500">提到希望某领域有帮手</text>
+<g class="q_q5" opacity="0">
+<line x1="821.6" y1="289.21" x2="821.6" y2="302.44" stroke="#8a8f9b" stroke-width="2"/>
+<text x="831.6" y="299.44" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.9" fill="#8a8f9b" font-weight="500">“Mentions they wish they had help with a specific domain”</text>
+</g>
+<text x="40" y="346.25" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#b9bcc6" font-weight="500" class="q_in" opacity="0">每条断言:上方 = SKILL.md 行号,后接 = SKILL.md 里的逐字原文</text>
+<text x="600" y="378" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#5b5f6b" font-weight="500" text-anchor="middle">显示出处:每条断言的逐字引文与行号</text>
+</svg>

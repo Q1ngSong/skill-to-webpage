@@ -1,0 +1,30 @@
+/* ============================================================
+   简洁文档(docs · 默认主题)
+   白底大留白,Linear/Notion 风,克制的靛蓝强调。
+   本文件的变量块 = base.html 中 :root 的默认值;
+   其余主题以 [data-theme="X"] 覆盖同名变量。
+   ============================================================ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --ink: #17181c;
+  --ink-soft: #3c3f46;
+  --muted: #7a7e88;
+  --line: #e6e7eb;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(79, 70, 229, .09);
+  --ok: #1a7f4e;
+  --warn: #b45309;
+  --chip: #eef0ff;
+  --code-bg: #f6f7f9;
+  --code-ink: #24292f;
+  --tooltip-bg: #17181c;
+  --tooltip-ink: #ffffff;
+  --radius: 10px;
+  --shadow: 0 10px 34px rgba(23, 24, 28, .07);
+  --font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+}

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 542" width="100%" role="img" aria-labelledby="t d">
+<title id="t">四阶段流水线:静态拆解 → 解析器抽取 → 合并排错 → 渲染</title>
+<desc id="d">skill-to-webpage 的四个阶段,每阶段标注脚本、产出与 token 成本,末尾是 verify-page.js 的 13 项自动验证。</desc>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#3c3f46"/></marker>
+<marker id="ar-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#4f46e5"/></marker>
+<marker id="ar-w" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#d97706"/></marker>
+<marker id="ar-o" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#16a34a"/></marker>
+</defs>
+<rect width="1200" height="542" fill="#fafafa"/>
+<text x="24" y="44" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="19" fill="#1d1f24" font-weight="700">四阶段流水线 · 静态拆解 → 解析器抽取 → 合并排错 → 渲染</text>
+<text x="24" y="66" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">静态拆解永远先跑,它是目录坐标系;语义层只能叠加,不能替换、不能重切。</text>
+<rect x="20" y="92" width="264.5" height="302" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="20" y="350" width="264.5" height="34" rx="0" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<rect x="20" y="374" width="264.5" height="20" rx="10" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<line x1="20" y1="350" x2="284.5" y2="350" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="20" y="92" width="264.5" height="302" rx="10" fill="none" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="50" cy="122" r="14" fill="#eef0fe" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="50" y="128" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#4f46e5" font-weight="700" text-anchor="middle">①</text>
+<text x="72" y="122" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15.5" fill="#1d1f24" font-weight="700">静态拆解</text>
+<rect x="72" y="130" width="50.54" height="20" rx="10" fill="#eef0fe" stroke="#d9dcfb" stroke-width="1"/><text x="80" y="143.96" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#4f46e5">零 LLM</text>
+<text x="36" y="170" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">零 LLM 结构解析:frontmatter 提 R 层,##</text>
+<text x="36" y="186" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">标题切节点(围栏感知),### 切步骤,资源扫</text>
+<text x="36" y="202" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">描 + 行号 evidence</text>
+<rect x="34" y="227" width="236.5" height="24" rx="5" fill="#f7f7fb" stroke="#e3e4e8" stroke-width="1"/>
+<text x="42" y="243.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#4f46e5">scripts/extract.py</text>
+<text x="36" y="274" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">产出 · 坐标系</text>
+<text x="36" y="293" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">output/&lt;skill&gt;/static/</text>
+<text x="36" y="310" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· INDEX.md</text>
+<text x="36" y="327" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· nodes/</text>
+<text x="36" y="344" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· full_text.md</text>
+<text x="36" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">成本</text>
+<text x="68" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#16a34a" font-weight="700">0 token</text>
+<line x1="290.5" y1="243" x2="311.5" y2="243" stroke="#3c3f46" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="318.5" y="92" width="264.5" height="302" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="318.5" y="350" width="264.5" height="34" rx="0" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<rect x="318.5" y="374" width="264.5" height="20" rx="10" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<line x1="318.5" y1="350" x2="583" y2="350" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="318.5" y="92" width="264.5" height="302" rx="10" fill="none" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="348.5" cy="122" r="14" fill="#eef0fe" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="348.5" y="128" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#4f46e5" font-weight="700" text-anchor="middle">②</text>
+<text x="370.5" y="122" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15.5" fill="#1d1f24" font-weight="700">解析器抽取</text>
+<rect x="370.5" y="130" width="71" height="20" rx="10" fill="#eef0fe" stroke="#d9dcfb" stroke-width="1"/><text x="378.5" y="143.96" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#4f46e5">可多个并行</text>
+<text x="334.5" y="170" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">任意解析器 skill(可多个)在坐标系上叠加</text>
+<text x="334.5" y="186" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">语义:分层 / 步骤分型 / 边 / 检查点 / 终</text>
+<text x="334.5" y="202" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">止 / 每步语义</text>
+<rect x="332.5" y="227" width="236.5" height="24" rx="5" fill="#f7f7fb" stroke="#e3e4e8" stroke-width="1"/>
+<text x="340.5" y="243.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#4f46e5">&lt;解析器&gt; skill ×N</text>
+<text x="334.5" y="274" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">产出 · 语义层</text>
+<text x="334.5" y="293" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">output/&lt;skill&gt;/&lt;解析器&gt;/</text>
+<text x="334.5" y="310" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· semantics.json</text>
+<text x="334.5" y="327" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">每条断言带 source + quote</text>
+<text x="334.5" y="344" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">一个失败不影响其他</text>
+<text x="334.5" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">成本</text>
+<text x="366.5" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#4f46e5" font-weight="700">各解析器自理</text>
+<line x1="589" y1="243" x2="610" y2="243" stroke="#3c3f46" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="617" y="92" width="264.5" height="302" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="617" y="350" width="264.5" height="34" rx="0" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<rect x="617" y="374" width="264.5" height="20" rx="10" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<line x1="617" y1="350" x2="881.5" y2="350" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="617" y="92" width="264.5" height="302" rx="10" fill="none" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="647" cy="122" r="14" fill="#eef0fe" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="647" y="128" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#4f46e5" font-weight="700" text-anchor="middle">③</text>
+<text x="669" y="122" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15.5" fill="#1d1f24" font-weight="700">合并排错</text>
+<rect x="669" y="130" width="71" height="20" rx="10" fill="#eef0fe" stroke="#d9dcfb" stroke-width="1"/><text x="677" y="143.96" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#4f46e5">冲突回原文</text>
+<text x="633" y="170" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">一致采纳、独有标来源、冲突列表并回原文裁</text>
+<text x="633" y="186" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">决;静态赢结构,语义只能叠加</text>
+<rect x="631" y="227" width="236.5" height="24" rx="5" fill="#f7f7fb" stroke="#e3e4e8" stroke-width="1"/>
+<text x="639" y="243.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#4f46e5">scripts/merge_semantics.py</text>
+<text x="633" y="274" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">产出 · 合并结果</text>
+<text x="633" y="293" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">output/&lt;skill&gt;/merged/</text>
+<text x="633" y="310" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· semantics.json</text>
+<text x="633" y="327" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">· merge-report.md</text>
+<text x="633" y="344" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">冲突回读 full_text.md 裁决</text>
+<text x="633" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">成本</text>
+<text x="665" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="700">脚本 + Agent 裁决</text>
+<line x1="887.5" y1="243" x2="908.5" y2="243" stroke="#3c3f46" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="915.5" y="92" width="264.5" height="302" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="915.5" y="350" width="264.5" height="34" rx="0" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<rect x="915.5" y="374" width="264.5" height="20" rx="10" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<line x1="915.5" y1="350" x2="1180" y2="350" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="915.5" y="92" width="264.5" height="302" rx="10" fill="none" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="945.5" cy="122" r="14" fill="#eef0fe" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="945.5" y="128" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#4f46e5" font-weight="700" text-anchor="middle">④</text>
+<text x="967.5" y="122" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15.5" fill="#1d1f24" font-weight="700">渲染</text>
+<rect x="967.5" y="130" width="49" height="20" rx="10" fill="#eef0fe" stroke="#d9dcfb" stroke-width="1"/><text x="975.5" y="143.96" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#4f46e5">转述层</text>
+<text x="931.5" y="170" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">render.py 吃 static + merged 出页;</text>
+<text x="931.5" y="186" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">Agent 只写转述层(overrides.json),不手</text>
+<text x="931.5" y="202" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">改生成的 HTML</text>
+<rect x="929.5" y="227" width="236.5" height="24" rx="5" fill="#f7f7fb" stroke="#e3e4e8" stroke-width="1"/>
+<text x="937.5" y="243.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#4f46e5">scripts/render.py</text>
+<text x="931.5" y="274" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">产出 · 交付物</text>
+<text x="931.5" y="293" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">&lt;skill&gt;-workflow.html</text>
+<text x="931.5" y="310" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">单文件交互 HTML,零依赖</text>
+<text x="931.5" y="327" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#1d1f24">&lt;skill&gt;-workflow.md</text>
+<text x="931.5" y="344" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">叙事版 md</text>
+<text x="931.5" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" font-weight="600">成本</text>
+<text x="963.5" y="377" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="700">脚本 + 少量 Agent</text>
+<rect x="20" y="436" width="1160" height="82" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="20" y="436" width="4" height="82" rx="2" fill="#16a34a" stroke="none" stroke-width="1"/>
+<path d="M1047.75,396 L1047.75,418 L1047.75,430" fill="none" stroke="#16a34a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ar-o)"/>
+<text x="40" y="462" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#16a34a" font-weight="700">验证</text>
+<text x="80" y="462" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#1d1f24">node scripts/verify-page.js</text>
+<text x="294.5" y="462" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">— 单页 13 项自动检查(总览页自动切到另一套 13 项)</text>
+<rect x="40" y="478" width="73" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="49" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">占位符残留</text>
+<rect x="120" y="478" width="62" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="129" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">节点切换</text>
+<rect x="189" y="478" width="84" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="198" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">子流程图边数</text>
+<rect x="280" y="478" width="73" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="289" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">卫星栏连线</text>
+<rect x="360" y="478" width="62" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="369" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">步骤展开</text>
+<rect x="429" y="478" width="51.77" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="438" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">4 主题</text>
+<rect x="487.77" y="478" width="40" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="496.77" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">出处</text>
+<rect x="534.77" y="478" width="62" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="543.77" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">追问弹窗</text>
+<rect x="603.77" y="478" width="150" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="612.77" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">子流程边可点选并高亮两端</text>
+<rect x="760.77" y="478" width="86.31" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="769.77" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">375px 不溢出</text>
+<rect x="854.08" y="478" width="74.54" height="21" rx="10.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="863.08" y="492.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b">无 JS 错误</text>
+</svg>

@@ -1,0 +1,30 @@
+/* ============================================================
+   白板手绘(whiteboard)
+   暖米底 + 大圆角便签卡片 + 马克笔红强调,轻松易懂。
+   ============================================================ */
+[data-theme="whiteboard"] {
+  --bg: linear-gradient(150deg, #fdf8ee 0%, #f8efdb 100%);
+  --surface: #fffdf6;
+  --surface-2: #fff4c2;
+  --ink: #3a2f1f;
+  --ink-soft: #5a4a33;
+  --muted: #8a7a5c;
+  --line: #e5d9b8;
+  --accent: #c9543f;
+  --on-accent: #fffdf6;
+  --accent-soft: rgba(201, 84, 63, .10);
+  --ok: #4a7c59;
+  --warn: #b07000;
+  --chip: #fff4c2;
+  --code-bg: #f7efdd;
+  --code-ink: #5a4a1f;
+  --tooltip-bg: #3a2f1f;
+  --tooltip-ink: #fffdf6;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(122, 96, 52, .16);
+}
+
+/* 便签质感:卡片描黄边、用米黄面 */
+[data-theme="whiteboard"] .card { border-width: 2px; border-color: #e0b84a; background: var(--surface-2); }
+[data-theme="whiteboard"] .topbar,
+[data-theme="whiteboard"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }

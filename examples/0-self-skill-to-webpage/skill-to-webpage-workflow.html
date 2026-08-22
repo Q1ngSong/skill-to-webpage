@@ -1,0 +1,1921 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skill-to-webpage · Skill Workflow</title>
+<style>
+/* ============================================================
+   skill-to-webpage 骨架层(base.html)
+   布局:Hero(R层) + 流程带 + 侧栏目录 + 详情面板
+   机制:CSS 变量换肤 / data-source 出处 / 追问打包 / SVG 子流程图
+   槽位 theme_styles(下方,勿在注释里写成双花括号形式)注入全部主题 CSS(docs 的 :root 默认块 +
+        3 个 [data-theme] 覆盖块,见 templates/themes/)
+   ============================================================ */
+
+/* —— 主题层(渲染时整段注入 4 个 themes/*.css)—— */
+/* ============================================================
+   简洁文档(docs · 默认主题)
+   白底大留白,Linear/Notion 风,克制的靛蓝强调。
+   本文件的变量块 = base.html 中 :root 的默认值;
+   其余主题以 [data-theme="X"] 覆盖同名变量。
+   ============================================================ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --ink: #17181c;
+  --ink-soft: #3c3f46;
+  --muted: #7a7e88;
+  --line: #e6e7eb;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(79, 70, 229, .09);
+  --ok: #1a7f4e;
+  --warn: #b45309;
+  --chip: #eef0ff;
+  --code-bg: #f6f7f9;
+  --code-ink: #24292f;
+  --tooltip-bg: #17181c;
+  --tooltip-ink: #ffffff;
+  --radius: 10px;
+  --shadow: 0 10px 34px rgba(23, 24, 28, .07);
+  --font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+}
+/* ============================================================
+   技术蓝图(blueprint)
+   深蓝底 + 浅蓝描边 + 径向光晕,工程图纸感。
+   ============================================================ */
+[data-theme="blueprint"] {
+  --bg: radial-gradient(circle at 18% 8%, rgba(95, 176, 255, .10), transparent 30rem), linear-gradient(160deg, #0b1f3a 0%, #0d2547 100%);
+  --surface: #0e2544;
+  --surface-2: #12305a;
+  --ink: #dcebff;
+  --ink-soft: #b9d4f5;
+  --muted: #7fa3d1;
+  --line: #2c4a77;
+  --accent: #5fb0ff;
+  --on-accent: #04182e;
+  --accent-soft: rgba(95, 176, 255, .14);
+  --ok: #7fd6a0;
+  --warn: #ffc46b;
+  --chip: #12305a;
+  --code-bg: #091a31;
+  --code-ink: #9fd0ff;
+  --tooltip-bg: #dcebff;
+  --tooltip-ink: #0b1f3a;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .35);
+}
+
+/* 顶栏/流程带背景在渐变底上改为毛玻璃,避免出现色块断层 */
+[data-theme="blueprint"] .topbar,
+[data-theme="blueprint"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+/* ============================================================
+   终端 IDE(ide)
+   编辑器暗色调 + 语法高亮配色(蓝 accent / 橙 code / 绿 ok)。
+   ============================================================ */
+[data-theme="ide"] {
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-2: #2d2d30;
+  --ink: #d4d4d4;
+  --ink-soft: #c0c0c0;
+  --muted: #8a8a8a;
+  --line: #3a3a3a;
+  --accent: #569cd6;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(86, 156, 214, .14);
+  --ok: #6a9955;
+  --warn: #ce9178;
+  --chip: #2d2d30;
+  --code-bg: #1b1b1c;
+  --code-ink: #ce9178;
+  --tooltip-bg: #d4d4d4;
+  --tooltip-ink: #1e1e1e;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .45);
+}
+
+/* 暗底上输入框用抬升面色,避免刺眼白底 */
+[data-theme="ide"] .dd-popover textarea { background: var(--surface-2); }
+/* ============================================================
+   白板手绘(whiteboard)
+   暖米底 + 大圆角便签卡片 + 马克笔红强调,轻松易懂。
+   ============================================================ */
+[data-theme="whiteboard"] {
+  --bg: linear-gradient(150deg, #fdf8ee 0%, #f8efdb 100%);
+  --surface: #fffdf6;
+  --surface-2: #fff4c2;
+  --ink: #3a2f1f;
+  --ink-soft: #5a4a33;
+  --muted: #8a7a5c;
+  --line: #e5d9b8;
+  --accent: #c9543f;
+  --on-accent: #fffdf6;
+  --accent-soft: rgba(201, 84, 63, .10);
+  --ok: #4a7c59;
+  --warn: #b07000;
+  --chip: #fff4c2;
+  --code-bg: #f7efdd;
+  --code-ink: #5a4a1f;
+  --tooltip-bg: #3a2f1f;
+  --tooltip-ink: #fffdf6;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(122, 96, 52, .16);
+}
+
+/* 便签质感:卡片描黄边、用米黄面 */
+[data-theme="whiteboard"] .card { border-width: 2px; border-color: #e0b84a; background: var(--surface-2); }
+[data-theme="whiteboard"] .topbar,
+[data-theme="whiteboard"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+button { font: inherit; color: inherit; }
+
+.page {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 56px;
+}
+
+/* ——— 顶栏 ——— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand { font: 800 15px/1.2 var(--font-display); letter-spacing: .02em; }
+.topbar .brand .lens { color: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+.src-toggle {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-display);
+  color: var(--muted);
+  transition: all .2s;
+}
+
+.src-toggle:hover, .src-toggle.active { border-color: var(--accent); color: var(--accent); }
+
+/* 多版本页面切换(渲染多版时由 component_scripts 注入到顶栏;单版页面不出现) */
+.variants { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+.variants .vl { color: var(--muted); font: 600 10.5px/1 var(--font-mono); letter-spacing: .06em; margin-right: 2px; }
+.variants a { color: var(--muted); text-decoration: none; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1 var(--font-display); white-space: nowrap; }
+.variants a:hover { color: var(--accent); border-color: var(--accent); }
+.variants a.cur { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 880px) { .variants .vl { display: none; } }
+@media (max-width: 640px) { .topbar { flex-wrap: wrap; row-gap: 6px; } .variants { order: 9; flex-basis: 100%; margin-right: 0; flex-wrap: wrap; } }
+.topbar .bundle-back { margin-left: 14px; font: 600 12.5px/1 var(--font-mono); color: var(--ink-soft); text-decoration: none; }
+.topbar .bundle-back:hover { color: var(--accent); }
+a.xjump { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+
+.theme-picker {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+}
+
+/* ——— Hero:R 层(何时用这个 skill) ——— */
+.hero { padding: 44px 4px 8px; }
+
+.hero .eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font: 700 13px/1.3 var(--font-display);
+  letter-spacing: .14em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(36px, 5.4vw, 62px);
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.hero .lede {
+  margin: 18px 0 0;
+  max-width: 860px;
+  color: var(--ink-soft);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+
+.hero .thesis {
+  margin-top: 22px;
+  max-width: 860px;
+  border-left: 5px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.hero .thesis strong {
+  display: block;
+  margin-bottom: 6px;
+  font: 800 15px/1.3 var(--font-display);
+  color: var(--accent);
+}
+
+.hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
+
+/* ——— 流程带(workflow rail):节点语义分组,不放渲染元数据 ——— */
+.rail-wrap {
+  position: sticky;
+  top: 49px;
+  z-index: 80;
+  margin: 26px 0 24px;
+  padding: 14px 4px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.rail::-webkit-scrollbar { height: 6px; }
+.rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.rail .group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 20px 10px 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.rail .group::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  color: var(--muted);
+  font: 700 10.5px/1 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.rail .group.main { border-style: solid; border-color: var(--accent); }
+.rail .group.main::before { color: var(--accent); }
+
+.node-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 108px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) - 3px);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  flex: 0 0 auto;
+}
+
+.node-chip .nid { color: var(--muted); font: 700 10.5px/1 var(--font-mono); letter-spacing: .06em; }
+.node-chip .nt { font: 700 13px/1.25 var(--font-display); }
+.node-chip .sub { color: var(--muted); font: 500 10.5px/1.2 var(--font-display); }
+
+.node-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.node-chip.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.node-chip.active .nid, .node-chip.active .sub { color: var(--on-accent); opacity: .75; }
+
+.rail .arrow { align-self: center; color: var(--muted); font: 700 15px/1 var(--font-mono); flex: 0 0 auto; padding: 0 1px; }
+.rail .arrow.big { color: var(--accent); font-size: 19px; }
+
+/* ——— 主体:侧栏 + 详情 ——— */
+.layout {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidebar { position: sticky; top: 148px; display: grid; gap: 16px; }
+
+/* grid 子项默认 min-width:auto,会被子流程图的 max-content 画布撑破 */
+#panels { min-width: 0; }
+
+.side-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 14px 10px;
+}
+
+.side-card .side-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  letter-spacing: .12em;
+}
+
+.toc { display: grid; gap: 2px; }
+
+.toc button {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s;
+}
+
+.toc button:hover, .toc button.active { background: var(--accent-soft); }
+.toc .tid { color: var(--muted); font: 700 11px/1.4 var(--font-mono); }
+.toc button.active .tid { color: var(--accent); }
+.toc .tt { font: 600 13px/1.35 var(--font-display); }
+.toc .tl { color: var(--muted); font: 500 10px/1.4 var(--font-mono); }
+
+.res-list { display: grid; gap: 6px; padding-bottom: 4px; }
+
+.res-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  font: 500 11.5px/1.35 var(--font-mono);
+  word-break: break-all;
+}
+
+.res-item .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--ok); }
+.res-item.missing .dot { background: var(--warn); }
+.res-empty { color: var(--muted); font: 500 12px/1.5 var(--font-display); padding: 2px 2px 6px; }
+
+/* ——— 详情面板 ——— */
+.panel { display: none; animation: rise .32s ease both; min-width: 0; }
+.panel.active { display: block; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-head { margin: 4px 0 18px; position: relative; }
+.panel-head .ph-id { color: var(--accent); font: 700 12px/1.2 var(--font-mono); letter-spacing: .08em; }
+.panel-head h2 { margin: 6px 0 0; font: 900 28px/1.2 var(--font-display); }
+
+.panel-head .lead {
+  margin: 12px 0 0;
+  max-width: 780px;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+
+/* ——— 通用卡片 ——— */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cards.two { grid-template-columns: repeat(2, 1fr); }
+
+.card {
+  position: relative;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card h3 { margin: 0 0 8px; font: 800 16px/1.3 var(--font-display); }
+.card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.75; }
+.card .when { margin-top: 8px; color: var(--muted); font: 500 12px/1.5 var(--font-display); }
+
+/* ——— 入口/条件分叉卡 ——— */
+.forks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.fork {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 22px 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s;
+  box-shadow: var(--shadow);
+}
+
+.fork:hover { border-color: var(--accent); transform: translateY(-2px); }
+.fork .fk-tag { color: var(--accent); font: 700 12px/1.2 var(--font-display); letter-spacing: .08em; }
+.fork h3 { margin: 8px 0 8px; font: 900 19px/1.3 var(--font-display); }
+.fork p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+.fork .fk-go { display: block; margin-top: 12px; color: var(--accent); font: 700 13px/1.3 var(--font-display); }
+
+/* ——— 子流程图(subflow:HTML 盒子 + SVG 连线层,环画成真实边) ——— */
+.subflow { overflow-x: auto; padding-bottom: 4px; }
+
+.sf-canvas {
+  position: relative;
+  padding: 56px 6px 10px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.sf-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+.sf-row { display: flex; gap: 30px; }
+
+.sf-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 112px;
+  max-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 12.5px/1.25 var(--font-display);
+  text-align: left;
+  flex: 0 0 auto;
+  transition: border-color .15s, transform .15s;
+  box-shadow: var(--shadow);
+}
+
+.sf-node .sn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; color: var(--muted); font: 700 10px/1 var(--font-mono); }
+.sf-node:hover { border-color: var(--accent); transform: translateY(-1px); }
+.sf-node.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sf-node.active .sn { color: var(--on-accent); opacity: .75; }
+
+.ed-f { stroke: var(--muted); stroke-width: 1.5; }
+.ed-l { stroke: var(--warn); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; animation: dashflow 1.1s linear infinite; }
+.ed-t { fill: var(--warn); font: 700 10.5px var(--font-display); }
+.mk-f { fill: var(--muted); }
+.mk-l { fill: var(--warn); }
+
+@keyframes dashflow { to { stroke-dashoffset: -18; } }
+
+/* ——— step 内交互组件 ——— */
+pre.code {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 12.5px/1.7 var(--font-mono);
+  overflow-x: auto;
+}
+
+code {
+  padding: 1.5px 5px;
+  border-radius: 5px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 92% var(--font-mono);
+}
+
+pre.code code { padding: 0; background: transparent; }
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 11px/1.2 var(--font-display);
+  cursor: pointer;
+  opacity: 0;
+  transition: all .15s;
+}
+
+pre.code:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.scroll { overflow-x: auto; margin: 10px 0; }
+
+table.tbl { width: 100%; border-collapse: collapse; font: 13.5px/1.6 var(--font-body); }
+.tbl th, .tbl td { padding: 9px 11px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tbl th { background: var(--surface-2); font: 700 12.5px/1.4 var(--font-display); white-space: nowrap; }
+.tbl td { color: var(--ink-soft); }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+
+table.rowsel tbody tr { cursor: pointer; }
+table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+
+.row-echo {
+  margin: 8px 0 2px;
+  padding: 9px 13px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--ink);
+  font: 700 13.5px/1.6 var(--font-display);
+}
+
+.checklist { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.checklist li { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+.checklist label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.checklist input { accent-color: var(--accent); width: 15px; height: 15px; flex: 0 0 auto; }
+.checklist input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.ck-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 700 12px/1.6 var(--font-display);
+}
+
+.ck-badge.done { background: var(--ok); color: #ffffff; }
+
+.acc { margin: 10px 0; display: grid; gap: 6px; }
+.acc details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.acc summary { padding: 10px 14px; cursor: pointer; font: 700 13.5px/1.4 var(--font-display); list-style: none; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary::before { content: "+"; display: inline-block; width: 16px; color: var(--accent); font-weight: 900; }
+.acc details[open] summary::before { content: "−"; }
+.acc .acc-body { padding: 0 14px 12px 30px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+
+.tree { margin: 10px 0; display: grid; gap: 4px; }
+.tree details { border: 1px solid var(--line); border-radius: 7px; background: var(--code-bg); }
+.tree summary { padding: 8px 12px; cursor: pointer; font: 600 12.5px/1.4 var(--font-mono); color: var(--code-ink); list-style: none; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree .tree-desc { padding: 0 12px 10px 26px; color: var(--ink-soft); font: 400 12.5px/1.6 var(--font-display); }
+
+/* ——— 规则列表(错误处理/边界类内容) ——— */
+.rules { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+
+.rules li {
+  position: relative;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.rules li strong { color: var(--ink); }
+.rules li .fb { display: block; margin-top: 7px; }
+
+/* ——— explain-card(子步骤详情) ——— */
+.explain-card {
+  display: none;
+  position: relative;
+  margin-top: 12px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.explain-card.active { display: block; animation: rise .28s ease both; }
+.explain-card h4 { margin: 0 0 10px; font: 800 16px/1.3 var(--font-display); }
+.explain-card p { margin: 0 0 10px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.8; }
+.explain-card ul, .explain-card ol { margin: 0 0 10px; padding-left: 22px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.85; }
+.explain-card li { margin-bottom: 3px; }
+.explain-card .hint { color: var(--muted); font-size: 13px; }
+
+/* ——— 环说明卡与跳转 ——— */
+p.loop-note {
+  padding: 9px 13px;
+  border: 1px dashed var(--warn);
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.jump {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font: 700 12px/1.5 var(--font-display);
+  color: var(--accent);
+  vertical-align: baseline;
+}
+
+.jump:hover { border-color: var(--accent); }
+
+/* ——— 出处标注(A:margin 细条 + tooltip;B:全局开关) ——— */
+[data-source] { position: relative; }
+
+.card[data-source], .explain-card[data-source], .fork[data-source],
+.rules li[data-source], .hero .thesis[data-source], .hero .lede[data-source] {
+  border-left: 3px solid var(--line);
+  transition: border-left-color .2s;
+}
+
+.card[data-source]:hover, .explain-card[data-source]:hover, .fork[data-source]:hover,
+.rules li[data-source]:hover, .hero .thesis[data-source]:hover, .hero .lede[data-source]:hover {
+  border-left-color: var(--accent);
+}
+
+.hero .thesis[data-source] { border-left-width: 5px; border-left-color: var(--accent); }
+
+[data-source]::after {
+  content: attr(data-source);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 5px);
+  padding: 3px 9px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  font: 600 10.5px/1.4 var(--font-mono);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 60;
+}
+
+[data-source]:hover::after { opacity: 1; }
+
+body.show-sources .card[data-source]::before,
+body.show-sources .explain-card[data-source]::before,
+body.show-sources .fork[data-source]::before,
+body.show-sources .rules li[data-source]::before {
+  content: attr(data-source);
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font: 600 10.5px/1.4 var(--font-mono);
+}
+
+/* ——— 追问按钮 + 弹窗 ——— */
+.deep-dive-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-display);
+  opacity: 0;
+  transition: all .2s;
+  z-index: 2;
+}
+
+.card:hover .deep-dive-btn, .explain-card:hover .deep-dive-btn,
+.fork:hover .deep-dive-btn, .rules li:hover .deep-dive-btn { opacity: .7; }
+
+.deep-dive-btn:hover { opacity: 1 !important; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+.dd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, .38);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-overlay.active { display: flex; }
+
+.dd-popover {
+  width: min(540px, calc(100% - 32px));
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.dd-popover .dd-title { margin: 0 0 6px; font: 800 19px/1.3 var(--font-display); }
+.dd-popover .dd-ctx { margin: 0 0 14px; color: var(--muted); font: 500 12.5px/1.6 var(--font-display); }
+
+.dd-popover textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: 14.5px/1.6 var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.dd-actions { display: flex; gap: 8px; }
+
+.dd-submit {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+}
+
+.dd-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  color: var(--muted);
+}
+
+.dd-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 26px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  border-radius: 8px;
+  font: 600 13px/1.4 var(--font-display);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.dd-toast.show { opacity: 1; }
+
+/* ——— 上一步/下一步 ——— */
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 26px; }
+
+.pager button {
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  transition: all .18s;
+  max-width: 48%;
+  text-align: left;
+}
+
+.pager button:hover { border-color: var(--accent); color: var(--accent); }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager button:disabled:hover { border-color: var(--line); color: inherit; }
+.pager .dir { display: block; color: var(--muted); font: 600 10.5px/1.3 var(--font-mono); margin-bottom: 3px; }
+
+/* ——— 页脚 ——— */
+.footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 12.5px/1.8 var(--font-display);
+}
+
+/* ——— 响应式 ——— */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .side-card.toc-card { display: none; }
+  .cards, .cards.two, .forks { grid-template-columns: 1fr; }
+  .rail-wrap { top: 45px; }
+  .hero h1 { font-size: 38px; }
+}
+
+@media (max-width: 520px) {
+  .page { width: calc(100% - 22px); }
+  .hero { padding-top: 26px; }
+  .hero h1 { font-size: 32px; }
+  .panel-head h2 { font-size: 23px; }
+  .sf-row { gap: 22px; }
+}
+
+/* ——— 组件专属附加样式(渲染时按需注入) ——— */
+/* ——— 语义层(s2w-semantics/2)视觉词汇:无语义数据时这些选择器不会出现,对 /1 页面静默 ——— */
+.hero .thesis .wsa { display: inline-block; margin-top: 10px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); font: 700 11.5px/1.4 var(--font-mono); letter-spacing: .04em; }
+.rail-sem { position: relative; display: grid; gap: 16px; width: max-content; min-width: 100%; }
+.rail-main, .rail-sat { display: flex; align-items: stretch; gap: 6px; }
+.rail-sat { position: relative; display: block; padding: 0; }
+.rail-sat::before { content: attr(data-label); position: absolute; left: 6px; top: 50%; transform: translateY(-50%); color: var(--muted); font: 600 10.5px/1.3 var(--font-display); white-space: nowrap; }
+.rail-sat .node-chip { position: absolute; top: 0; border-style: dashed; opacity: .88; }
+.rail-sat .node-chip.active { border-style: solid; opacity: 1; }
+.rail-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rl-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 4; }
+.rail .arrow.cap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.rail .arrow.cap::after { content: attr(data-cap); color: var(--warn); font: 600 9.5px/1.2 var(--font-display); white-space: nowrap; }
+.sf-node .sf-when { display: block; color: var(--accent); font: 600 9.5px/1.2 var(--font-display); }
+.sf-node .sf-type { display: inline-block; margin-left: auto; color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-node .t-tool { color: var(--accent); } .sf-node .t-gate, .sf-node .t-fb { color: var(--warn); } .sf-node .t-out { color: var(--ok); }
+.sf-node .sf-gate { display: block; margin-top: 3px; color: var(--warn); font: 700 10px/1.2 var(--font-display); }
+.sf-node .sf-imp { color: var(--muted); font: 600 9px/1 var(--font-display); }
+.sf-node.implicit { border-style: dashed; }
+.sf-node.active .sf-type, .sf-node.active .sf-gate, .sf-node.active .sf-imp, .sf-node.active .sf-when { color: var(--on-accent); opacity: .85; }
+.sf-end { align-self: center; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--ink-soft); font: 700 20px/1 var(--font-mono); padding: 0 6px; }
+.sf-end small { color: var(--muted); font: 700 9px/1.2 var(--font-mono); letter-spacing: .08em; }
+.sf-lane { position: absolute; left: 0; right: 0; height: 0; }
+.sf-legend { margin: 2px 0 26px 6px; color: var(--muted); font: 600 10px/1.5 var(--font-display); }
+.sf-ext { position: absolute; top: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; max-width: 208px; padding: 7px 10px; border: 1px dotted var(--muted); border-radius: 8px; background: var(--surface); cursor: pointer; text-align: left; font: 700 12px/1.25 var(--font-display); color: var(--ink); box-shadow: var(--shadow); }
+.sf-ext .xid { color: var(--muted); font: 700 9.5px/1 var(--font-mono); letter-spacing: .06em; }
+.sf-ext small { color: var(--ink-soft); font: 500 10.5px/1.4 var(--font-display); white-space: normal; }
+.sf-ext:hover { border-color: var(--accent); }
+.sf-ext.out { border: 1px dashed var(--warn); }
+.sf-ext.out .xid { color: var(--warn); }
+.sf-ext.xskill { border-style: dashed; text-decoration: none; }
+.sf-ext.xskill .xid { color: var(--accent); }
+.ed-c { fill: none; stroke: var(--accent); stroke-width: 1.6; } .ed-c.inf { stroke-dasharray: 4 3; }
+.ed-ct { fill: var(--accent); font: 700 10.5px var(--font-display); }
+.ed-d { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 3; }
+.ed-x { fill: none; stroke: var(--warn); stroke-width: 1.5; } .ed-x.inf { stroke-dasharray: 4 3; }
+.ed-e { fill: none; stroke: var(--ink-soft); stroke-width: 1.4; } .ed-e.inf { stroke-dasharray: 4 3; }
+.ed-et { fill: var(--ink-soft); font: 600 9.5px var(--font-display); }
+.mk-c { fill: var(--accent); } .mk-d { fill: var(--muted); } .mk-x { fill: var(--warn); } .mk-e { fill: var(--ink-soft); }
+
+/* 连线可点选:单击高亮两端,其余淡出(与组合总览页同一套词汇;淡出只动透明度,四主题通用) */
+.sfe { pointer-events: stroke; transition: opacity .12s ease, stroke-width .12s ease; }
+.sfe:hover, .sfe.focus { stroke-width: 2.6; opacity: 1; }
+.sfe.dim, .sfl.dim { opacity: .18; }
+.sfl { transition: opacity .12s ease; }
+.sf-node, .sf-ext, .sf-end, .node-chip { transition: opacity .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.sf-node.dim, .sf-ext.dim, .sf-end.dim, .node-chip.dim { opacity: .35; }
+.sf-node.focus, .sf-ext.focus, .node-chip.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.sf-end.focus { color: var(--accent); }
+.tbadge { display: inline-block; margin-left: 8px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font: 700 10px/1.3 var(--font-mono); letter-spacing: .06em; vertical-align: middle; }
+.tbadge.t-tool { color: var(--accent); border-color: var(--accent); } .tbadge.t-gate, .tbadge.t-fb { color: var(--warn); border-color: var(--warn); } .tbadge.t-out { color: var(--ok); border-color: var(--ok); }
+.gate-badge { display: inline-block; margin-left: 6px; color: var(--warn); font: 700 11px/1.3 var(--font-display); vertical-align: middle; }
+.goal { margin: 4px 0 8px; color: var(--ink); font-size: 14px; line-height: 1.7; }
+.goal strong { color: var(--accent); margin-right: 4px; }
+.sem-h { margin: 12px 0 4px; color: var(--muted); font: 700 10.5px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sem-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+.sem-list li { margin: 2px 0; }
+.sem-list.fail li::marker { content: "⚠ "; color: var(--warn); }
+.sem-list.tips li::marker { content: "✦ "; color: var(--accent); }
+.qt { display: none; margin-left: 6px; color: var(--muted); font: 500 12px/1.5 var(--font-body); }
+body.show-sources .qt { display: inline; }
+.qt::before { content: "\201C"; } .qt::after { content: "\201D"; }
+.inf { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink-soft); font: 600 10px/1.6 var(--font-display); vertical-align: middle; }
+.flow { margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--ink-soft); font-size: 13px; line-height: 1.9; }
+.flow .fk { display: inline-block; min-width: 14px; color: var(--muted); font: 700 11px var(--font-mono); margin-right: 4px; }
+.gov { margin: 6px 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--accent-soft); color: var(--ink-soft); font-size: 13px; line-height: 1.7; border-radius: 0 6px 6px 0; }
+.recon-tbl .w { color: var(--accent); font-weight: 700; } .recon-tbl .nw { color: var(--muted); }
+.recon-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.recon-sum span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font: 600 11.5px/1.4 var(--font-display); color: var(--ink-soft); }
+
+/* none */
+</style>
+</head>
+<body data-theme="docs">
+
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand"><span class="lens">◈</span> skill-to-webpage</span>
+    <span class="spacer"></span>
+    <button id="srcToggle" class="src-toggle" title="显示/隐藏出处">显示出处</button>
+    <select id="themePicker" class="theme-picker" title="切换主题">
+      <option value="docs">简洁文档</option>
+      <option value="blueprint">技术蓝图</option>
+      <option value="ide">终端 IDE</option>
+      <option value="whiteboard">白板手绘</option>
+    </select>
+  </div>
+
+  <!-- Hero:R 层(skill 名 + description 原文 + 执行总纲) -->
+  <header class="hero">
+    <p class="eyebrow">SKILL WORKFLOW · 7 NODES · SKILL.md 187 LINES · SEMANTICS BY MERGE(RWSA-LITE) · 206 CLAIMS VERIFIED</p>
+    <h1>skill-to-webpage</h1>
+    <p class="lede" data-source="SKILL.md:3">把一个 Claude Code Skill 拆成本地知识库,再渲染成单文件交互 workflow 页:节点总览(按语义分组)、子流程图(环与跳转画成真实的边)、逐步骤点开、出处行号、追问打包;语义层由任意解析器 skill(可多个)叠加并相互印证。<strong>何时用:</strong>想可视化某个 skill 的执行策略、想用某个解析器分析一个 skill、或想逐步探索它怎么工作时。</p>
+    <div class="thesis" data-source="SKILL.md:8">
+      <strong>执行总纲:静态拆解永远先跑产出目录坐标系,语义层由任意解析器叠加,再合并 → 校验 → 渲染成单文件 HTML</strong>
+      <span>静态拆解永远先跑(零 LLM,产出目录坐标系)→ 语义层由任意解析器叠加(一个失败不影响其他)→ 合并、回原文裁决冲突 → 校验 → 渲染成单文件 HTML → 自动验证 → 交付。这一页就是用 rwsa-lite 解析器对 skill-to-webpage 自己跑出来的结果。</span>
+    </div>
+  </header>
+
+  <!-- 流程带:节点按语义分组(理念/执行/支撑),芯片副标题写节点做什么 -->
+  <div class="rail-wrap">
+    <div class="rail" id="rail">
+      <div class="rail-sem" id="railSem"><svg class="rail-svg" id="railSvg"></svg><div class="rail-main"><div class="group" data-label="R · 触发"><button class="node-chip" data-node="rt"><span class="nid">rt · R</span><span class="nt">何时触发</span><span class="sub">8 类触发信号</span></button></div><span class="arrow big cap" data-cap="进入">⇒</span><div class="group main" data-label="W · 执行主线"><button class="node-chip" data-node="n02"><span class="nid">n02 · W</span><span class="nt">八步编排主线</span><span class="sub">一句话到交付八步</span></button></div><span class="arrow big cap" data-cap="找不到时 ⤓">⇒</span><div class="group" data-label="W · 兜底"><button class="node-chip" data-node="n05"><span class="nid">n05 · W</span><span class="nt">Agent 自任解析器</span><span class="sub">没解析器时自己上</span></button></div></div><div class="rail-sat" data-label="支撑层 S / A · 点线 = 依赖边"><button class="node-chip sat" data-node="n01"><span class="nid">n01 · S</span><span class="nt">六条设计原则</span><span class="sub">六条不可让步的底线 · → Step 3 / Step 4 / Step 5</span></button><button class="node-chip sat" data-node="n03"><span class="nid">n03 · A</span><span class="nt">输出目录约定</span><span class="sub">产物目录长什么样 · → Step 2 / Step 3 / Step 4 / Step 5</span></button><button class="node-chip sat" data-node="n04"><span class="nid">n04 · A</span><span class="nt">文件与脚本分工</span><span class="sub">脚本模板各管什么 · → Step 2 / Step 3 / Step 4</span></button><button class="node-chip sat" data-node="n06"><span class="nid">n06 · S</span><span class="nt">错误处理表</span><span class="sub">出错时怎么降级 · → Step 2 / Step 3 / Step 4 / Step 5</span></button><button class="node-chip sat" data-node="n07"><span class="nid">n07 · S</span><span class="nt">明确不做的事</span><span class="sub">明说不做的三件事 · → Step 0</span></button></div></div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- 侧栏:节点目录(带行号) + 当前节点资源(存在性徽章) -->
+    <aside class="sidebar">
+      <div class="side-card toc-card">
+        <p class="side-title">节点目录</p>
+        <nav class="toc" id="toc">
+          <button data-node="rt"><span class="tid">rt</span><span class="tt">何时触发</span><span class="tl">3</span></button><button data-node="n01"><span class="tid">n01</span><span class="tt">哲学</span><span class="tl">10-18</span></button><button data-node="n02"><span class="tid">n02</span><span class="tt">一句话入口与编排</span><span class="tl">19-103</span></button><button data-node="n03"><span class="tid">n03</span><span class="tt">目录约定</span><span class="tl">104-128</span></button><button data-node="n04"><span class="tid">n04</span><span class="tt">文件结构</span><span class="tl">129-153</span></button><button data-node="n05"><span class="tid">n05</span><span class="tt">阶段 2:临场语义判断(Agent 作为解析器 `agent/` 时)</span><span class="tl">154-168</span></button><button data-node="n06"><span class="tid">n06</span><span class="tt">错误处理</span><span class="tl">169-182</span></button><button data-node="n07"><span class="tid">n07</span><span class="tt">不在本次范围</span><span class="tl">183-187</span></button><button data-node="recon"><span class="tid">⊕</span><span class="tt">印证报告</span><span class="tl">merge(rwsa-lite)</span></button>
+        </nav>
+      </div>
+      <div class="side-card">
+        <p class="side-title">本节点引用的资源</p>
+        <div class="res-list" id="resList"></div>
+      </div>
+    </aside>
+
+    <!-- 详情面板:每个节点一个 <section class="panel" id="p-nXX"> -->
+    <main id="panels">
+      <section class="panel" id="p-rt"><div class="panel-head"><span class="ph-id">rt · R 层 · 路由/激活 · activation · frontmatter</span><h2>何时触发</h2><p class="lead">这是路由层(R):frontmatter description 给出的激活条件,任一出现就进入执行路径。它不是流程步骤,是入口条件。</p></div><div class="card" data-source="SKILL.md:3"><p>把一个 Claude Code Skill(SKILL.md + scripts/templates 等资源)拆解成本地知识库,再渲染成可交互的单文件 workflow HTML 页——节点总览(按语义分组)、子流程图(环与跳转画成真实的边)、逐步骤点开、出处行号标注、追问打包(提问+位置+依赖文件复制给 Agent)。支持用任意解析器 skill(可多个)叠加语义层并相互印证;也支持一整组 skill——出组合总览页(skill 调用图 + 节点调用图)加每个成员一页。当用户想可视化一个 skill 的执行策略/workflow、想看一组 skill 之间怎么互相调用、想用某个解析器分析一个 skill、或想逐步探索某个 skill 怎么工作时使用。</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('何时触发','SKILL.md:3')">?</button></div><p class="sem-h">触发条件(R 层)</p><ul class="rules"><li class="claim" data-source="SKILL.md:3">用户想可视化一个 skill 的执行策略 / workflow <q class="qt">当用户想可视化一个 skill 的执行策略/workflow</q></li><li class="claim" data-source="SKILL.md:3">用户想看一组 skill 之间怎么互相调用 <q class="qt">想看一组 skill 之间怎么互相调用</q></li><li class="claim" data-source="SKILL.md:3">用户想用某个解析器分析一个 skill <q class="qt">想用某个解析器分析一个 skill</q></li><li class="claim" data-source="SKILL.md:3">用户想逐步探索某个 skill 怎么工作 <q class="qt">想逐步探索某个 skill 怎么工作时使用</q></li><li class="claim" data-source="SKILL.md:21">触发句式:使用 &lt;解析器路径或名字&gt; 分析并可视化 &lt;skill 路径&gt; <q class="qt">使用 &lt;解析器路径或名字&gt;[ &lt;更多解析器&gt;] 分析并可视化 &lt;skill 路径&gt;</q></li><li class="claim" data-source="SKILL.md:21">触发句式:可视化这个 skill:&lt;路径&gt; <q class="qt">可视化这个 skill:&lt;路径&gt;</q></li><li class="claim" data-source="SKILL.md:21">触发句式:可视化这组 skill:&lt;组目录&gt;(下辖多个 &lt;成员名&gt;/SKILL.md 的目录) <q class="qt">可视化这组 skill:&lt;组目录&gt;</q></li><li class="claim" data-source="SKILL.md:21">触发句式:把 X 渲染成 workflow 页 <q class="qt">把 X 渲染成 workflow 页</q></li></ul><p class="sem-h">排除条件</p><ul class="rules"><li class="claim" data-source="SKILL.md:185">不做环 / 分支的脚本级自动提取——静态拆解仍零 LLM,语义只来自解析器或 Agent 临场判断 <q class="qt">自动提取(静态拆解仍零 LLM</q></li><li class="claim" data-source="SKILL.md:186">页面内不直接回答追问,追问只打包复制给 Agent <q class="qt">页面内直接得到回答(追问是打包复制给 Agent)</q></li><li class="claim" data-source="SKILL.md:187">不做跨组的站点导航,没有跨组索引页 <q class="qt">但没有跨组索引页</q></li><li class="claim" data-source="SKILL.md:173">目录里没有 SKILL.md 就报错,不硬跑 <q class="qt">目录无 SKILL.md</q></li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n01"><div class="panel-head"><span class="ph-id">n01 · S 层 · 语义/知识 · domain_rules</span><h2>哲学</h2><p class="lead">理念层:静态骨架是坐标系、语义只能叠加、解析器可插拔、冲突回原文、原文与转述分层、单文件零依赖——主线每一步都在兑现这六条。</p></div><div class="card" data-source="SKILL.md:10-18"><ul><li><strong>呈现的是 workflow,不是文档</strong>:主轴是&quot;节点做什么、怎么推进、哪里分叉、哪里成环&quot;。节点总览只放节点语义,渲染元数据(步数/环数)不上主视图。</li><li><strong>静态骨架是坐标系</strong>:阶段 1 纯结构解析(<code>##</code> → 节点,<code>###</code> → 步骤,行号,资源),零 token。任何语义层都只能<strong>叠加</strong>在它上面,不能替换、不能重切;目录与实际流程的差异写进印证区而不是改目录。</li><li><strong>解析器可插拔</strong>:解析器就是普通 skill,用路径或名字指定;握手约定见 <code>references/parser-protocol.md</code>,数据格式见 <code>references/semantics-contract.md</code>。一个失败不影响其他。</li><li><strong>冲突回原文</strong>:多份语义产物不一致时,以 SKILL.md 原文裁决(每条断言都带 <code>source</code> + <code>quote</code>,回读即可)。</li><li><strong>原文与转述分层</strong>:带 <code>data-source</code> 的内容块是逐字原文;分组名、节点副标题、总纲、引语是转述,不冒充引文;页脚披露。</li><li><strong>单文件零依赖</strong>:产出 HTML 内联全部 CSS/JS/主题,无 CDN、无外部字体、不引 Mermaid。</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('哲学','SKILL.md:10-18')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:14">解析器可插拔:就是普通 skill,一个失败不影响其他 <q class="qt">一个失败不影响其他</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:13">语义层只能叠加在静态骨架上,不能替换、不能重切 <q class="qt">不能替换、不能重切</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:15">冲突回原文:多份语义不一致时以 SKILL.md 原文裁决(每条断言都带 source + quote) <q class="qt">以 SKILL.md 原文裁决</q> → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button></li><li class="claim" data-source="SKILL.md:16">原文与转述分层:带 data-source 的块是逐字原文,分组名 / 节点副标题 / 总纲 / 引语是转述,不冒充引文 <q class="qt">分组名、节点副标题、总纲、引语是转述,不冒充引文</q> → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button></li><li class="claim" data-source="SKILL.md:17">单文件零依赖:HTML 内联全部 CSS/JS/主题,无 CDN、无外部字体、不引 Mermaid <q class="qt">无 CDN、无外部字体、不引 Mermaid</q> → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button></li><li class="claim" data-source="SKILL.md:13">Agent 当解析器时也只读静态产物,不重切节点 <q class="qt">任何语义层都只能</q> <span class="inf">推断</span> → <button class="jump" onclick="showStep('n05','e51')">Step 1 读静态骨架</button></li></ul><p class="flow"><span class="fk">◂</span>domain_rules(解析器可插拔、语义只叠加) → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>domain_rules(冲突回原文裁决) → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button><br><span class="fk">◂</span>domain_rules / quality_standards(原文与转述分层 → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button>(语义层只能叠加在静态骨架上,不能替换、不能重切) <span class="inf">推断</span>、<button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button>(冲突回原文:以 SKILL.md 原文裁决)、<button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button>(原文与转述分层、单文件零依赖两条底线约束渲染) <span class="inf">推断</span></p><p class="sem-h">引用的资源</p><ul class="sem-list"><li>references/parser-protocol.md</li><li>references/semantics-contract.md</li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n02"><div class="panel-head"><span class="ph-id">n02 · W 层 · 流程 · main_flow</span><h2>一句话入口与编排</h2><p class="lead">执行主线。Step 0 解析请求 → Step 1 环境自检 → Step 2 静态拆解 → Step 3 逐个解析器 → Step 4 合并排错 → Step 5 渲染 → Step 6 验证 → Step 7 交付;末尾的「重入」规则是回到 Step 2 / Step 5 的捷径。</p></div><div class="card" data-source="SKILL.md:20-22"><p>触发句式(任一):<code>使用 &lt;解析器路径或名字&gt;[ &lt;更多解析器&gt;] 分析并可视化 &lt;skill 路径&gt;</code> · <code>可视化这个 skill:&lt;路径&gt;</code> · <code>可视化这组 skill:&lt;组目录&gt;</code>(组目录 = 下辖多个 <code>&lt;成员名&gt;/SKILL.md</code> 的目录,出组合总览页 + 每个成员一页)· <code>把 X 渲染成 workflow 页</code>。Agent 全程接管,<strong>顺序执行以下 Step,已在请求里给出的信息不重复问</strong>。</p></div><div class="stepper" id="st-n02"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node" data-x="e21"><span class="sn">0<span class="sf-type ">PARSE</span></span><span class="st">解析请求</span><span class="sf-gate">⏸ 需用户确认</span></button><button class="sf-node" data-x="e22"><span class="sn">1<span class="sf-type t-gate">VALIDATE</span></span><span class="st">环境自检</span><span class="sf-gate">⏸ 需用户确认</span></button><button class="sf-node" data-x="e23"><span class="sn">2<span class="sf-type t-tool">TOOL_CALL</span></span><span class="st">静态抽取 → `static/`</span></button><button class="sf-node" data-x="e24"><span class="sn">3<span class="sf-type t-tool">TOOL_CALL</span></span><span class="st">解析器抽取(逐个)→ `&lt;解析器名&gt;/`</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node" data-x="e25"><span class="sn">4<span class="sf-type ">TRANSFORM</span></span><span class="st">合并与排错 → `merged/`</span></button><button class="sf-node" data-x="e26"><span class="sn">5<span class="sf-type ">GENERATE</span></span><span class="st">渲染</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node" data-x="e27"><span class="sn">6<span class="sf-type t-gate">VALIDATE</span></span><span class="st">验证</span><span class="sf-gate">◆ 验证闸口</span></button><button class="sf-node" data-x="e28"><span class="sn">7<span class="sf-type t-out">OUTPUT</span></span><span class="st">交付</span></button><span class="sf-end">⦿<small>END</small></span></div><div class="sf-lane"><button class="sf-ext in" data-at="e21" data-inf="0" onclick="showNode('n07')"><span class="xid">n07 · S</span><span class="xt">明确不做的事</span><small>范围边界:解析请求时排除的三件事 → Step 0</small></button><button class="sf-ext in" data-at="e23,e24,e25" data-inf="0,0,0" onclick="showNode('n04')"><span class="xid">n04 · A</span><span class="xt">文件与脚本分工</span><small>domain_rules / failure_modes(阶段 1 切分规则与无 → Step 2 · criteria(validate_semantics.py 的校验口径) → Step 3 · domain_rules(合并规则:静态赢结构) → Step 4</small></button><button class="sf-ext in" data-at="e23,e24,e25,e26" data-inf="0,0,0,0" onclick="showNode('n06')"><span class="xid">n06 · S</span><span class="xt">错误处理表</span><small>failure_modes(无 ## 标题 / 无 ### 子标题的退化) → Step 2 · failure_modes(解析器作废 / 整体回落 / 单条作废) → Step 3 · failure_modes(解析器之间冲突的处理) → Step 4 · failure_modes(资源缺失标&quot;缺失&quot;不中断) → Step 5</small></button><button class="sf-ext in" data-at="e23,e24,e25,e26" data-inf="0,0,0,0" onclick="showNode('n03')"><span class="xid">n03 · A</span><span class="xt">输出目录约定</span><small>outputs(static/ 与 bundle 产物布局) → Step 2 · outputs(每个解析器一个文件夹) → Step 3 · outputs(merged/ 的两个产物) → Step 4 · outputs(根目录 = merged 版) → Step 5</small></button><button class="sf-ext in" data-at="e24,e26" data-inf="0,0" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">Agent 自任解析器</span><small>agent/semantics.json 同样走 Step 3 的验收 → Step 3 · governance(JS 安全规则) → Step 5</small></button><button class="sf-ext in" data-at="e24,e25,e26" data-inf="0,0,0" onclick="showNode('n01')"><span class="xid">n01 · S</span><span class="xt">六条设计原则</span><small>domain_rules(解析器可插拔、语义只叠加) → Step 3 · domain_rules(冲突回原文裁决) → Step 4 · domain_rules / quality_standards(原文与转述分层 → Step 5</small></button><button class="sf-ext out" data-from="e24" data-inf="0" onclick="showStep('n05','e51')"><span class="xid">n05 · W</span><span class="xt">Agent 自任解析器</span><small>← Step 3 没有外部解析器但要语义层 → Agent 按「阶段 2」临场判断</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e21" data-source="SKILL.md:23-30"><h4>Step 0 · 解析请求 <span class="tbadge ">PARSE</span> <span class="gate-badge">⏸ 需用户确认</span></h4><p class="goal" data-source="SKILL.md:23"><strong>目标</strong> 从一句话请求里解出 skill 路径、解析器列表、主题、输出目录与要出哪几版 HTML <q class="qt">解析请求</q></p><p class="sem-h">输入</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:21">四种触发句式之一(单 skill / 组目录 / 指定解析器 / 渲染成 workflow 页) <q class="qt">触发句式(任一)</q></li></ul><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:25">skill 路径必填,必须是含 SKILL.md 的目录;没给就问 <q class="qt">含 `SKILL.md` 的目录;没给就问</q></li><li class="claim" data-source="SKILL.md:26">解析器列表可空,按用户给的顺序记录;给路径直接用,给名字先在三处 skills 目录找同名目录 <q class="qt">按用户给的顺序记录。给的是路径 → 直接用</q></li><li class="claim" data-source="SKILL.md:27">初始主题四选一,默认 docs <q class="qt">`docs`(默认)/ `blueprint` / `ide` / `whiteboard`</q></li><li class="claim" data-source="SKILL.md:28">输出目录默认 ./output/&lt;skill名&gt;/ <q class="qt">默认 `./output/&lt;skill名&gt;/`</q></li><li class="claim" data-source="SKILL.md:29">用 AskUserQuestion 多选出哪几版 HTML,选项按序列出 merged(默认选中)、static、以及每个解析器各一版 <q class="qt">选项按序列出 `merged`(合并结果,**默认选中**)</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:21">Agent 全程接管、顺序执行 Step,已在请求里给出的信息不重复问 <q class="qt">顺序执行以下 Step,已在请求里给出的信息不重复问</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck21c">0/1</span></p><ul class="checklist" id="ckl21c"><li data-source="SKILL.md:29"><label><input type="checkbox"><span>多选结果记为版本列表,第一个就是主页面 <q class="qt">多选结果记为版本列表,第一个为主页面</q></span></label></li></ul><p class="sem-h">技巧</p><ul class="sem-list tips"><li class="claim" data-source="SKILL.md:29">用户在触发句里已经说了要出哪几版就不再问 <q class="qt">用户在触发句里说了</q></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:26">按名字找不到解析器目录时,grep 这些目录下 description 含 s2w-semantics/ 的 skill 供用户选 <q class="qt">找不到再 grep 这些目录下 `description` 含 `s2w-semantics/` 的 skill 供用户选</q></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:29">AskUserQuestion(multiSelect: true)选版本</pre><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:26">按名字找解析器的三处目录:.agents/skills/、.claude/skills/、~/.claude/skills/ <q class="qt">在 `.agents/skills/`、`.claude/skills/`、`~/.claude/skills/` 找同名目录</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:23-30</summary><div class="acc-body"><ol><li><strong>skill 路径</strong>(必填):含 <code>SKILL.md</code> 的目录;没给就问。</li><li><strong>解析器列表</strong>(可空):按用户给的顺序记录。给的是路径 → 直接用;给的是名字 → 在 <code>.agents/skills/</code>、<code>.claude/skills/</code>、<code>~/.claude/skills/</code> 找同名目录,找不到再 grep 这些目录下 <code>description</code> 含 <code>s2w-semantics/</code> 的 skill 供用户选。没给 → 不跑外部解析器(Agent 可按「阶段 2」自己当解析器,见 Step 3)。</li><li><strong>初始主题</strong>:<code>docs</code>(默认)/ <code>blueprint</code> / <code>ide</code> / <code>whiteboard</code>。</li><li><strong>输出目录</strong>:默认 <code>./output/&lt;skill名&gt;/</code>。</li><li><strong>出哪几版 HTML</strong>(AskUserQuestion,<code>multiSelect: true</code>):选项按序列出 <code>merged</code>(合并结果,<strong>默认选中</strong>)、<code>static</code>(静态基线,不吃语义)、以及用户提到的每个解析器各一版(按用户给的顺序,如 <code>my-parser</code>)。用户在触发句里说了(&quot;出 merged 和 static 两版&quot;)就不问。多选结果记为版本列表,第一个为主页面。</li></ol></div></details></div><p class="flow"><span class="fk">⇢</span>请求里没给解析器列表 → 不跑外部解析器,Agent 按「阶段 2」自己当解析器 → <button class="jump" onclick="showNode('n05')">n05 Agent 自任解析器</button><br><span class="fk">⤓</span>按名字找不到同名解析器目录 → 改 grep description 含 s2w-semantics/ 的 skill 供用户选<br><span class="fk">⇢</span>只换主题、改转述或补出另一版 → 直接 Step 5 → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e21')">Step 0 解析请求</button>(按名字找不到同名解析器目录 → 改 grep description 含 s2w-semantics/ 的 skill 供用户选)、<button class="jump" onclick="showNode('n07')">n07 明确不做的事</button>(范围边界:解析请求时排除的三件事)</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 0 Step 0 · 解析请求','SKILL.md:23-30')">?</button></div><div class="explain-card" id="e22" data-source="SKILL.md:31-34"><h4>Step 1 · 环境自检 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">⏸ 需用户确认</span></h4><p class="goal" data-source="SKILL.md:31"><strong>目标</strong> 自检 python3 与自动验证链(node + playwright + chromium)是否齐备 <q class="qt">环境自检</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:33">node + playwright + chromium 只有 Step 6 自动验证才需要 <q class="qt">仅自动验证需要</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck22c">0/1</span></p><ul class="checklist" id="ckl22c"><li data-source="SKILL.md:33"><label><input type="checkbox"><span>python3 ≥ 3.10 是硬必需,缺失只告知用户自行安装 <q class="qt">`python3` ≥ 3.10 必需(缺失则告知自行安装)</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:33">用户拒绝安装 playwright → 自动验证不可用,改人工核对清单 <q class="qt">拒绝则改人工核对清单</q></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:33">缺失时必须先征得同意再装,不得擅自下载 130MB 依赖 <q class="qt">缺失时**先征得同意**再装</q></div><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:33">npm i --no-save playwright &amp;&amp; npx playwright install chromium(约 130MB)</pre><div class="acc"><details><summary>原文 · SKILL.md:31-34</summary><div class="acc-body"><p><code>python3</code> ≥ 3.10 必需(缺失则告知自行安装);<code>node</code> + <code>playwright</code> + chromium 仅自动验证需要,缺失时<strong>先征得同意</strong>再装(<code>npm i --no-save playwright &amp;&amp; npx playwright install chromium</code>,约 130MB),拒绝则改人工核对清单。</p></div></details></div><p class="flow"><span class="fk">⇢</span>static/ 在且源未变 → 跳过 Step 2 → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">⤓</span>拒绝装 playwright → Step 6 自动验证换成人工核对清单 → <button class="jump" onclick="showStep('n02','e27')">Step 6 验证</button> <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 Step 1 · 环境自检','SKILL.md:31-34')">?</button></div><div class="explain-card" id="e23" data-source="SKILL.md:35-54"><h4>Step 2 · 静态抽取 → `static/` <span class="tbadge t-tool">TOOL_CALL</span></h4><p class="goal" data-source="SKILL.md:35"><strong>目标</strong> 跑 extract.py 产出 static/ 目录坐标系,并报告节点数 <q class="qt">静态抽取 → `static/`</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:41">跑完报告节点数 <q class="qt">报告节点数</q></li><li class="claim" data-source="SKILL.md:43">组模式:逐成员按拓扑顺序(被引用者先)走 Step 3–6,validate/merge 都加 --bundle,语义用 s2w-semantics/3 <q class="qt">对每个成员按拓扑顺序(被引用者先)走 Step 3–6</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:152">阶段 1 零 LLM 切法:frontmatter 提 R 层、## 切节点(围栏内不误切)、&lt;3 行短节点并入邻居、记行号、查五类资源存在性、CRLF/BOM 归一 <q class="qt">&lt;3 行短节点并入邻居</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck23c">0/1</span></p><ul class="checklist" id="ckl23c"><li data-source="SKILL.md:41"><label><input type="checkbox"><span>static/ 已存在且源 SKILL.md 未变(sha256 同)即可复用,不必重跑 <q class="qt">已存在且源 SKILL.md 未变(sha256 同)→ 可复用</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:152">目录里没有 SKILL.md → 报错,不硬跑 <q class="qt">目录无 SKILL.md → 报错不硬跑</q></li><li class="claim" data-source="SKILL.md:174">SKILL.md 无任何 ## 标题 → 退化成单一 Overview 节点 <q class="qt">单一 Overview 节点,页面退化为单节点详情</q></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:38">python3 scripts/extract.py &lt;skill目录&gt; --output-dir output/&lt;skill名&gt; --name static</pre><pre class="code" data-source="SKILL.md:43">组目录改用 python3 scripts/extract_bundle.py &lt;组目录&gt; --output-dir output/&lt;组名&gt;</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:108">static/:INDEX.md · nodes/ · full_text.md · metadata.json <q class="qt">坐标系(INDEX.md · nodes/ · full_text.md · metadata.json)</q></li><li class="claim" data-source="SKILL.md:121-122">组模式还产出 bundle.json 组清单与 bundle/static/cross-refs.json 跨引用事实表 <q class="qt">跨引用事实表(零 LLM;kind = token / path / name / word)</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:35-54</summary><div class="acc-body"><pre class="code">python3 scripts/extract.py &lt;skill目录&gt; --output-dir output/&lt;skill名&gt; --name static</pre>
+<p>报告节点数。<code>static/</code> 已存在且源 SKILL.md 未变(sha256 同)→ 可复用。</p>
+<p><strong>组目录(bundle)时</strong>:<code>python3 scripts/extract_bundle.py &lt;组目录&gt; --output-dir output/&lt;组名&gt;</code> 代替 <code>extract.py</code>;之后对每个成员按拓扑顺序(被引用者先)走 Step 3–6,<code>validate_semantics.py</code> / <code>merge_semantics.py</code> 都加 <code>--bundle output/&lt;组名&gt;/bundle.json</code>,语义用 <code>s2w-semantics/3</code>(跨 skill 边写 <code>&lt;skill&gt;:nXX[.k]</code> 端点,<code>delegate</code> 类型);全部成员合并完成后<strong>再对每个成员重跑一遍 <code>render.py</code></strong>——成员页的跨 skill 入边是渲染时从兄弟的 <code>merged/</code> 现取的快照,先渲染的成员看不到后合并的调用方,不补这一遍就会缺入边:</p>
+<pre class="code">for m in $(python3 -c &quot;import json;print(*[m[&#x27;name&#x27;] for m in json.load(open(&#x27;output/&lt;组名&gt;/bundle.json&#x27;))[&#x27;members&#x27;]])&quot;); do
+  python3 scripts/render.py &quot;output/&lt;组名&gt;/$m&quot; --skill-dir &quot;&lt;组目录&gt;/$m&quot; --variants merged static
+done
+python3 scripts/render_bundle.py output/&lt;组名&gt;        # 再出总览页
+node scripts/verify-page.js output/&lt;组名&gt;/&lt;组名&gt;-workflow.html   # 13 项</pre>
+<p>总览页的转述层放 <code>output/&lt;组名&gt;/overrides.json</code>,render_bundle.py 不给 <code>--overrides</code> 时自动读它(显式给了却不存在会报错)。</p></div></details></div><p class="flow"><span class="fk">⇢</span>某解析器产物在且 sha256 一致 → 复用,跳过该解析器的抽取 → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button> <span class="inf">推断</span><br><span class="fk">⦿</span>目录里没有 SKILL.md → 报错,不硬跑 → END <span class="inf">推断</span><br><span class="fk">◂</span>阶段 1 静态拆解的切分规则写在「文件结构」节点里 → <button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button> <span class="inf">推断</span><br><span class="fk">◂</span>静态抽取的报错场景(无 SKILL.md / 无 ## 标题 / 无 ### 子标题) → <button class="jump" onclick="showNode('n06')">n06 错误处理表</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button>(domain_rules / failure_modes(阶段 1 切分规则与无)、<button class="jump" onclick="showNode('n06')">n06 错误处理表</button>(failure_modes(无 ## 标题 / 无 ### 子标题的退化))、<button class="jump" onclick="showNode('n03')">n03 输出目录约定</button>(outputs(static/ 与 bundle 产物布局))</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 Step 2 · 静态抽取 → `static/`','SKILL.md:35-54')">?</button></div><div class="explain-card" id="e24" data-source="SKILL.md:55-65"><h4>Step 3 · 解析器抽取(逐个)→ `&lt;解析器名&gt;/` <span class="tbadge t-tool">TOOL_CALL</span> <span class="gate-badge">◆ 验证闸口</span></h4><p class="goal" data-source="SKILL.md:55"><strong>目标</strong> 对列表里每个解析器完成加载、交付三样输入、验收,一个个来互不影响 <q class="qt">解析器抽取(逐个)</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:59">加载:Skill 工具按名字找得到就用;否则直接读它的 SKILL.md 并按其步骤执行,两者等价 <q class="qt">直接读取其 SKILL.md 并按其步骤执行</q></li><li class="claim" data-source="SKILL.md:60">交给它三样:源 skill 目录绝对路径、static/ 绝对路径、它自己的输出目录(先创建),并附契约路径 <q class="qt">源 skill 目录绝对路径、`static/` 绝对路径</q></li><li class="claim" data-source="SKILL.md:61">验收:跑 validate_semantics.py 核对产物 <q class="qt">python3 scripts/validate_semantics.py output/&lt;skill名&gt;/&lt;解析器名&gt;</q></li><li class="claim" data-source="SKILL.md:62">跑完一个换下一个解析器,彼此互不影响 <q class="qt">下一个解析器,互不影响</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:14">解析器可插拔:就是普通 skill,一个失败不影响其他 <q class="qt">一个失败不影响其他</q></li><li class="claim" data-source="SKILL.md:13">语义层只能叠加在静态骨架上,不能替换、不能重切 <q class="qt">不能替换、不能重切</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck24c">0/2</span></p><ul class="checklist" id="ckl24c"><li data-source="SKILL.md:61"><label><input type="checkbox"><span>整体回落 → 该解析器作废并记录原因;单条作废只减条目不废整份 <q class="qt">整体回落 → 该解析器作废并记录原因;单条作废只减条目</q></span></label></li><li data-source="SKILL.md:135"><label><input type="checkbox"><span>校验口径:schema / sha256 / 行数 / 每条 quote 逐行回读 / 端点与序号 / 派生视图与边一致 <q class="qt">schema / sha256 / 行数 / 每条 `quote` 逐行回读 / 端点与序号 / 派生视图与边一致</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:176">解析器找不到 / 读不到 SKILL.md → 该解析器作废并告知,其余照跑 <q class="qt">该解析器作废并告知,其余照跑</q></li><li class="claim" data-source="SKILL.md:177">产物 JSON 非法 / schema 不符 / sha256 过期 / 行数不符 / layers 未覆盖 / unanchored 非空 → 整体作废 <q class="qt">该解析器整体作废,告知原因</q></li><li class="claim" data-source="SKILL.md:178">个别 claim 越界、缺 source、quote 回读对不上、派生视图无对应边 → 仅作废该条,交付时列出 <q class="qt">仅作废该条,交付时列出</q></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:61">python3 scripts/validate_semantics.py &lt;输出目录&gt; --static &lt;static目录&gt; --skill-dir &lt;skill目录&gt;</pre><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:57">references/parser-protocol.md:解析器握手(目录约定、三个输入、验收、合并规则) <q class="qt">references/parser-protocol.md</q></li><li class="claim" data-source="SKILL.md:60">references/semantics-contract.md:语义数据格式 s2w-semantics/2(组合扩展 /3) <q class="qt">references/semantics-contract.md</q></li></ul><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:109">每个解析器一个文件夹:semantics.json(必需)+ 它的报告 <q class="qt">每个解析器一个文件夹:semantics.json(必需)+ 它的报告</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:55-65</summary><div class="acc-body"><p>对列表里每个解析器,按 <code>references/parser-protocol.md</code>:</p>
+<ol><li><strong>加载</strong>:Skill 工具能按名字找到就用;否则<strong>直接读取其 SKILL.md 并按其步骤执行</strong>(装在 <code>.agents/skills/</code> 等未注册目录时必然如此,两者等价)。</li><li><strong>交给它三样东西</strong>:源 skill 目录绝对路径、<code>static/</code> 绝对路径、它自己的输出目录 <code>output/&lt;skill名&gt;/&lt;解析器名&gt;/</code>(先创建);附契约路径 <code>references/semantics-contract.md</code>。</li><li><strong>验收</strong>:<code>python3 scripts/validate_semantics.py output/&lt;skill名&gt;/&lt;解析器名&gt; --static output/&lt;skill名&gt;/static --skill-dir &lt;skill目录&gt;</code>。整体回落 → 该解析器作废并记录原因;单条作废只减条目。</li><li>下一个解析器,互不影响。</li></ol>
+<p><strong>没有外部解析器但要语义层时</strong>:Agent 自己按下方「阶段 2 · 临场语义判断」产出 <code>output/&lt;skill名&gt;/agent/semantics.json</code>(<code>/1</code> 子集即可),同样走验收;<code>agent</code> 就是一个普通解析器名。</p></div></details></div><p class="flow"><span class="fk">⤓</span>没有外部解析器但要语义层 → Agent 按「阶段 2」临场判断 → <button class="jump" onclick="showNode('n05')">n05 Agent 自任解析器</button><br><span class="fk">◂</span>语义层只能叠加在静态骨架上,不能替换、不能重切 → <button class="jump" onclick="showNode('n01')">n01 六条设计原则</button> <span class="inf">推断</span><br><span class="fk">◂</span>解析器握手协议 references/parser-protocol.md → <button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button> <span class="inf">推断</span><br><span class="fk">◂</span>解析器找不到 / 产物整体回落 / 单条作废的处理规则 → <button class="jump" onclick="showNode('n06')">n06 错误处理表</button><br><span class="fk">↻</span>还有下一个解析器,互不影响(自环)<br><span class="fk">⇢</span>0 个可用解析器 → 跳过 Step 4,直接渲染静态基线 → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n05','e52')">Step 2 产出 agent/semantics.json(四项)</button>(agent/semantics.json 同样走 Step 3 的验收)、<button class="jump" onclick="showNode('n01')">n01 六条设计原则</button>(domain_rules(解析器可插拔、语义只叠加))、<button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button>(criteria(validate_semantics.py 的校验口径))、<button class="jump" onclick="showNode('n06')">n06 错误处理表</button>(failure_modes(解析器作废 / 整体回落 / 单条作废))、<button class="jump" onclick="showNode('n03')">n03 输出目录约定</button>(outputs(每个解析器一个文件夹))</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 3 Step 3 · 解析器抽取(逐个)→ `<解析器名>/`','SKILL.md:55-65')">?</button></div><div class="explain-card" id="e25" data-source="SKILL.md:66-73"><h4>Step 4 · 合并与排错 → `merged/` <span class="tbadge ">TRANSFORM</span></h4><p class="goal" data-source="SKILL.md:66"><strong>目标</strong> 把多个解析器的语义合并成 merged/,并逐处冲突回原文裁决 <q class="qt">合并与排错</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:72">读 merged/merge-report.md,每处冲突回读 static/full_text.md 原文裁决 <q class="qt">每处冲突回读 `static/full_text.md` 原文裁决</q></li><li class="claim" data-source="SKILL.md:72">裁决结论改进 merged/semantics.json,或加 --prefer &lt;名&gt; 重跑,并记下依据行号 <q class="qt">把结论改进 `merged/semantics.json`(或加 `--prefer &lt;名&gt;` 重跑)</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:136">合并规则:静态赢结构,一致采纳、独有标来源、冲突记表并暂选 <q class="qt">静态赢结构,一致采纳、独有标来源、冲突记表并暂选</q></li><li class="claim" data-source="SKILL.md:15">冲突回原文:多份语义不一致时以 SKILL.md 原文裁决(每条断言都带 source + quote) <q class="qt">以 SKILL.md 原文裁决</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck25c">0/1</span></p><ul class="checklist" id="ckl25c"><li data-source="SKILL.md:72"><label><input type="checkbox"><span>0 个可用解析器 → 跳过本步,后续直接渲染静态基线 <q class="qt">0 个可用解析器 → 跳过本步,后续渲染静态基线</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:179">解析器之间冲突 → merge-report.md 列出、按规则暂选,Agent 回原文裁决后改 merged/semantics.json <q class="qt">按规则暂选;Agent 回原文裁决后改 `merged/semantics.json`</q></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:69">python3 scripts/merge_semantics.py output/&lt;skill名&gt; --parsers &lt;名1&gt; [&lt;名2&gt; …] --skill-dir &lt;skill目录&gt;</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:111">merged/:semantics.json(每条带 by 来源)+ merge-report.md <q class="qt">semantics.json(每条带 by 来源)+ merge-report.md</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:66-73</summary><div class="acc-body"><pre class="code">python3 scripts/merge_semantics.py output/&lt;skill名&gt; --parsers &lt;名1&gt; [&lt;名2&gt; …] --skill-dir &lt;skill目录&gt;</pre>
+<p>读 <code>merged/merge-report.md</code>:<strong>每处冲突回读 <code>static/full_text.md</code> 原文裁决</strong>,把结论改进 <code>merged/semantics.json</code>(或加 <code>--prefer &lt;名&gt;</code> 重跑),记下依据行号。0 个可用解析器 → 跳过本步,后续渲染静态基线。</p></div></details></div><p class="flow"><span class="fk">◂</span>冲突回原文:以 SKILL.md 原文裁决 → <button class="jump" onclick="showNode('n01')">n01 六条设计原则</button><br><span class="fk">◂</span>解析器之间冲突的处理规则 → <button class="jump" onclick="showNode('n06')">n06 错误处理表</button><br><span class="fk">↻</span>裁决后改结论,或加 --prefer &lt;名&gt; 重跑合并(自环)<br><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button>(domain_rules(合并规则:静态赢结构))、<button class="jump" onclick="showNode('n01')">n01 六条设计原则</button>(domain_rules(冲突回原文裁决))、<button class="jump" onclick="showNode('n06')">n06 错误处理表</button>(failure_modes(解析器之间冲突的处理))、<button class="jump" onclick="showNode('n03')">n03 输出目录约定</button>(outputs(merged/ 的两个产物))</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 4 Step 4 · 合并与排错 → `merged/`','SKILL.md:66-73')">?</button></div><div class="explain-card" id="e26" data-source="SKILL.md:74-88"><h4>Step 5 · 渲染 <span class="tbadge ">GENERATE</span> <span class="gate-badge">◆ 验证闸口</span></h4><p class="goal" data-source="SKILL.md:74"><strong>目标</strong> 把选中的每一版渲染成单文件 HTML 与叙事 md,转述层走 overrides.json <q class="qt">Step 5 · 渲染</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:80">每个版本写进自己的文件夹,根目录放 merged 版(未选 merged 时放列表第一个),多版时顶栏有切换链接 <q class="qt">output/&lt;skill名&gt;/&lt;版本&gt;/&lt;skill名&gt;-workflow.html</q></li><li class="claim" data-source="SKILL.md:80">render.py 自动出分层节点总览、子流程图(类型徽章 / 闸口 / 条件弧 / 环 / 外部节点栏 / 终止)、步骤卡、原文折叠、印证报告面板、叙事 md <q class="qt">分层节点总览、子流程图</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:16">原文与转述分层:带 data-source 的块是逐字原文,分组名 / 节点副标题 / 总纲 / 引语是转述,不冒充引文 <q class="qt">分组名、节点副标题、总纲、引语是转述,不冒充引文</q></li></ul><p class="sem-h">判据 <span class="ck-badge" id="ck26c">0/1</span></p><ul class="checklist" id="ckl26c"><li data-source="SKILL.md:80"><label><input type="checkbox"><span>merged 吃 static/ + merged/;static 只吃 static/;&lt;解析器名&gt; 吃该解析器自己的 semantics.json <q class="qt">`merged` 吃 `static/` + `merged/`</q></span></label></li></ul><p class="sem-h">质量标准 <span class="ck-badge" id="ck26q">0/2</span></p><ul class="checklist" id="ckl26q"><li data-source="SKILL.md:87"><label><input type="checkbox"><span>节点短标题 ≤ 12 字写&quot;节点做什么&quot;;引语一句话点出该节点在流程里的位置;强调色克制 <q class="qt">节点短标题 ≤ 12 字写&quot;节点做什么&quot;</q></span></label></li><li data-source="SKILL.md:17"><label><input type="checkbox"><span>单文件零依赖:HTML 内联全部 CSS/JS/主题,无 CDN、无外部字体、不引 Mermaid <q class="qt">无 CDN、无外部字体、不引 Mermaid</q></span></label></li></ul><p class="sem-h">常见翻车</p><ul class="sem-list fail"><li class="claim" data-source="SKILL.md:80">语义文件缺失或校验整体回落的版本会被跳过并告知 <q class="qt">语义文件缺失或校验整体回落的版本会被跳过并告知</q></li><li class="claim" data-source="SKILL.md:181">引用的资源文件缺失 → 面板里标&quot;缺失&quot;,不中断 <q class="qt">面板里标&quot;缺失&quot;,不中断</q></li></ul><p class="sem-h">治理约束</p><div class="gov" data-source="SKILL.md:80">Agent 的转述层写进 overrides.json 再渲染,不要手改生成的 HTML <q class="qt">不要手改生成的 HTML</q></div><div class="gov" data-source="SKILL.md:87">overrides 里的 HTML 片段必须遵守 JS 安全规则(不含脚本) <q class="qt">遵守下方 JS 安全规则</q></div><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:77">python3 scripts/render.py output/&lt;skill名&gt; --variants &lt;版本…&gt; [--theme docs] [--overrides …] --skill-dir &lt;skill目录&gt;</pre><pre class="code" data-source="SKILL.md:49">组模式还要跑 python3 scripts/render_bundle.py output/&lt;组名&gt; 出总览页</pre><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:113">根目录 &lt;skill名&gt;-workflow.html = merged 版(未选 merged 时为列表第一个)+ 对应叙事 md <q class="qt">根目录 = merged 版(未选 merged 时为列表第一个)</q></li></ul><p class="sem-h">呈现模板</p><div class="acc"><details><summary>overrides.json 结构:chip_titles / leads / description_html / thesis_html / eyebrow_extra(SKILL.md:83-84)</summary><div class="acc-body"><pre class="code">{ &quot;chip_titles&quot;: { &quot;n03&quot;: &quot;帮用户找 skill&quot; }, &quot;leads&quot;: { &quot;n03&quot;: &quot;段首引语(可含 HTML)&quot; },
+  &quot;description_html&quot;: &quot;description 的中文转述&quot;, &quot;thesis_html&quot;: &quot;总纲下的一段说明&quot;, &quot;eyebrow_extra&quot;: &quot;&quot; }</pre></div></details></div><div class="acc"><details><summary>原文 · SKILL.md:74-88</summary><div class="acc-body"><pre class="code">python3 scripts/render.py output/&lt;skill名&gt; --variants &lt;Step 0 选的版本…&gt; [--theme docs] [--overrides output/&lt;skill名&gt;/overrides.json] --skill-dir &lt;skill目录&gt;</pre>
+<p>每个版本写进<strong>自己的文件夹</strong>:<code>output/&lt;skill名&gt;/&lt;版本&gt;/&lt;skill名&gt;-workflow.html</code>(+ <code>.md</code>);根目录 <code>output/&lt;skill名&gt;/&lt;skill名&gt;-workflow.html</code> 放 <strong>merged 版</strong>(未选 merged 时放列表第一个);多版时页面顶栏有版本切换链接。<code>merged</code> 吃 <code>static/</code> + <code>merged/</code>,<code>static</code> 只吃 <code>static/</code>(静态基线页),<code>&lt;解析器名&gt;</code> 吃该解析器自己的 <code>semantics.json</code>(合并前的单家视角,便于对照)。语义文件缺失或校验整体回落的版本会被跳过并告知。<code>render.py</code> 自动:分层节点总览、子流程图(类型徽章 / 闸口 / 条件弧 / 环 / 外部节点栏 / 终止)、由 8 维语义生成的步骤卡、原文折叠、印证报告面板、叙事版 <code>.md</code>。<strong>Agent 的转述层</strong>写进 <code>overrides.json</code> 再渲染,<strong>不要手改生成的 HTML</strong>:</p>
+<pre class="code">{ &quot;chip_titles&quot;: { &quot;n03&quot;: &quot;帮用户找 skill&quot; }, &quot;leads&quot;: { &quot;n03&quot;: &quot;段首引语(可含 HTML)&quot; },
+  &quot;description_html&quot;: &quot;description 的中文转述&quot;, &quot;thesis_html&quot;: &quot;总纲下的一段说明&quot;, &quot;eyebrow_extra&quot;: &quot;&quot; }</pre>
+<p>转述层规则:节点短标题 ≤ 12 字写&quot;节点做什么&quot;;引语一句话点出该节点在流程里的位置;强调色克制;<code>overrides</code> 里的 HTML 片段遵守下方 JS 安全规则(不含脚本)。</p></div></details></div><p class="flow"><span class="fk">◂</span>原文与转述分层、单文件零依赖两条底线约束渲染 → <button class="jump" onclick="showNode('n01')">n01 六条设计原则</button> <span class="inf">推断</span><br><span class="fk">◂</span>渲染写文件的位置按「目录约定」那棵树 → <button class="jump" onclick="showNode('n03')">n03 输出目录约定</button> <span class="inf">推断</span><br><span class="fk">◂</span>overrides 里的 HTML 片段须遵守 JS 安全规则(不含脚本) → <button class="jump" onclick="showNode('n05')">n05 Agent 自任解析器</button><br><span class="fk">◂</span>引用的资源文件缺失 → 标&quot;缺失&quot;不中断 → <button class="jump" onclick="showNode('n06')">n06 错误处理表</button><br><span class="fk">↻</span>组模式:全部成员合并完成后,对每个成员重跑一遍 render.py(自环)<br><span class="fk">◂</span>来源:<button class="jump" onclick="showNode('n05')">n05 Agent 自任解析器</button>(governance(JS 安全规则))、<button class="jump" onclick="showNode('n01')">n01 六条设计原则</button>(domain_rules / quality_standards(原文与转述分层)、<button class="jump" onclick="showNode('n03')">n03 输出目录约定</button>(outputs(根目录 = merged 版))、<button class="jump" onclick="showNode('n06')">n06 错误处理表</button>(failure_modes(资源缺失标&quot;缺失&quot;不中断))</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 5 Step 5 · 渲染','SKILL.md:74-88')">?</button></div><div class="explain-card" id="e27" data-source="SKILL.md:89-97"><h4>Step 6 · 验证 <span class="tbadge t-gate">VALIDATE</span> <span class="gate-badge">◆ 验证闸口</span></h4><p class="goal" data-source="SKILL.md:89"><strong>目标</strong> 跑 verify-page.js 做 13 项自动检查,失败修完再跑,最后人工再核对四条 <q class="qt">Step 6 · 验证</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:96">失败项修复后重跑,直到 13 项全过 <q class="qt">失败项修复后重跑直到全过</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck27c">0/2</span></p><ul class="checklist" id="ckl27c"><li data-source="SKILL.md:96"><label><input type="checkbox"><span>单页 13 项:占位符残留、节点切换、子流程图边数、支撑/外部连线、步骤展开、4 主题、出处、追问弹窗、边可点选高亮两端、375px 不溢出、无 JS 错误 <q class="qt">单页 13 项自动检查</q></span></label></li><li data-source="SKILL.md:96"><label><input type="checkbox"><span>总览页(body data-page=&quot;bundle&quot;)自动切到另一套 13 项 <q class="qt">总览页(`&lt;body data-page=&quot;bundle&quot;&gt;`)自动切到 13 项</q></span></label></li></ul><p class="sem-h">质量标准 <span class="ck-badge" id="ck27q">0/2</span></p><ul class="checklist" id="ckl27q"><li data-source="SKILL.md:96"><label><input type="checkbox"><span>人工再核对:节点总览分组语义正确;环与跳转有原文依据 <q class="qt">人工再核对:节点总览分组语义正确;环与跳转有原文依据</q></span></label></li><li data-source="SKILL.md:96"><label><input type="checkbox"><span>人工再核对:追问打包含位置 + 行号 + 依赖文件;无 {{…}} 残留 <q class="qt">追问打包含位置 + 行号 + 依赖文件</q></span></label></li></ul><p class="sem-h">工具</p><pre class="code" data-source="SKILL.md:92">node scripts/verify-page.js output/&lt;skill名&gt;/&lt;skill名&gt;-workflow.html(根目录与每个选中版本各跑一次)</pre><div class="acc"><details><summary>原文 · SKILL.md:89-97</summary><div class="acc-body"><pre class="code">node scripts/verify-page.js output/&lt;skill名&gt;/&lt;skill名&gt;-workflow.html          # 根目录(merged)
+node scripts/verify-page.js output/&lt;skill名&gt;/&lt;版本&gt;/&lt;skill名&gt;-workflow.html   # 每个选中的版本</pre>
+<p>单页 13 项自动检查(占位符残留、节点切换、子流程图边数、支撑/外部连线、步骤展开、4 主题、出处、追问弹窗、<strong>子流程边可点选并高亮两端</strong>、375px 不溢出、无 JS 错误);总览页(<code>&lt;body data-page=&quot;bundle&quot;&gt;</code>)自动切到 13 项(两张图与 skill 数一致、图 1 弧数、图 2 折叠态连线数、全部展开、<strong>图 2 连线起点落在来源分组框内</strong>、成员链接存在 + 占位符残留 / data-source 出处 / 主题 / 出处开关 / 追问弹窗 / 375px / JS 错误)。失败项修复后重跑直到全过。人工再核对:节点总览分组语义正确;环与跳转有原文依据;追问打包含位置 + 行号 + 依赖文件;无 <code>{{…}}</code> 残留。</p></div></details></div><p class="flow"><span class="fk">↻</span>13 项里有失败 → 修复后重跑,直到全过(自环)<br><span class="fk">↻</span>组模式:还有下一个成员(拓扑顺序,被引用者先) → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e22')">Step 1 环境自检</button>(拒绝装 playwright → Step 6 自动验证换成人工核对清单) <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 6 Step 6 · 验证','SKILL.md:89-97')">?</button></div><div class="explain-card" id="e28" data-source="SKILL.md:98-103"><h4>Step 7 · 交付 <span class="tbadge t-out">OUTPUT</span></h4><p class="goal" data-source="SKILL.md:98"><strong>目标</strong> 发所有选中的版本并交代解析器、作废、冲突裁决与印证摘要 <q class="qt">Step 7 · 交付</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:100">说明:用了哪些解析器、各作废几条、冲突几处及裁决依据行号、印证摘要 <q class="qt">用了哪些解析器、各作废几条、冲突几处及裁决依据行号</q></li></ol><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:102">重入:static/ 在且源未变跳过 Step 2;解析器产物 sha256 一致可复用;只换主题 / 改转述 / 补一版直接 Step 5 <q class="qt">只换主题、改转述或补出另一版 → 直接 Step 5</q></li></ul><p class="sem-h">质量标准 <span class="ck-badge" id="ck28q">0/1</span></p><ul class="checklist" id="ckl28q"><li data-source="SKILL.md:100"><label><input type="checkbox"><span>附页面用法一句话:主题切换、显示出处看逐字引文、追问打包 <q class="qt">页面用法一句话(主题切换、显示出处看逐字引文、追问打包)</q></span></label></li></ul><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:100">根目录 &lt;skill名&gt;-workflow.html + 各 &lt;版本&gt;/&lt;skill名&gt;-workflow.html,均附 .md <q class="qt">发所有选中的版本</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:98-103</summary><div class="acc-body"><p>发所有选中的版本(根目录 <code>&lt;skill名&gt;-workflow.html</code> + 各 <code>&lt;版本&gt;/&lt;skill名&gt;-workflow.html</code>,附 <code>.md</code>),说明:用了哪些解析器、各作废几条、冲突几处及裁决依据行号、印证摘要(非流程标题 / 隐含步骤 / 顺序偏差 / 跨锚定);页面用法一句话(主题切换、显示出处看逐字引文、追问打包)。</p>
+<p><strong>重入</strong>:<code>static/</code> 在且源未变 → 跳过 Step 2;某解析器产物在且 sha256 一致 → 可复用;只换主题、改转述或补出另一版 → 直接 Step 5。</p></div></details></div><p class="flow"><span class="fk">⦿</span>所有选中的版本发出并交代完毕 → END</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 7 Step 7 · 交付','SKILL.md:98-103')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:64">output/&lt;skill名&gt;/agent/semantics.json——agent 就是一个普通解析器名 <q class="qt">`agent` 就是一个普通解析器名</q> → <button class="jump" onclick="showStep('n05','e52')">Step 2 产出 agent/semantics.json(四项)</button></li></ul><p class="sem-h">引用的资源</p><ul class="sem-list"><li>scripts/extract.py</li><li>scripts/extract_bundle.py</li><li>scripts/render.py</li><li>scripts/render_bundle.py</li><li>scripts/verify-page.js</li><li>references/parser-protocol.md</li><li>references/semantics-contract.md</li><li>scripts/validate_semantics.py</li><li>scripts/merge_semantics.py</li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n03"><div class="panel-head"><span class="ph-id">n03 · A 层 · 附件/工具 · io</span><h2>目录约定</h2><p class="lead">支撑:output/&lt;skill名&gt;/ 下 static · &lt;解析器名&gt; · agent · merged · overrides.json · 根目录主页各放什么,Step 2–5 的产物都落在这里。</p></div><div class="card" data-source="SKILL.md:104-128"><pre class="code">output/&lt;skill名&gt;/
+├── static/             阶段 1 零 LLM —— 坐标系(INDEX.md · nodes/ · full_text.md · metadata.json)+ 选中时的静态基线页
+├── &lt;解析器名&gt;/          每个解析器一个文件夹:semantics.json(必需)+ 它的报告 + 选中时该解析器单家视角的页
+├── agent/              Agent 自己临场判断时的解析器文件夹(可选)
+├── merged/             merge_semantics.py:semantics.json(每条带 by 来源)+ merge-report.md + merged 版页
+├── overrides.json      渲染 Agent 的转述层(可选)
+├── &lt;skill名&gt;-workflow.html            根目录 = merged 版(未选 merged 时为列表第一个)
+└── &lt;skill名&gt;-workflow.md              对应的叙事版</pre>
+<p>组目录(bundle)时,上面这棵树整体下沉一层,组根多出清单与事实表:</p>
+<pre class="code">output/&lt;组名&gt;/
+├── bundle.json                     组清单(s2w-bundle/1):成员、skill_dir、static、page、sha256、节点数
+├── bundle/static/cross-refs.json   跨引用事实表(零 LLM;kind = token / path / name / word)
+├── &lt;成员名&gt;/                        每个成员就是上面那棵完整的树
+├── overrides.json                  总览页的转述层(可选:chip_titles / description_html / thesis_html)
+├── &lt;组名&gt;-workflow.html            组合总览页(图 1 skill 调用图 + 图 2 节点调用图 + 清单 + 印证)
+└── &lt;组名&gt;-workflow.md              对应的叙事版</pre><button class="deep-dive-btn" title="追问" onclick="openDeepDive('目录约定','SKILL.md:104-128')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:108">static/:INDEX.md · nodes/ · full_text.md · metadata.json <q class="qt">坐标系(INDEX.md · nodes/ · full_text.md · metadata.json)</q> → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button></li><li class="claim" data-source="SKILL.md:121-122">组模式还产出 bundle.json 组清单与 bundle/static/cross-refs.json 跨引用事实表 <q class="qt">跨引用事实表(零 LLM;kind = token / path / name / word)</q> → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button></li><li class="claim" data-source="SKILL.md:109">每个解析器一个文件夹:semantics.json(必需)+ 它的报告 <q class="qt">每个解析器一个文件夹:semantics.json(必需)+ 它的报告</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:111">merged/:semantics.json(每条带 by 来源)+ merge-report.md <q class="qt">semantics.json(每条带 by 来源)+ merge-report.md</q> → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button></li><li class="claim" data-source="SKILL.md:113">根目录 &lt;skill名&gt;-workflow.html = merged 版(未选 merged 时为列表第一个)+ 对应叙事 md <q class="qt">根目录 = merged 版(未选 merged 时为列表第一个)</q> → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button></li></ul><p class="flow"><span class="fk">◂</span>outputs(根目录 = merged 版) → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>outputs(static/ 与 bundle 产物布局) → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button><br><span class="fk">◂</span>outputs(每个解析器一个文件夹) → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>outputs(merged/ 的两个产物) → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button>(渲染写文件的位置按「目录约定」那棵树) <span class="inf">推断</span></p><div class="pager"></div></section>
+<section class="panel" id="p-n04"><div class="panel-head"><span class="ph-id">n04 · A 层 · 附件/工具 · resources</span><h2>文件结构</h2><p class="lead">支撑:extract / validate / merge / render / verify 五个脚本与模板、契约文档的职责表——Step 2–6 各自调用的工具。</p></div><div class="card" data-source="SKILL.md:129-153"><div class="scroll"><table class="tbl"><thead><tr><th>文件</th><th>作用</th></tr></thead><tbody><tr><td><code>scripts/extract.py</code> + <code>scripts/extractor/</code></td><td>阶段 1 静态拆解(零 LLM;43 个单测)</td></tr><tr><td><code>scripts/extract_bundle.py</code></td><td>组级阶段 1(零 LLM):逐成员出 <code>static/</code>,扫跨引用事实表 <code>cross-refs.json</code>,写 <code>bundle.json</code></td></tr><tr><td><code>scripts/validate_semantics.py</code></td><td>解析器产物校验:schema / sha256 / 行数 / 每条 <code>quote</code> 逐行回读 / 端点与序号 / 派生视图与边一致;可作模块</td></tr><tr><td><code>scripts/merge_semantics.py</code></td><td>多解析器合并:静态赢结构,一致采纳、独有标来源、冲突记表并暂选</td></tr><tr><td><code>scripts/render.py</code></td><td>渲染器:static(+ merged)→ HTML + 叙事 md;<code>overrides.json</code> 承载转述层</td></tr><tr><td><code>scripts/render_bundle.py</code></td><td>组合总览页渲染器:<code>bundle.json</code> + 各成员 <code>merged/</code> → 两张图 + 清单 + 印证</td></tr><tr><td><code>scripts/bundle_layout.py</code></td><td>总览页布局纯函数:分层、破环、重心排序、skill 卡片坐标(有单测)</td></tr><tr><td><code>scripts/s2w_common.py</code></td><td>共用:读 static/、语义归一化(/1 派生视图折算成边)、端点 <code>parse_ep</code> / <code>fmt_ep</code></td></tr><tr><td><code>scripts/verify-page.js</code></td><td>Playwright 自动验证(单页 13 项 / 总览页 13 项,按 <code>body[data-page]</code> 自动切)</td></tr><tr><td><code>templates/base.html</code></td><td>骨架 + 全部样式 + 交互引擎(含语义层视觉词汇,无数据时静默)</td></tr><tr><td><code>templates/bundle.html</code></td><td>组合总览页骨架:两张图容器 + 展开开关 + 清单区 + 印证区(同一套主题 / 出处 / 追问)</td></tr><tr><td><code>templates/flow-lib.js</code></td><td>布线库(正交布线 / 轨道避让),由 base.html 与 bundle.html 渲染时内联</td></tr><tr><td><code>templates/components.md</code></td><td>组件范式 + 语义层标记契约 + 总览页组件</td></tr><tr><td><code>templates/themes/</code></td><td>4 套主题 CSS</td></tr><tr><td><code>references/parser-protocol.md</code></td><td>解析器握手:目录约定、三个(组内四个)输入、验收、合并规则</td></tr><tr><td><code>references/semantics-contract.md</code></td><td>语义数据格式 <code>s2w-semantics/2</code>,组合扩展见其中的 <code>s2w-semantics/3</code> 一节</td></tr></tbody></table></div>
+<h4>阶段 1:静态拆解(零 LLM)</h4>
+<p>frontmatter 提 R 层(description 原样,引号已剥离);<code>##</code> 标题切节点(围栏内的 <code>##</code> 不误切);&lt;3 行短节点并入邻居;扫描五类资源目录引用并查存在性;每节点记 <code>SKILL.md:起-止</code> 行号;CRLF/BOM 归一化。目录无 SKILL.md → 报错不硬跑。</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('文件结构','SKILL.md:129-153')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:152">阶段 1 零 LLM 切法:frontmatter 提 R 层、## 切节点(围栏内不误切)、&lt;3 行短节点并入邻居、记行号、查五类资源存在性、CRLF/BOM 归一 <q class="qt">&lt;3 行短节点并入邻居</q> → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button></li><li class="claim" data-source="SKILL.md:152">目录里没有 SKILL.md → 报错,不硬跑 <q class="qt">目录无 SKILL.md → 报错不硬跑</q> → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button></li><li class="claim" data-source="SKILL.md:135">校验口径:schema / sha256 / 行数 / 每条 quote 逐行回读 / 端点与序号 / 派生视图与边一致 <q class="qt">schema / sha256 / 行数 / 每条 `quote` 逐行回读 / 端点与序号 / 派生视图与边一致</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:136">合并规则:静态赢结构,一致采纳、独有标来源、冲突记表并暂选 <q class="qt">静态赢结构,一致采纳、独有标来源、冲突记表并暂选</q> → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button></li></ul><p class="flow"><span class="fk">◂</span>domain_rules / failure_modes(阶段 1 切分规则与无 → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button><br><span class="fk">◂</span>criteria(validate_semantics.py 的校验口径) → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>domain_rules(合并规则:静态赢结构) → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button>(阶段 1 静态拆解的切分规则写在「文件结构」节点里) <span class="inf">推断</span>、<button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button>(解析器握手协议 references/parser-protocol.md) <span class="inf">推断</span>、<button class="jump" onclick="showStep('n05','e52')">Step 2 产出 agent/semantics.json(四项)</button>(字段与规则同 references/semantics-contract.md) <span class="inf">推断</span></p><p class="sem-h">引用的资源</p><ul class="sem-list"><li>scripts/extract.py</li><li>scripts/extract_bundle.py</li><li>scripts/validate_semantics.py</li><li>scripts/merge_semantics.py</li><li>scripts/render.py</li><li>scripts/render_bundle.py</li><li>scripts/bundle_layout.py</li><li>scripts/s2w_common.py</li><li>scripts/verify-page.js</li><li>templates/base.html</li><li>templates/bundle.html</li><li>templates/flow-lib.js</li><li>templates/components.md</li><li>references/parser-protocol.md</li><li>references/semantics-contract.md</li></ul><div class="pager"></div></section>
+<section class="panel" id="p-n05"><div class="panel-head"><span class="ph-id">n05 · W 层 · 流程 · fallback</span><h2>阶段 2:临场语义判断(Agent 作为解析器 `agent/` 时)</h2><p class="lead">兜底路径:没有外部解析器但要语义层时,Agent 自己按四条规则写 agent/semantics.json,当作一个普通解析器走 Step 3 的验收。</p></div><div class="card" data-source="SKILL.md:155-168"><p>读 <code>static/INDEX.md</code> 与 <code>nodes/*.md</code>,产出 <code>agent/semantics.json</code>(<code>schema: s2w-semantics/1</code> 子集即可,字段见契约):</p>
+<ol><li><strong>语义分组</strong> <code>groups</code>:2–4 组(理念/准备、<strong>执行主线</strong>、支撑/边界为常见形),主线 <code>main: true</code>。</li><li><strong>节点副标题</strong> <code>node_summaries</code>:≤ 12 字写&quot;节点做什么&quot;,不写元数据。</li><li><strong>环与分叉</strong>(读文本找:重试 / 循环 / 逐章 / 直到 / 回到 Step X / 失败则 / 先…再…):步骤间回退或自身重试 → <code>loops</code>;条件跳转 → <code>jumps</code>;兜底 → <code>guards</code>。<strong>每条带 <code>source</code> + <code>quote</code>,找不到依据就不写</strong>。</li><li><strong>总纲</strong> <code>thesis</code>:一句执行总纲,出处指向对应行。</li></ol>
+<p>能做到 <code>/2</code>(分层、步骤分型、全部边、检查点、终止、每步语义)更好,规则同契约。</p>
+<h4>JS 安全规则(CRITICAL)</h4>
+<p><code>base.html</code> 与 <code>render.py</code> 已遵守:<code>function()</code> 不用箭头函数;JS 字符串内禁用中文弯引号;DOM 操作前 null 守卫;<code>var</code> 不用 <code>const/let</code>。<code>overrides.json</code> 里的 HTML 片段不得含 <code>&lt;script&gt;</code>。</p></div><div class="stepper" id="st-n05"><div class="subflow"><div class="sf-canvas"><svg class="sf-svg"></svg><div class="sf-row"><button class="sf-node implicit" data-x="e51"><span class="sn">1<span class="sf-imp">隐含</span><span class="sf-type ">READ</span></span><span class="st">读静态骨架</span></button><button class="sf-node implicit" data-x="e52"><span class="sn">2<span class="sf-imp">隐含</span><span class="sf-type ">GENERATE</span></span><span class="st">产出 agent/semantics.json(四项)</span><span class="sf-gate">◆ 验证闸口</span></button></div><div class="sf-lane"><button class="sf-ext in" data-at="e51,e51" data-inf="0,0" onclick="showStep('n02','e21')"><span class="xid">n02 · W</span><span class="xt">八步编排主线</span><small>Step 3 没有外部解析器但要语义层 → Agent 按「阶段 2」临场判断 → 此处 · Step 5 overrides 里的 HTML 片段须遵守 JS 安全规则(不含脚本) → 此处</small></button></div></div></div><div class="sf-legend">外部节点 · ◂ 点线 = 依赖来源 · ⤓ 橙线 = 兜底去向 · 单击线条高亮两端(其余淡出)· Esc 清除</div><div class="explain-card" id="e51" data-source="SKILL.md:156"><h4>Step 1 · 读静态骨架 <span class="tbadge ">READ</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:156"><strong>目标</strong> 读 static/INDEX.md 与 nodes/*.md 作为临场判断的底本 <q class="qt">读 `static/INDEX.md` 与 `nodes/*.md`</q></p><p class="sem-h">输入</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:156">static/INDEX.md 与 nodes/*.md <q class="qt">`static/INDEX.md` 与 `nodes/*.md`</q></li></ul><p class="sem-h">规则</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:13">Agent 当解析器时也只读静态产物,不重切节点 <q class="qt">任何语义层都只能</q> <span class="inf">推断</span></li></ul><div class="acc"><details><summary>原文 · SKILL.md:156</summary><div class="acc-body"><p>读 <code>static/INDEX.md</code> 与 <code>nodes/*.md</code>,产出 <code>agent/semantics.json</code>(<code>schema: s2w-semantics/1</code> 子集即可,字段见契约):</p></div></details></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 1 读静态骨架','SKILL.md:156')">?</button></div><div class="explain-card" id="e52" data-source="SKILL.md:158-163"><h4>Step 2 · 产出 agent/semantics.json(四项) <span class="tbadge ">GENERATE</span> <span class="gate-badge">◆ 验证闸口</span> <span class="inf">隐含步骤</span></h4><p class="goal" data-source="SKILL.md:156"><strong>目标</strong> 产出 agent/semantics.json,s2w-semantics/1 子集即可 <q class="qt">产出 `agent/semantics.json`</q></p><p class="sem-h">怎么做</p><ol class="sem-list"><li class="claim" data-source="SKILL.md:158">语义分组 groups:2–4 组(理念/准备、执行主线、支撑/边界为常见形),主线 main: true <q class="qt">2–4 组(理念/准备</q></li><li class="claim" data-source="SKILL.md:159">节点副标题 node_summaries:≤ 12 字写&quot;节点做什么&quot;,不写元数据 <q class="qt">≤ 12 字写&quot;节点做什么&quot;,不写元数据</q></li><li class="claim" data-source="SKILL.md:160">环与分叉:步骤间回退或自身重试 → loops;条件跳转 → jumps;兜底 → guards <q class="qt">步骤间回退或自身重试 → `loops`;条件跳转 → `jumps`;兜底 → `guards`</q></li><li class="claim" data-source="SKILL.md:161">总纲 thesis:一句执行总纲,出处指向对应行 <q class="qt">一句执行总纲,出处指向对应行</q></li></ol><p class="sem-h">判据 <span class="ck-badge" id="ck52c">0/1</span></p><ul class="checklist" id="ckl52c"><li data-source="SKILL.md:160"><label><input type="checkbox"><span>每条带 source + quote,找不到依据就不写 <q class="qt">找不到依据就不写</q></span></label></li></ul><p class="sem-h">质量标准 <span class="ck-badge" id="ck52q">0/1</span></p><ul class="checklist" id="ckl52q"><li data-source="SKILL.md:163"><label><input type="checkbox"><span>能做到 /2(分层、步骤分型、全部边、检查点、终止、每步语义)更好,规则同契约 <q class="qt">能做到 `/2`(分层、步骤分型、全部边、检查点、终止、每步语义)更好</q></span></label></li></ul><p class="sem-h">技巧</p><ul class="sem-list tips"><li class="claim" data-source="SKILL.md:160">读文本找环与分叉的信号词:重试 / 循环 / 逐章 / 直到 / 回到 Step X / 失败则 / 先…再… <q class="qt">重试 / 循环 / 逐章 / 直到 / 回到 Step X / 失败则 / 先…再…</q></li></ul><p class="sem-h">资源</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:156">字段与规则见 references/semantics-contract.md <q class="qt">字段见契约</q></li></ul><p class="sem-h">输出</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:64">output/&lt;skill名&gt;/agent/semantics.json——agent 就是一个普通解析器名 <q class="qt">`agent` 就是一个普通解析器名</q></li></ul><div class="acc"><details><summary>原文 · SKILL.md:158-163</summary><div class="acc-body"><ol><li><strong>语义分组</strong> <code>groups</code>:2–4 组(理念/准备、<strong>执行主线</strong>、支撑/边界为常见形),主线 <code>main: true</code>。</li><li><strong>节点副标题</strong> <code>node_summaries</code>:≤ 12 字写&quot;节点做什么&quot;,不写元数据。</li><li><strong>环与分叉</strong>(读文本找:重试 / 循环 / 逐章 / 直到 / 回到 Step X / 失败则 / 先…再…):步骤间回退或自身重试 → <code>loops</code>;条件跳转 → <code>jumps</code>;兜底 → <code>guards</code>。<strong>每条带 <code>source</code> + <code>quote</code>,找不到依据就不写</strong>。</li><li><strong>总纲</strong> <code>thesis</code>:一句执行总纲,出处指向对应行。</li></ol>
+<p>能做到 <code>/2</code>(分层、步骤分型、全部边、检查点、终止、每步语义)更好,规则同契约。</p></div></details></div><p class="flow"><span class="fk">◂</span>agent/semantics.json 同样走 Step 3 的验收 → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>字段与规则同 references/semantics-contract.md → <button class="jump" onclick="showNode('n04')">n04 文件与脚本分工</button> <span class="inf">推断</span></p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('Step 2 产出 agent/semantics.json(四项)','SKILL.md:158-163')">?</button></div><p class="flow"><span class="fk">◂</span>governance(JS 安全规则) → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button>(没有外部解析器但要语义层 → Agent 按「阶段 2」临场判断)、<button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button>(overrides 里的 HTML 片段须遵守 JS 安全规则(不含脚本))</p><div class="pager"></div></section>
+<section class="panel" id="p-n06"><div class="panel-head"><span class="ph-id">n06 · S 层 · 语义/知识 · domain_rules</span><h2>错误处理</h2><p class="lead">边界:十种失败场景各自怎么处理——整体回落、单条作废、解析器作废、静态基线页兜底,都不硬失败。</p></div><div class="card" data-source="SKILL.md:169-182"><div class="scroll"><table class="tbl"><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>目录无 SKILL.md</td><td>报错:&quot;skill-to-webpage 需要一个包含 SKILL.md 的 Claude Code Skill 目录路径。&quot;</td></tr><tr><td>SKILL.md 无任何 <code>##</code> 标题</td><td>单一 Overview 节点,页面退化为单节点详情</td></tr><tr><td>节点无 <code>###</code> 子标题</td><td>不画子流程图,直接展示原文(语义层有隐含步骤则画虚线框)</td></tr><tr><td>解析器找不到 / 读不到 SKILL.md</td><td>该解析器作废并告知,其余照跑</td></tr><tr><td>解析器产物 JSON 非法 / schema 不符 / sha256 过期 / 行数不符 / <code>layers</code> 未覆盖 / <code>unanchored</code> 非空</td><td>该解析器整体作废,告知原因</td></tr><tr><td>个别 claim 越界、缺 <code>source</code>、<code>quote</code> 回读对不上、派生视图无对应边</td><td>仅作废该条,交付时列出</td></tr><tr><td>解析器之间冲突</td><td><code>merge-report.md</code> 列出,按规则暂选;Agent 回原文裁决后改 <code>merged/semantics.json</code></td></tr><tr><td>0 个可用解析器</td><td>渲染静态基线页,并说明</td></tr><tr><td>引用的资源文件缺失</td><td>面板里标&quot;缺失&quot;,不中断</td></tr></tbody></table></div><button class="deep-dive-btn" title="追问" onclick="openDeepDive('错误处理','SKILL.md:169-182')">?</button></div><p class="sem-h">语义层挂载(本节点内容被哪一步使用)</p><ul class="sem-list"><li class="claim" data-source="SKILL.md:174">SKILL.md 无任何 ## 标题 → 退化成单一 Overview 节点 <q class="qt">单一 Overview 节点,页面退化为单节点详情</q> → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button></li><li class="claim" data-source="SKILL.md:176">解析器找不到 / 读不到 SKILL.md → 该解析器作废并告知,其余照跑 <q class="qt">该解析器作废并告知,其余照跑</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:177">产物 JSON 非法 / schema 不符 / sha256 过期 / 行数不符 / layers 未覆盖 / unanchored 非空 → 整体作废 <q class="qt">该解析器整体作废,告知原因</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:178">个别 claim 越界、缺 source、quote 回读对不上、派生视图无对应边 → 仅作废该条,交付时列出 <q class="qt">仅作废该条,交付时列出</q> → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button></li><li class="claim" data-source="SKILL.md:179">解析器之间冲突 → merge-report.md 列出、按规则暂选,Agent 回原文裁决后改 merged/semantics.json <q class="qt">按规则暂选;Agent 回原文裁决后改 `merged/semantics.json`</q> → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button></li><li class="claim" data-source="SKILL.md:181">引用的资源文件缺失 → 面板里标&quot;缺失&quot;,不中断 <q class="qt">面板里标&quot;缺失&quot;,不中断</q> → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button></li></ul><p class="flow"><span class="fk">◂</span>failure_modes(无 ## 标题 / 无 ### 子标题的退化) → <button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button><br><span class="fk">◂</span>failure_modes(解析器作废 / 整体回落 / 单条作废) → <button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button><br><span class="fk">◂</span>failure_modes(解析器之间冲突的处理) → <button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button><br><span class="fk">◂</span>failure_modes(资源缺失标&quot;缺失&quot;不中断) → <button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button><br><span class="fk">◂</span>来源:<button class="jump" onclick="showStep('n02','e23')">Step 2 静态抽取 → `static/`</button>(静态抽取的报错场景(无 SKILL.md / 无 ## 标题 / 无 ### 子标题))、<button class="jump" onclick="showStep('n02','e24')">Step 3 解析器抽取(逐个)→ `&lt;解析器名&gt;/`</button>(解析器找不到 / 产物整体回落 / 单条作废的处理规则)、<button class="jump" onclick="showStep('n02','e25')">Step 4 合并与排错 → `merged/`</button>(解析器之间冲突的处理规则)、<button class="jump" onclick="showStep('n02','e26')">Step 5 渲染</button>(引用的资源文件缺失 → 标&quot;缺失&quot;不中断)</p><div class="pager"></div></section>
+<section class="panel" id="p-n07"><div class="panel-head"><span class="ph-id">n07 · S 层 · 语义/知识 · scope</span><h2>不在本次范围</h2><p class="lead">边界:脚本级环/分支抽取、页内直接回答、多 skill 聚合站点——本 skill 不做(多 skill 组合已另行扩展)。</p></div><div class="card" data-source="SKILL.md:183-187"><ul><li>环/分支的<strong>脚本级</strong>自动提取(静态拆解仍零 LLM;语义层来自解析器 skill 或 Agent 临场判断)。</li><li>页面内直接得到回答(追问是打包复制给 Agent)。</li><li>跨<strong>组</strong>的站点导航(组合总览页 + 成员页已支持,但没有跨组索引页)。</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('不在本次范围','SKILL.md:183-187')">?</button></div><p class="flow"><span class="fk">◂</span>范围边界:解析请求时排除的三件事 → <button class="jump" onclick="showStep('n02','e21')">Step 0 解析请求</button></p><div class="pager"></div></section>
+<section class="panel" id="p-recon"><div class="panel-head"><span class="ph-id">印证 · 静态目录 vs 语义流程 · merge(rwsa-lite)</span><h2>印证报告</h2><p class="lead">结构拆解的目录是坐标系;语义层只能叠加。这里列出两者对不上的地方,以及多个解析器之间的一致与冲突。</p></div><div class="recon-sum"><span>schema s2w-semantics/2 · merge(rwsa-lite)</span><span>断言 206:explicit 194 · inferred 12</span><span>解析器:rwsa-lite · 一致 0 · 独有 15 · 冲突 0</span></div><p class="sem-h">目录(静态 ## 标题)vs 分层(语义)</p><div class="scroll"><table class="tbl recon-tbl"><thead><tr><th>节点</th><th>标题</th><th>行号</th><th>### 步数</th><th>归属 / 角色</th><th>印证结论</th></tr></thead><tbody><tr><td>n01</td><td>哲学</td><td>10-18</td><td>0</td><td>S / domain_rules</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n02</td><td>一句话入口与编排</td><td>19-103</td><td>8</td><td>W / main_flow</td><td class="w">流程节点</td></tr><tr><td>n03</td><td>目录约定</td><td>104-128</td><td>0</td><td>A / io</td><td class="nw">非流程标题 → A 层</td></tr><tr><td>n04</td><td>文件结构</td><td>129-153</td><td>0</td><td>A / resources</td><td class="nw">非流程标题 → A 层</td></tr><tr><td>n05</td><td>阶段 2:临场语义判断(Agent 作为解析器 `agent/` 时)</td><td>154-168</td><td>0</td><td>W / fallback</td><td class="w">流程节点</td></tr><tr><td>n06</td><td>错误处理</td><td>169-182</td><td>0</td><td>S / domain_rules</td><td class="nw">非流程标题 → S 层</td></tr><tr><td>n07</td><td>不在本次范围</td><td>183-187</td><td>0</td><td>S / scope</td><td class="nw">非流程标题 → S 层</td></tr></tbody></table></div><p class="sem-h">非流程标题(5)</p><ul class="sem-list"><li><code>n01</code> → S 层:六条设计底线,是贯穿全流程的判据与禁令,不是按序执行的步骤</li><li><code>n03</code> → A 层:两棵输出目录树,是产物布局约定(io),渲染与交付读它</li><li><code>n04</code> → A 层:脚本 / 模板 / 参考文件清单,是资源表;其中「阶段 1:静态拆解」小节才是 Step 2 的实现规则</li><li><code>n06</code> → S 层:场景 → 处理的错误处理表,逐行是各步骤的 failure_modes / criteria,不是流程步骤</li><li><code>n07</code> → S 层:范围排除是对 Step 0 解析请求的边界约束,不是触发条件;触发信息在 frontmatter description</li></ul><p class="sem-h">隐含步骤(文本有、目录无)(1)</p><ul class="sem-list"><li>锚 <button class="jump" onclick="showNode('n05')">n05 Agent 自任解析器</button>,2 步(SKILL.md:156)</li></ul><p class="sem-h">顺序偏差(文档顺序 ≠ 执行顺序)(5)</p><ul class="sem-list"><li>「重入」写在 Step 7 之后(102 行),实际在 Step 0 就要判断,并直接决定跳过 Step 2 / Step 3 或直奔 Step 5(SKILL.md:102)</li><li>组模式的成员循环与「全部合并后再重跑一遍 render.py」写在 Step 2 段落里,实际发生在 Step 3–6 之间与 Step 5 之后(SKILL.md:43)</li><li>阶段 1 静态拆解的实现规则排在「文件结构」之后(150-152 行),实际是 Step 2 的行为规格(SKILL.md:150)</li><li>「阶段 2:临场语义判断」排在全部 Step 之后(154 行起),实际是 Step 3 无外部解析器时的兜底分支,产物还要回到 Step 3 验收(SKILL.md:64)</li><li>JS 安全规则排在 165-167 行,实际是 Step 5 渲染时对 overrides.json 的硬约束(SKILL.md:87)</li></ul><p class="sem-h">跨锚定(知识写在别处)(15)</p><ul class="sem-list"><li>n02.3 domain_rules / failure_modes(阶段 1 切分规则与无 SKILL.md 报错) ← <code>n04</code>(SKILL.md:150-152)</li><li>n02.3 failure_modes(无 ## 标题 / 无 ### 子标题的退化) ← <code>n06</code>(SKILL.md:174-175)</li><li>n02.4 domain_rules(解析器可插拔、语义只叠加) ← <code>n01</code>(SKILL.md:13-14)</li><li>n02.4 criteria(validate_semantics.py 的校验口径) ← <code>n04</code>(SKILL.md:135)</li><li>n02.4 failure_modes(解析器作废 / 整体回落 / 单条作废) ← <code>n06</code>(SKILL.md:176-178)</li><li>n02.5 domain_rules(合并规则:静态赢结构) ← <code>n04</code>(SKILL.md:136)</li><li>n02.5 domain_rules(冲突回原文裁决) ← <code>n01</code>(SKILL.md:15)</li><li>n02.5 failure_modes(解析器之间冲突的处理) ← <code>n06</code>(SKILL.md:179)</li><li>n02.6 governance(JS 安全规则) ← <code>n05</code>(SKILL.md:165-167)</li><li>n02.6 domain_rules / quality_standards(原文与转述分层、单文件零依赖) ← <code>n01</code>(SKILL.md:16-17)</li><li>n02.6 outputs(根目录 = merged 版) ← <code>n03</code>(SKILL.md:113)</li><li>n02.6 failure_modes(资源缺失标&quot;缺失&quot;不中断) ← <code>n06</code>(SKILL.md:181)</li><li>n02.3 outputs(static/ 与 bundle 产物布局) ← <code>n03</code>(SKILL.md:108-122)</li><li>n02.4 outputs(每个解析器一个文件夹) ← <code>n03</code>(SKILL.md:109)</li><li>n02.5 outputs(merged/ 的两个产物) ← <code>n03</code>(SKILL.md:111)</li></ul><p class="sem-h">裁定记录(9)</p><ul class="sem-list"><li><code>n02.1</code> Step 0 的 5 条编号项是要素清单(procedure),不是 5 个子步骤——它们是同一次请求解析里要凑齐的字段(SKILL.md:25)</li><li><code>n02.3</code> 组目录分支(43-53 行)不另立隐含步骤:它替换 Step 2 的命令、并派生出 Step 3–6 的成员循环与 Step 5 的二次渲染,记为 tools/procedure 与两条 retry 边(SKILL.md:43)</li><li><code>n02.8</code> 「重入」不是第 9 步,而是三条跳转条件;分别成 n02.1→n02.6、n02.2→n02.4、n02.3→n02.5 三条 condition_true 边(SKILL.md:102)</li><li><code>n06</code> 错误处理表是场景 → 处理的判据表,不是流程步骤;逐行挂成对应步骤的 failure_modes,并成 4 条 dependency 边(SKILL.md:171)</li><li><code>n05</code> n05 判为 W 层(role=fallback)而非 S 层:它是 Step 3 没有外部解析器时真正要执行的兜底流程,产物同样走验收(SKILL.md:64)</li><li><code>n05.2</code> 阶段 2 的四条编号项是 agent/semantics.json 的字段清单(procedure),不是四个步骤;整段合成一个 GENERATE 步(SKILL.md:161)</li><li><code>n02.5</code> 「0 个可用解析器 → 跳过本步」判为跳到 Step 5 的 condition_true,而不是终止——后续仍渲染静态基线页(SKILL.md:72)</li><li><code>n02.2</code> 「拒绝则改人工核对清单」的落点判为 Step 6:人工核对清单替代的正是 Step 6 的自动 13 项,故记 fallback n02.2→n02.7(inferred)(SKILL.md:33)</li><li><code>n02.6</code> overrides.json 的 JSON 片段是转述层的格式示范,归 attachments.presentation 而非 examples(SKILL.md:83)</li></ul><p class="sem-h">备注</p><ul class="sem-list"><li>静态拆解把 &lt;3 行的 `## 阶段 1:静态拆解(零 LLM)`(150-153)与 `## JS 安全规则(CRITICAL)`(165-168)并入了邻居,于是 n04 与 n05 各含两个主题;骨架步数按 SKILL.md 原文的 `###` 计,所以这两节在 skeleton 里都是 0 步。</li><li>静态目录 7 个节点里只有 n02 是真流程节点(8 个 Step);n05 是文本里第二条可执行路径,但没有任何 `###`,故其 2 步全为隐含步骤。</li><li>全文的显式终止只有 Step 7「交付」;另记一条推断终止(目录无 SKILL.md → 报错不硬跑),它来自 152 行的阶段 1 规格。</li><li>n02 的 5 条 retry 边里有 3 条只在组目录(bundle)模式下成立(逐成员 Step 3–6、二次渲染),单 skill 模式跑不到。</li><li>编排方补边:15 条跨锚定(支撑节点知识挂到 W 步骤)逐条补为节点级 dependency 边,使 S/A 节点依附于主线;出处与引文取自各跨锚定的同一行。</li><li>编排方裁定:n07「不在本次范围」由 R 改为 S/scope 并依附 Step 0;frontmatter 的触发信息由渲染器合成 rt 节点呈现。</li><li>2026-08-24 维护:源 SKILL.md 术语两轮修订(旧词统一为「节点 / skill 卡片 / 支撑连线 / 主线」)后,同步了 sha256 与受影响的 quote/转述;语义断言本身未改。</li></ul><p class="sem-h">校验</p><ul class="sem-list"><li>merged:作废 0 条</li></ul><div class="pager"></div></section>
+    </main>
+  </div>
+
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>skill-to-webpage/SKILL.md</code>(187 行,7 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/skill-to-webpage</code> · 拆解零 LLM · 语义层由 <code>merge(rwsa-lite)</code> 产出,206 条断言经 <code>validate_semantics.py</code> 逐条回读核对(解析器 rwsa-lite,冲突 0 处) · 渲染 Agent 负责排版与衔接文案 · 带出处行号的内容为 SKILL.md 原文,开启「显示出处」可见每条断言的逐字引文 · 2026-08-24</footer>
+</div>
+
+<!-- 追问弹窗 -->
+<div class="dd-overlay" id="ddOverlay">
+  <div class="dd-popover">
+    <p class="dd-title" id="ddTitle"></p>
+    <p class="dd-ctx" id="ddCtx"></p>
+    <textarea id="ddInput" placeholder="输入你想追问的细节…"></textarea>
+    <div class="dd-actions">
+      <button class="dd-submit" id="ddSubmit">打包复制追问到剪贴板</button>
+      <button class="dd-cancel" id="ddCancel">取消</button>
+    </div>
+  </div>
+</div>
+<div class="dd-toast" id="ddToast"></div>
+
+<script>
+/* JS 安全规则(CRITICAL):var / function() / DOM 前 null 守卫 / 字符串内无中文弯引号 */
+
+/* ——— 渲染时注入的页面数据 ——— */
+var SKILL_NAME = "skill-to-webpage";
+var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/skills/skill-to-webpage";
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/skill-to-webpage/static";
+var NODES = ["rt", "n01", "n02", "n03", "n04", "n05", "n06", "n07", "recon"];
+var NODE_TITLES = {"n01": "六条设计原则", "n02": "八步编排主线", "n03": "输出目录约定", "n04": "文件与脚本分工", "n05": "Agent 自任解析器", "n06": "错误处理表", "n07": "明确不做的事", "rt": "何时触发", "recon": "印证报告"};
+var NODE_RES = {"n01": [["references/parser-protocol.md", true], ["references/semantics-contract.md", true]], "n02": [["scripts/extract.py", true], ["scripts/extract_bundle.py", true], ["scripts/render.py", true], ["scripts/render_bundle.py", true], ["scripts/verify-page.js", true], ["references/parser-protocol.md", true], ["references/semantics-contract.md", true], ["scripts/validate_semantics.py", true], ["scripts/merge_semantics.py", true]], "n03": [], "n04": [["scripts/extract.py", true], ["scripts/extract_bundle.py", true], ["scripts/validate_semantics.py", true], ["scripts/merge_semantics.py", true], ["scripts/render.py", true], ["scripts/render_bundle.py", true], ["scripts/bundle_layout.py", true], ["scripts/s2w_common.py", true], ["scripts/verify-page.js", true], ["templates/base.html", true], ["templates/bundle.html", true], ["templates/flow-lib.js", true], ["templates/components.md", true], ["references/parser-protocol.md", true], ["references/semantics-contract.md", true]], "n05": [], "n06": [], "n07": [], "recon": [], "rt": []};
+var SUBFLOW_LOOPS = {"st-n02": [{"from": "e24", "to": "e24", "label": "逐个解析器"}, {"from": "e25", "to": "e25", "label": "裁决后重跑合并"}, {"from": "e26", "to": "e26", "label": "组模式二次渲染"}, {"from": "e27", "to": "e27", "label": "修完重验"}, {"from": "e27", "to": "e24", "label": "逐成员走 Step 3–6"}]};
+var SEM_EDGES = {};   /* 语义层(可选):{"st-nXX": {arcs: [{from,to,label,inf}], end: {from,label,inf}}},渲染时经 component_scripts 赋值 */
+var RAIL_LINKS = [];  /* 语义层(可选):流程带支撑行 → 主线的依赖弧 [{from,to}] */
+
+/* ——— 侧栏资源渲染 ——— */
+function renderResources(nodeId) {
+  var box = document.getElementById("resList");
+  if (!box) { return; }
+  var list = NODE_RES[nodeId] || [];
+  if (list.length === 0) {
+    box.innerHTML = '<p class="res-empty">本节点未引用资源文件</p>';
+    return;
+  }
+  var html = "";
+  var i;
+  for (i = 0; i < list.length; i++) {
+    var cls = list[i][1] ? "res-item" : "res-item missing";
+    var label = list[i][1] ? "存在" : "缺失";
+    html += '<div class="' + cls + '" title="' + label + '"><span class="dot"></span>' + list[i][0] + "</div>";
+  }
+  box.innerHTML = html;
+}
+
+/* ——— 上一步/下一步 ——— */
+function renderPager(nodeId) {
+  var idx = -1;
+  var i;
+  for (i = 0; i < NODES.length; i++) { if (NODES[i] === nodeId) { idx = i; } }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var pager = panel.querySelector(".pager");
+  if (!pager) { return; }
+  var html = "";
+  if (idx > 0) {
+    var prev = NODES[idx - 1];
+    html += '<button onclick="showNode(\'' + prev + '\')"><span class="dir">← 上一节点</span>' + prev + " · " + NODE_TITLES[prev] + "</button>";
+  } else {
+    html += "<button disabled><span class=\"dir\">← 上一节点</span>已是起点</button>";
+  }
+  if (idx < NODES.length - 1) {
+    var next = NODES[idx + 1];
+    html += '<button onclick="showNode(\'' + next + '\')" style="text-align:right"><span class="dir">下一节点 →</span>' + next + " · " + NODE_TITLES[next] + "</button>";
+  } else {
+    html += "<button disabled style=\"text-align:right\"><span class=\"dir\">下一节点 →</span>已是终点</button>";
+  }
+  pager.innerHTML = html;
+}
+
+/* ——— 节点切换 ——— */
+function showNode(nodeId) {
+  var panels = document.querySelectorAll(".panel");
+  var i;
+  for (i = 0; i < panels.length; i++) { panels[i].classList.remove("active"); }
+  var target = document.getElementById("p-" + nodeId);
+  if (target) { target.classList.add("active"); }
+
+  var chips = document.querySelectorAll(".node-chip");
+  for (i = 0; i < chips.length; i++) {
+    if (chips[i].getAttribute("data-node") === nodeId) { chips[i].classList.add("active"); }
+    else { chips[i].classList.remove("active"); }
+  }
+  var tocBtns = document.querySelectorAll(".toc button");
+  for (i = 0; i < tocBtns.length; i++) {
+    if (tocBtns[i].getAttribute("data-node") === nodeId) { tocBtns[i].classList.add("active"); }
+    else { tocBtns[i].classList.remove("active"); }
+  }
+  renderResources(nodeId);
+  renderPager(nodeId);
+  redrawActiveSubflows();
+  var rail = document.getElementById("rail");
+  if (rail) {
+    var activeChip = rail.querySelector(".node-chip.active");
+    if (activeChip && activeChip.scrollIntoView) {
+      activeChip.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    }
+  }
+}
+
+/* ——— 跳到某节点的某个子步骤 ——— */
+function showStep(nodeId, explainId) {
+  showNode(nodeId);
+  if (!explainId) { return; }
+  var panel = document.getElementById("p-" + nodeId);
+  if (!panel) { return; }
+  var btns = panel.querySelectorAll(".sf-node");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute("data-x") === explainId && btns[i].onclick) { btns[i].onclick(); }
+  }
+}
+
+(function bindNav() {
+  var btns = document.querySelectorAll("[data-node]");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    (function (btn) {
+      btn.onclick = function () { showNode(btn.getAttribute("data-node")); };
+    })(btns[i]);
+  }
+})();
+
+/* ——— 布局工具(语义层共用;无语义数据时不会被调用) ——— */
+/* 一维放置:每个盒子想居中于其关联盒子正下方;与邻居重叠则并成一簇共同居中;簇不越过左界 minLeft */
+function semPlace1D(items, minLeft, gap) {
+  items.sort(function (p, q) { return p.want - q.want; });
+  var clusters = [];
+  var i, k;
+  for (i = 0; i < items.length; i++) {
+    items[i].off = 0;
+    var c = { items: [items[i]], w: items[i].w, sum: items[i].want, left: Math.max(minLeft, items[i].want) };
+    while (clusters.length > 0 && clusters[clusters.length - 1].left + clusters[clusters.length - 1].w + gap > c.left) {
+      var p = clusters.pop();
+      for (k = 0; k < c.items.length; k++) { c.items[k].off += p.w + gap; p.items.push(c.items[k]); }
+      p.sum += c.sum - c.items.length * (p.w + gap);
+      p.w += gap + c.w;
+      p.left = Math.max(minLeft, p.sum / p.items.length);
+      c = p;
+    }
+    clusters.push(c);
+  }
+  for (i = 0; i < clusters.length; i++) {
+    for (k = 0; k < clusters[i].items.length; k++) { clusters[i].items[k].left = clusters[i].left + clusters[i].items[k].off; }
+  }
+}
+
+/* 正交折线:(x0,y0) 先竖直到轨道 yt,再水平,再竖直到 (x1,y1);拐角圆弧半径 r */
+function orthoPath(x0, y0, x1, y1, yt, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var dx = x1 - x0;
+  if (Math.abs(dx) < 2) { return "M " + f(x0) + " " + f(y0) + " L " + f(x1) + " " + f(y1); }
+  var sx = dx > 0 ? 1 : -1;
+  var s0 = yt > y0 ? 1 : -1;
+  var s1 = y1 > yt ? 1 : -1;
+  var rr = Math.min(r, Math.abs(dx) / 2, Math.abs(yt - y0), Math.abs(y1 - yt));
+  return "M " + f(x0) + " " + f(y0) + " L " + f(x0) + " " + f(yt - s0 * rr) + " Q " + f(x0) + " " + f(yt) + " " + f(x0 + sx * rr) + " " + f(yt) +
+    " L " + f(x1 - sx * rr) + " " + f(yt) + " Q " + f(x1) + " " + f(yt) + " " + f(x1) + " " + f(yt + s1 * rr) + " L " + f(x1) + " " + f(y1);
+}
+
+/* 卫星栏布线:主行在上、卫星栏在下,轨道夹在两者之间(yTop..yBot)。
+   links = [{rowBox, satBox, rowKey, satKey, dir:"up"|"down"}]:up = 箭头汇入主行盒子(依赖来源),down = 箭头汇入卫星盒子(兜底去向)。
+   端口沿盒边按对侧盒子的横向位置排序分散;每条线独占一条水平轨道;轨道次序取交叉最少者(≤8 条穷举,更多用邻换贪心)。 */
+function semRouteLane(links, yTop, yBot) {
+  var i, j, g, cc;
+  function spread(keyName, boxName, otherName, portName) {
+    var groups = {};
+    for (i = 0; i < links.length; i++) {
+      if (!groups[links[i][keyName]]) { groups[links[i][keyName]] = []; }
+      groups[links[i][keyName]].push(links[i]);
+    }
+    for (g in groups) {
+      if (!groups.hasOwnProperty(g)) { continue; }
+      var arr = groups[g];
+      arr.sort(function (p, q) { return (p[otherName].l + p[otherName].w / 2) - (q[otherName].l + q[otherName].w / 2); });
+      for (j = 0; j < arr.length; j++) { arr[j][portName] = arr[j][boxName].l + arr[j][boxName].w * (j + 1) / (arr.length + 1); }
+    }
+  }
+  spread("rowKey", "rowBox", "satBox", "xs");
+  spread("satKey", "satBox", "rowBox", "xe");
+  for (i = 0; i < links.length; i++) {
+    links[i].lo = Math.min(links[i].xs, links[i].xe);
+    links[i].hi = Math.max(links[i].xs, links[i].xe);
+    links[i].span = links[i].hi - links[i].lo;
+  }
+  /* up 在上轨、dn 在下轨时的交叉数:dn 的上竖段穿过 up 的横段 / up 的下竖段穿过 dn 的横段 */
+  function pairCross(up, dn) {
+    var c = 0;
+    if (dn.xs > up.lo + 0.5 && dn.xs < up.hi - 0.5) { c++; }
+    if (up.xe > dn.lo + 0.5 && up.xe < dn.hi - 0.5) { c++; }
+    return c;
+  }
+  function cost(order) {
+    var c = 0, a, b;
+    for (a = 0; a < order.length; a++) { for (b = a + 1; b < order.length; b++) { c += pairCross(order[a], order[b]); } }
+    return c;
+  }
+  function drift(order) { var s = 0, a; for (a = 0; a < order.length; a++) { s += a * order[a].span; } return s; }
+  var best = links.slice().sort(function (p, q) { return q.span - p.span; });
+  var bestC = cost(best), bestD = drift(best);
+  var n = best.length;
+  if (n > 1 && n <= 8) {
+    var arr2 = best.slice(), cnt = [], k = 0, tmp, sw;
+    for (i = 0; i < n; i++) { cnt[i] = 0; }
+    while (k < n) {
+      if (cnt[k] < k) {
+        sw = (k % 2 === 0) ? 0 : cnt[k];
+        tmp = arr2[sw]; arr2[sw] = arr2[k]; arr2[k] = tmp;
+        cc = cost(arr2);
+        if (cc < bestC || (cc === bestC && drift(arr2) < bestD)) { best = arr2.slice(); bestC = cc; bestD = drift(arr2); }
+        cnt[k] += 1; k = 0;
+      } else { cnt[k] = 0; k += 1; }
+    }
+  } else if (n > 8) {
+    var pass, improved = true;
+    for (pass = 0; pass < 30 && improved; pass++) {
+      improved = false;
+      for (i = 0; i + 1 < n; i++) {
+        var t1 = best[i]; best[i] = best[i + 1]; best[i + 1] = t1;
+        cc = cost(best);
+        if (cc < bestC) { bestC = cc; improved = true; } else { best[i + 1] = best[i]; best[i] = t1; }
+      }
+    }
+  }
+  for (i = 0; i < n; i++) {
+    var lk = best[i];
+    var yt = yTop + (yBot - yTop) * (i + 1) / (n + 1);
+    if (lk.dir === "down") {
+      lk.d = orthoPath(lk.xs, lk.rowBox.t + lk.rowBox.h + 1, lk.xe, lk.satBox.t - 2, yt, 8);
+    } else {
+      lk.d = orthoPath(lk.xe, lk.satBox.t - 1, lk.xs, lk.rowBox.t + lk.rowBox.h + 3, yt, 8);
+    }
+  }
+  return best;
+}
+
+/* ——— 连线选中:单击一条线,高亮它的两端,同一张图里的其它线与盒子淡出 ———
+   选中态按容器(每个 stepper / 流程带)分别记,重画(展开、换窗宽)后由 sfApplyFocus 复原 */
+var SF_FOCUS = {};
+
+function sfRootKey(root) { return root.id || "sf-root"; }
+
+function sfSetCls(el, name, want) {
+  var cur = el.getAttribute("class") || "";
+  var has = (" " + cur + " ").indexOf(" " + name + " ") >= 0;
+  if (want === has) { return; }
+  el.setAttribute("class", want ? (cur + " " + name)
+    : (" " + cur + " ").replace(" " + name + " ", " ").replace(/^\s+|\s+$/g, ""));
+}
+
+/* 盒子的端点键:步骤盒子用 data-x,外部卡片 / END 用 data-extkey,流程带芯片用 rail:<节点 id> */
+function sfBoxKey(el) {
+  if (!el || !el.getAttribute) { return null; }
+  if (el.getAttribute("data-x")) { return el.getAttribute("data-x"); }
+  if (el.getAttribute("data-extkey")) { return el.getAttribute("data-extkey"); }
+  if (el.getAttribute("data-node")) { return "rail:" + el.getAttribute("data-node"); }
+  return null;
+}
+
+function sfApplyFocus(root) {
+  if (!root) { return; }
+  var f = SF_FOCUS[sfRootKey(root)] || null;
+  var edges = root.querySelectorAll("[data-efrom]");   /* 线 + 线上的标签 */
+  var boxes = root.querySelectorAll(".sf-node, .sf-ext, .sf-end, .node-chip");
+  var i;
+  for (i = 0; i < edges.length; i++) {
+    var hit = f !== null && edges[i].getAttribute("data-efrom") === f.from && edges[i].getAttribute("data-eto") === f.to;
+    sfSetCls(edges[i], "focus", f !== null && hit);
+    sfSetCls(edges[i], "dim", f !== null && !hit);
+  }
+  for (i = 0; i < boxes.length; i++) {
+    var k = sfBoxKey(boxes[i]);
+    var on = f !== null && k !== null && (k === f.from || k === f.to);
+    sfSetCls(boxes[i], "focus", f !== null && on);
+    sfSetCls(boxes[i], "dim", f !== null && !on);
+  }
+}
+
+function sfClearFocus() {
+  SF_FOCUS = {};
+  var roots = document.querySelectorAll(".stepper, #railSem"), i;
+  for (i = 0; i < roots.length; i++) { sfApplyFocus(roots[i]); }
+}
+
+(function bindSfFocus() {
+  document.addEventListener("click", function (ev) {
+    var el = ev.target, edge = null, root = null;
+    while (el && el !== document.body) {
+      if (!edge && el.getAttribute && el.getAttribute("data-efrom") !== null && el.getAttribute("data-eto") !== null) { edge = el; }
+      if (el.className !== undefined && el.id === "railSem") { root = el; break; }
+      if (el.classList && el.classList.contains && el.classList.contains("stepper")) { root = el; break; }
+      el = el.parentNode;
+    }
+    if (!root) { return; }
+    var key = sfRootKey(root), cur = SF_FOCUS[key] || null;
+    if (!edge) { SF_FOCUS[key] = null; }          /* 点空白 / 点盒子:清掉选中,节点自身的点击行为不变 */
+    else {
+      var f = { from: edge.getAttribute("data-efrom"), to: edge.getAttribute("data-eto") };
+      SF_FOCUS[key] = (cur && cur.from === f.from && cur.to === f.to) ? null : f;
+    }
+    sfApplyFocus(root);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" || ev.keyCode === 27) { sfClearFocus(); }
+  });
+})();
+
+/* ——— 子流程图绘制:顺序边直线 + 上方弧线(回边 / 自环 / 条件跳转,按跨度分层避让)+ 外部节点栏(依赖来源 / 兜底去向,正交布线)+ 终止标记 ——— */
+function semLayoutLane(stepper, canvas) {
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (!lane || !row) { canvas.style.paddingBottom = ""; return; }
+  var exts = lane.querySelectorAll(".sf-ext");
+  var i, j, nLinks = 0, natMax = 0, maxH = 0;
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = ""; exts[i].style.height = ""; }
+  for (i = 0; i < exts.length; i++) {
+    nLinks += (exts[i].getAttribute("data-at") || exts[i].getAttribute("data-from") || "").split(",").length;
+    if (exts[i].offsetWidth > natMax) { natMax = exts[i].offsetWidth; }
+  }
+  for (i = 0; i < exts.length; i++) { exts[i].style.width = natMax + "px"; }
+  var gap = Math.max(36, 18 + 10 * nLinks);
+  var rowBottom = row.offsetTop + row.offsetHeight;
+  lane.style.top = (rowBottom + gap) + "px";
+  var items = [];
+  for (i = 0; i < exts.length; i++) {
+    var ex = exts[i];
+    var refs = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+    var sum = 0, n = 0;
+    for (j = 0; j < refs.length; j++) {
+      var b = stepper.querySelector('.sf-node[data-x="' + refs[j] + '"]');
+      if (b) { sum += b.offsetLeft + b.offsetWidth / 2; n++; }
+    }
+    items.push({ el: ex, want: (n > 0 ? sum / n : 0) - ex.offsetWidth / 2, w: ex.offsetWidth });
+    if (ex.offsetHeight > maxH) { maxH = ex.offsetHeight; }
+  }
+  semPlace1D(items, 0, 12);
+  for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+  lane.style.height = maxH + "px";
+  canvas.style.paddingBottom = (gap + maxH + 16) + "px";
+}
+
+function drawSubflow(stepperId) {
+  var stepper = document.getElementById(stepperId);
+  if (!stepper) { return; }
+  var canvas = stepper.querySelector(".sf-canvas");
+  var svg = stepper.querySelector(".sf-svg");
+  var nodes = stepper.querySelectorAll(".sf-node");
+  if (!canvas || !svg || nodes.length === 0) { return; }
+  var i, j;
+  var idx = {};
+  for (i = 0; i < nodes.length; i++) { idx[nodes[i].getAttribute("data-x")] = i; }
+
+  /* 同行盒子等宽:自然宽取最大(CSS 夹在 112–200px),高度随行拉伸、内容垂直居中 */
+  var natMax = 0;
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = ""; }
+  for (i = 0; i < nodes.length; i++) { var nw = nodes[i].getBoundingClientRect().width; if (nw > natMax) { natMax = nw; } }
+  natMax = Math.ceil(natMax) + 2; /* 留 2px 余量:编号行是可换行 flex,正好贴边时会因亚像素取整折行 */
+  for (i = 0; i < nodes.length; i++) { nodes[i].style.width = natMax + "px"; }
+
+  /* 上方弧线分层:跨度短的在下;与已放置弧线重叠则抬一层 */
+  var sem = SEM_EDGES[stepperId] || {};
+  var arcs = [];
+  var loops = SUBFLOW_LOOPS[stepperId] || [];
+  for (i = 0; i < loops.length; i++) { arcs.push({ kind: "loop", e: loops[i] }); }
+  var skips = sem.arcs || [];
+  for (i = 0; i < skips.length; i++) { arcs.push({ kind: "skip", e: skips[i] }); }
+  var maxLevel = 0;
+  for (i = 0; i < arcs.length; i++) {
+    var ia = idx[arcs[i].e.from], ib = idx[arcs[i].e.to];
+    if (ia === undefined || ib === undefined) { arcs[i].bad = true; continue; }
+    arcs[i].lo = Math.min(ia, ib);
+    arcs[i].hi = Math.max(ia, ib);
+    arcs[i].span = arcs[i].hi - arcs[i].lo;
+  }
+  arcs.sort(function (p, q) { return p.span - q.span; });
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var level = 1;
+    for (j = 0; j < i; j++) {
+      if (arcs[j].bad) { continue; }
+      var overlap = !(arcs[i].hi < arcs[j].lo || arcs[i].lo > arcs[j].hi);
+      if (overlap && arcs[j].level >= level) { level = arcs[j].level + 1; }
+    }
+    arcs[i].level = level;
+    if (level > maxLevel) { maxLevel = level; }
+  }
+  canvas.style.paddingTop = Math.max(56, 30 + 26 * maxLevel) + "px";
+  semLayoutLane(stepper, canvas);
+
+  var W = canvas.scrollWidth;
+  var H = canvas.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  function marker(id, cls, size) {
+    return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="' + size + '" markerHeight="' + size + '" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="' + cls + '"></path></marker>';
+  }
+  var parts = ["<defs>" + marker(stepperId + "-mf", "mk-f", 7) + marker(stepperId + "-ml", "mk-l", 6.5) + marker(stepperId + "-mc", "mk-c", 6.5) + marker(stepperId + "-md", "mk-d", 6) + marker(stepperId + "-mx", "mk-x", 6.5) + marker(stepperId + "-me", "mk-e", 6.5) + "</defs>"];
+  var pos = {};
+  for (i = 0; i < nodes.length; i++) {
+    var b = nodes[i];
+    pos[b.getAttribute("data-x")] = { l: b.offsetLeft, t: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight };
+  }
+
+  /* 顺序边 */
+  for (i = 0; i < nodes.length - 1; i++) {
+    var a = pos[nodes[i].getAttribute("data-x")];
+    var c = pos[nodes[i + 1].getAttribute("data-x")];
+    if (!a || !c) { continue; }
+    parts.push('<line x1="' + (a.l + a.w + 1) + '" y1="' + (a.t + a.h / 2) + '" x2="' + (c.l - 3) + '" y2="' + (c.t + c.h / 2) + '" class="ed-f sfe" data-efrom="' + nodes[i].getAttribute("data-x") + '" data-eto="' + nodes[i + 1].getAttribute("data-x") + '" marker-end="url(#' + stepperId + '-mf)"></line>');
+  }
+
+  /* 上方弧线:回边 / 自环(ed-l,橙色流动虚线)与条件跳转(ed-c,蓝色;推断为虚线) */
+  for (i = 0; i < arcs.length; i++) {
+    if (arcs[i].bad) { continue; }
+    var e = arcs[i].e;
+    var s = pos[e.from];
+    var t = pos[e.to];
+    if (!s || !t) { continue; }
+    var L = arcs[i].level;
+    var isLoop = arcs[i].kind === "loop";
+    var cls = isLoop ? "ed-l" : ("ed-c" + (e.inf ? " inf" : ""));
+    var d, lx, ly;
+    if (e.from === e.to) {
+      var cx = s.l + s.w / 2;
+      var cy = s.t - (10 + 26 * L);
+      d = "M " + (cx + 16) + " " + (s.t - 1) + " C " + (cx + 44) + " " + cy + ", " + (cx - 44) + " " + cy + ", " + (cx - 16) + " " + (s.t - 1);
+      lx = cx;
+      ly = s.t - (6 + 26 * L);
+    } else {
+      var x1 = s.l + s.w / 2;
+      var x2 = t.l + t.w / 2;
+      var topY = Math.min(s.t, t.t);
+      var py = topY - (14 + 26 * L);
+      d = "M " + x1 + " " + (s.t - 1) + " C " + x1 + " " + py + ", " + x2 + " " + py + ", " + x2 + " " + (t.t - 1);
+      lx = (x1 + x2) / 2;
+      ly = topY - (8 + 26 * L);
+    }
+    parts.push('<path d="' + d + '" class="' + cls + ' sfe" data-efrom="' + e.from + '" data-eto="' + e.to + '" marker-end="url(#' + stepperId + (isLoop ? "-ml" : "-mc") + ')"></path>');
+    var label = e.label + (e.inf ? " · 推断" : "");
+    var halfLabel = label.length * 5.5;
+    if (lx < halfLabel + 4) { lx = halfLabel + 4; }
+    if (lx > W - halfLabel - 4) { lx = W - halfLabel - 4; }
+    parts.push('<text x="' + lx + '" y="' + ly + '" text-anchor="middle" class="' + (isLoop ? "ed-t" : "ed-ct") + ' sfl" data-efrom="' + e.from + '" data-eto="' + e.to + '">' + label + "</text>");
+  }
+
+  /* 外部节点栏:依赖来源(点线,上箭头汇入步骤)/ 兜底去向(橙线,下箭头汇入外部节点);正交布线,每线一轨 */
+  var lane = stepper.querySelector(".sf-lane");
+  var row = stepper.querySelector(".sf-row");
+  if (lane && row) {
+    var exts = lane.querySelectorAll(".sf-ext");
+    var links = [];
+    for (i = 0; i < exts.length; i++) {
+      var ex = exts[i];
+      var isOut = ex.classList.contains("out");
+      var exRect = { l: lane.offsetLeft + ex.offsetLeft, t: lane.offsetTop + ex.offsetTop, w: ex.offsetWidth, h: ex.offsetHeight };
+      ex.setAttribute("data-extkey", "ext:x" + i);
+      var refs1 = (ex.getAttribute("data-at") || ex.getAttribute("data-from") || "").split(",");
+      var infs = (ex.getAttribute("data-inf") || "").split(",");
+      for (j = 0; j < refs1.length; j++) {
+        if (!pos[refs1[j]]) { continue; }
+        links.push({ rowBox: pos[refs1[j]], satBox: exRect, rowKey: refs1[j], satKey: "ext:x" + i, dir: isOut ? "down" : "up",
+                     cls: (isOut ? "ed-x" : "ed-d") + (infs[j] === "1" ? " inf" : ""), mk: isOut ? "-mx" : "-md" });
+      }
+    }
+    var routed = semRouteLane(links, row.offsetTop + row.offsetHeight, lane.offsetTop);
+    for (i = 0; i < routed.length; i++) {
+      /* up = 箭头汇入主行盒子(依赖来源:外部 → 步骤);down = 箭头汇入外部卡片(兜底去向) */
+      var lf = routed[i].dir === "up" ? routed[i].satKey : routed[i].rowKey;
+      var lt = routed[i].dir === "up" ? routed[i].rowKey : routed[i].satKey;
+      parts.push('<path d="' + routed[i].d + '" class="' + routed[i].cls + ' sfe" data-efrom="' + lf + '" data-eto="' + lt + '" marker-end="url(#' + stepperId + routed[i].mk + ')"></path>');
+    }
+  }
+
+  /* 终止标记:最后一步 → ⦿ END */
+  var endEl = stepper.querySelector(".sf-end");
+  if (endEl && sem.end && pos[sem.end.from]) {
+    var se = pos[sem.end.from];
+    var ex1 = endEl.offsetLeft, ey1 = endEl.offsetTop + endEl.offsetHeight / 2;
+    endEl.setAttribute("data-extkey", "ext:END");
+    parts.push('<path d="M ' + (se.l + se.w + 1) + ' ' + (se.t + se.h / 2) + ' L ' + (ex1 - 2) + ' ' + ey1 + '" class="ed-e' + (sem.end.inf ? " inf" : "") + ' sfe" data-efrom="' + sem.end.from + '" data-eto="ext:END" marker-end="url(#' + stepperId + '-me)"></path>');
+    parts.push('<text x="' + (ex1 + endEl.offsetWidth / 2) + '" y="' + (endEl.offsetTop + endEl.offsetHeight + 14) + '" text-anchor="middle" class="ed-et sfl" data-efrom="' + sem.end.from + '" data-eto="ext:END">' + sem.end.label + (sem.end.inf ? " · 推断" : "") + "</text>");
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(stepper);
+}
+
+function redrawActiveSubflows() {
+  var active = document.querySelector(".panel.active");
+  if (!active) { return; }
+  var steppers = active.querySelectorAll(".stepper");
+  var i;
+  for (i = 0; i < steppers.length; i++) { drawSubflow(steppers[i].id); }
+}
+
+/* ——— 子步骤点击绑定 ——— */
+(function bindSubflows() {
+  var steppers = document.querySelectorAll(".stepper");
+  var s;
+  for (s = 0; s < steppers.length; s++) {
+    (function (stepper) {
+      var btns = stepper.querySelectorAll(".sf-node");
+      var i;
+      for (i = 0; i < btns.length; i++) {
+        (function (btn) {
+          btn.onclick = function () {
+            var targetId = btn.getAttribute("data-x");
+            var cards = stepper.querySelectorAll(".explain-card");
+            var j;
+            for (j = 0; j < cards.length; j++) { cards[j].classList.remove("active"); }
+            var allBtns = stepper.querySelectorAll(".sf-node");
+            for (j = 0; j < allBtns.length; j++) { allBtns[j].classList.remove("active"); }
+            btn.classList.add("active");
+            var card = document.getElementById(targetId);
+            if (card) { card.classList.add("active"); }
+          };
+        })(btns[i]);
+      }
+      if (btns.length > 0) { btns[0].onclick(); }
+    })(steppers[s]);
+  }
+})();
+
+window.addEventListener("resize", function () { redrawActiveSubflows(); });
+
+/* ——— 主题切换 + localStorage ——— */
+(function bindTheme() {
+  var picker = document.getElementById("themePicker");
+  if (!picker) { return; }
+  picker.value = document.body.getAttribute("data-theme") || "docs";
+  var saved = null;
+  try { saved = localStorage.getItem("s2w-theme"); } catch (e) { saved = null; }
+  if (saved) {
+    document.body.setAttribute("data-theme", saved);
+    picker.value = saved;
+  }
+  picker.onchange = function () {
+    document.body.setAttribute("data-theme", picker.value);
+    try { localStorage.setItem("s2w-theme", picker.value); } catch (e) {}
+  };
+})();
+
+/* ——— 出处开关 ——— */
+(function bindSrcToggle() {
+  var toggle = document.getElementById("srcToggle");
+  if (!toggle) { return; }
+  toggle.onclick = function () {
+    document.body.classList.toggle("show-sources");
+    toggle.classList.toggle("active");
+    toggle.textContent = document.body.classList.contains("show-sources") ? "隐藏出处" : "显示出处";
+  };
+})();
+
+/* ——— 追问弹窗:提问 + 位置 + 依赖文件,打包复制给 Agent ——— */
+(function bindDeepDive() {
+  var overlay = document.getElementById("ddOverlay");
+  var titleEl = document.getElementById("ddTitle");
+  var ctxEl = document.getElementById("ddCtx");
+  var input = document.getElementById("ddInput");
+  var toast = document.getElementById("ddToast");
+  if (!overlay || !titleEl || !ctxEl || !input || !toast) { return; }
+  var currentRef = "";
+  var currentConcept = "";
+  var currentDeps = [];
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+  window.flashToast = showToast;
+
+  /* 依赖收集:内容块文本里的资源路径 + 当前节点挂载的资源(Phase 1 抽取产物),去重合并 */
+  function findDeps(el) {
+    var out = [];
+    var seen = {};
+    if (el) {
+      var tokens = el.textContent.split(/[^A-Za-z0-9_.\/-]+/);
+      var i;
+      for (i = 0; i < tokens.length; i++) {
+        var tk = tokens[i].replace(/[.,;:]+$/, "");
+        if (/^(scripts|templates|references|examples|assets)\/[A-Za-z0-9_.\/-]*$/.test(tk)) {
+          if (!seen[tk]) { seen[tk] = 1; out.push(tk); }
+        }
+      }
+    }
+    var activePanel = document.querySelector(".panel.active");
+    if (activePanel) {
+      var nodeId = activePanel.id.replace("p-", "");
+      var res = NODE_RES[nodeId] || [];
+      var j;
+      for (j = 0; j < res.length; j++) {
+        if (!seen[res[j][0]]) { seen[res[j][0]] = 1; out.push(res[j][0]); }
+      }
+    }
+    return out;
+  }
+
+  window.openDeepDive = function (conceptName, source) {
+    currentRef = source;
+    currentConcept = conceptName;
+    var block = document.querySelector('.panel.active [data-source="' + source + '"]') || document.querySelector('[data-source="' + source + '"]');
+    currentDeps = findDeps(block);
+    titleEl.textContent = "追问「" + conceptName + "」";
+    var depsHint = currentDeps.length > 0
+      ? " · 依赖:" + currentDeps.slice(0, 3).join("、") + (currentDeps.length > 3 ? " 等 " + currentDeps.length + " 项" : "")
+      : "";
+    ctxEl.textContent = "出处:" + source + depsHint + " | 提交后把提问 + 位置 + 依赖文件打包复制到剪贴板,贴给 Agent 即可。";
+    input.value = "";
+    overlay.classList.add("active");
+    setTimeout(function () { input.focus(); }, 180);
+  };
+
+  var cancelBtn = document.getElementById("ddCancel");
+  if (cancelBtn) { cancelBtn.onclick = function () { overlay.classList.remove("active"); }; }
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) { overlay.classList.remove("active"); }
+  };
+
+  var submitBtn = document.getElementById("ddSubmit");
+  if (submitBtn) {
+    submitBtn.onclick = function () {
+      var q = input.value.replace(/^\s+|\s+$/g, "");
+      if (!q) { showToast("请输入你的问题"); return; }
+      var nodeLoc = "";
+      var activePanel = document.querySelector(".panel.active");
+      if (activePanel) {
+        var phId = activePanel.querySelector(".ph-id");
+        var phTitle = activePanel.querySelector("h2");
+        if (phId && phTitle) { nodeLoc = phId.textContent.split(" · ")[0] + "「" + phTitle.textContent + "」 > "; }
+      }
+      var depLines = "";
+      var i;
+      if (currentDeps.length > 0) {
+        for (i = 0; i < currentDeps.length; i++) {
+          depLines += "  - " + SKILL_DIR + "/" + currentDeps[i] + "\n";
+        }
+      } else {
+        depLines = "  - (该内容块未显式引用依赖文件)\n";
+      }
+      var prompt = "【追问 · 由 skill-to-webpage 页面打包】\n"
+        + "- Skill:" + SKILL_NAME + "(源目录:" + SKILL_DIR + ")\n"
+        + "- 提问对象:" + nodeLoc + "「" + currentConcept + "」\n"
+        + "- 原文位置:" + SKILL_DIR + "/SKILL.md 的 " + currentRef.replace("SKILL.md:", "第 ") + " 行\n"
+        + "- 涉及依赖文件:\n" + depLines
+        + "- 知识库:" + KB_DIR + "(full_text.md 行号与原文位置一致,节点摘要在 nodes/)\n"
+        + "- 我的问题:" + q + "\n\n"
+        + "请先读原文位置与涉及的依赖文件,再回答。";
+      window.__lastPrompt = prompt;
+      function fallbackShow() {
+        input.value = prompt;
+        showToast("剪贴板不可用,已把打包内容放入输入框,请手动全选复制");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(prompt).then(function () {
+          overlay.classList.remove("active");
+          showToast("追问已打包复制(提问 + 位置 + 依赖文件),贴给 Agent 即可");
+        }).catch(fallbackShow);
+      } else {
+        fallbackShow();
+      }
+    };
+  }
+})();
+
+/* ——— 代码块复制按钮 ——— */
+(function bindCopyButtons() {
+  var pres = document.querySelectorAll("pre.code");
+  var i;
+  for (i = 0; i < pres.length; i++) {
+    (function (pre) {
+      var txt = pre.textContent;
+      var btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.type = "button";
+      btn.textContent = "复制";
+      btn.onclick = function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () {
+            btn.textContent = "已复制 ✓";
+            setTimeout(function () { btn.textContent = "复制"; }, 1600);
+          }).catch(function () {
+            if (window.flashToast) { window.flashToast("复制失败"); }
+          });
+        } else {
+          if (window.flashToast) { window.flashToast("当前环境不支持剪贴板"); }
+        }
+      };
+      pre.appendChild(btn);
+    })(pres[i]);
+  }
+})();
+
+/* ——— 决策表格:行点选 → 结论回显(data-echo 模板,{N} 为列号) ——— */
+(function bindRowSelect() {
+  var tables = document.querySelectorAll("table.rowsel");
+  var t;
+  for (t = 0; t < tables.length; t++) {
+    (function (table) {
+      var tpl = table.getAttribute("data-echo") || "{0}";
+      var wrap = table.parentNode;
+      var echo = document.createElement("p");
+      echo.className = "row-echo";
+      echo.textContent = "点击任意一行,查看该行的结论";
+      if (wrap && wrap.parentNode) { wrap.parentNode.insertBefore(echo, wrap.nextSibling); }
+      var rows = table.querySelectorAll("tbody tr");
+      var r;
+      for (r = 0; r < rows.length; r++) {
+        (function (row) {
+          row.onclick = function () {
+            var all = table.querySelectorAll("tbody tr");
+            var k;
+            for (k = 0; k < all.length; k++) { all[k].classList.remove("rowon"); }
+            row.classList.add("rowon");
+            var cells = row.querySelectorAll("td");
+            echo.textContent = tpl.replace(/\{(\d+)\}/g, function (m, idx) {
+              var c = cells[parseInt(idx, 10)];
+              return c ? c.textContent.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "") : "";
+            });
+          };
+        })(rows[r]);
+      }
+    })(tables[t]);
+  }
+})();
+
+/* ——— 自检清单计数(class="checklist" + 对应 .ck-badge,id 由渲染层配对) ——— */
+(function bindChecklists() {
+  var lists = document.querySelectorAll("ul.checklist");
+  var n;
+  for (n = 0; n < lists.length; n++) {
+    (function (list) {
+      var badge = document.getElementById(list.id.replace("ckl", "ck"));
+      if (!badge) { return; }
+      var boxes = list.querySelectorAll("input");
+      function update() {
+        var cnt = 0;
+        var i;
+        for (i = 0; i < boxes.length; i++) { if (boxes[i].checked) { cnt++; } }
+        if (cnt === boxes.length && boxes.length > 0) {
+          badge.textContent = cnt + "/" + boxes.length + " ✓ 全部通过";
+          badge.className = "ck-badge done";
+        } else {
+          badge.textContent = cnt + "/" + boxes.length;
+          badge.className = "ck-badge";
+        }
+      }
+      var i;
+      for (i = 0; i < boxes.length; i++) { boxes[i].onchange = update; }
+      update();
+    })(lists[n]);
+  }
+})();
+
+/* ——— 流程带芯片等宽:主行芯片同宽(自然宽取最大、≤200,装不下时缩到刚好装下、≥108);支撑行芯片同宽 ——— */
+function railFitChips() {
+  var rail = document.getElementById("rail");
+  if (!rail) { return; }
+  var mainRow = rail.querySelector(".rail-main") || rail;
+  var all = rail.querySelectorAll(".node-chip");
+  var mains = [], sats = [], i;
+  for (i = 0; i < all.length; i++) { if (all[i].classList.contains("sat")) { sats.push(all[i]); } else { mains.push(all[i]); } }
+  function natural(list) {
+    var k, m = 0, sum = 0;
+    for (k = 0; k < list.length; k++) { list[k].style.width = ""; }
+    for (k = 0; k < list.length; k++) { var w = list[k].offsetWidth; sum += w; if (w > m) { m = w; } }
+    return { max: m, sum: sum };
+  }
+  function extent(el) {
+    var ch = el.children, first = null, last = null, k;
+    for (k = 0; k < ch.length; k++) {
+      if (ch[k].offsetWidth > 0 && String(ch[k].tagName).toLowerCase() !== "svg") { if (!first) { first = ch[k]; } last = ch[k]; }
+    }
+    return first ? (last.offsetLeft + last.offsetWidth - first.offsetLeft) : 0;
+  }
+  if (mains.length > 0) {
+    var nm = natural(mains);
+    var gaps = extent(mainRow) - nm.sum;
+    var uw = Math.min(200, nm.max);
+    var fit = (rail.clientWidth - gaps) / mains.length;
+    if (uw > fit) { uw = Math.max(108, fit); }
+    for (i = 0; i < mains.length; i++) { mains[i].style.width = Math.floor(uw) + "px"; }
+  }
+  if (sats.length > 0) {
+    var ns = natural(sats);
+    var sw = Math.min(200, ns.max);
+    for (i = 0; i < sats.length; i++) { sats[i].style.width = sw + "px"; }
+  }
+}
+
+/* ——— 流程带支撑行(语义层):S/A 芯片定位到其关联主线节点下方(一维簇放置),依赖线正交布线;无 #railSem 时只做芯片等宽 ——— */
+function semDrawRail() {
+  railFitChips();
+  var wrap = document.getElementById("railSem");
+  var svg = document.getElementById("railSvg");
+  if (!wrap || !svg) { return; }
+  var sat = wrap.querySelector(".rail-sat");
+  var mainRow = wrap.querySelector(".rail-main");
+  var i, j;
+  function rect(el) {
+    var wr = wrap.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return { l: r.left - wr.left, t: r.top - wr.top, w: r.width, h: r.height };
+  }
+  function mainChip(id) { return wrap.querySelector('.rail-main .node-chip[data-node="' + id + '"]'); }
+  function satChip(id) { return wrap.querySelector('.rail-sat .node-chip[data-node="' + id + '"]'); }
+  var nLinks = 0;
+  for (i = 0; i < RAIL_LINKS.length; i++) { if (mainChip(RAIL_LINKS[i].to) && satChip(RAIL_LINKS[i].from)) { nLinks++; } }
+  if (sat && mainRow) {
+    wrap.style.rowGap = Math.max(30, 18 + 10 * nLinks) + "px";
+    var gutter = 160;
+    if (window.getComputedStyle) {
+      var gw = parseFloat(window.getComputedStyle(sat, "::before").width);
+      if (!isNaN(gw) && gw > 0) { gutter = gw + 18; }
+    }
+    var chips = sat.querySelectorAll(".node-chip");
+    var items = [], maxH = 0;
+    for (i = 0; i < chips.length; i++) {
+      var ch = chips[i];
+      ch.style.height = "";
+      var nid = ch.getAttribute("data-node"), sum = 0, cnt = 0;
+      for (j = 0; j < RAIL_LINKS.length; j++) {
+        if (RAIL_LINKS[j].from !== nid) { continue; }
+        var tg = mainChip(RAIL_LINKS[j].to);
+        if (tg) { var tr = rect(tg); sum += tr.l + tr.w / 2; cnt++; }
+      }
+      items.push({ el: ch, want: cnt > 0 ? sum / cnt - ch.offsetWidth / 2 : gutter, w: ch.offsetWidth });
+      if (ch.offsetHeight > maxH) { maxH = ch.offsetHeight; }
+    }
+    semPlace1D(items, gutter, 12);
+    for (i = 0; i < items.length; i++) { items[i].el.style.left = Math.round(items[i].left) + "px"; items[i].el.style.height = maxH + "px"; }
+    sat.style.height = maxH + "px";
+  }
+  var W = wrap.scrollWidth, H = wrap.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var parts = ['<defs><marker id="rl-md" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="mk-d"></path></marker></defs>'];
+  if (sat && mainRow) {
+    var links = [];
+    for (i = 0; i < RAIL_LINKS.length; i++) {
+      var a = satChip(RAIL_LINKS[i].from);
+      var b = mainChip(RAIL_LINKS[i].to);
+      if (!a || !b) { continue; }
+      links.push({ rowBox: rect(b), satBox: rect(a), rowKey: RAIL_LINKS[i].to, satKey: RAIL_LINKS[i].from, dir: "up" });
+    }
+    var mr = rect(mainRow), sr = rect(sat);
+    var routed = semRouteLane(links, mr.t + mr.h, sr.t);
+    for (i = 0; i < routed.length; i++) {
+      parts.push('<path d="' + routed[i].d + '" class="rl-d sfe" data-efrom="rail:' + routed[i].satKey + '" data-eto="rail:' + routed[i].rowKey + '" marker-end="url(#rl-md)"></path>');
+    }
+  }
+  svg.innerHTML = parts.join("");
+  sfApplyFocus(wrap);
+}
+window.addEventListener("resize", function () { semDrawRail(); });
+window.addEventListener("load", function () { semDrawRail(); redrawActiveSubflows(); });
+setTimeout(function () { semDrawRail(); }, 250);
+
+/* ——— 组件专属附加脚本(渲染时按需注入) ——— */
+SEM_EDGES = {"st-n02": {"arcs": [{"from": "e21", "to": "e26", "label": "只换主题、改转述或补出另一版 → 直接 Step 5", "inf": false}, {"from": "e22", "to": "e24", "label": "static/ 在且源未变 → 跳过 Step 2", "inf": false}, {"from": "e23", "to": "e25", "label": "某解析器产物在且 sha256 一致 → 复用,跳过该解析器的抽取", "inf": true}, {"from": "e24", "to": "e26", "label": "0 个可用解析器 → 跳过 Step 4,直接渲染静态基线", "inf": false}], "end": {"from": "e28", "label": "所有选中的版本发出并交代完毕", "inf": false}}, "st-n05": {"arcs": []}};
+RAIL_LINKS = [{"from": "n01", "to": "n02"}, {"from": "n03", "to": "n02"}, {"from": "n04", "to": "n02"}, {"from": "n06", "to": "n02"}, {"from": "n07", "to": "n02"}];
+semDrawRail();
+(function () { var host = document.getElementById("srcToggle"); if (!host || !host.parentNode) { return; } var box = document.createElement("span"); box.innerHTML = "<span class=\"variants\"><span class=\"vl\">版本</span><a href=\"merged/skill-to-webpage-workflow.html\" class=\"cur\">merged</a><a href=\"static/skill-to-webpage-workflow.html\">static</a><a href=\"rwsa-lite/skill-to-webpage-workflow.html\">rwsa-lite</a></span>"; host.parentNode.insertBefore(box.firstChild, host); })();
+
+/* ——— 初始状态 ——— */
+(function initFromHash() {
+  var want = (location.hash || "").replace("#", "");
+  var start = "rt";
+  if (want && NODES.indexOf(want) >= 0) { start = want; }
+  showNode(start);
+  window.addEventListener("hashchange", function () {
+    var h = (location.hash || "").replace("#", "");
+    if (h && NODES.indexOf(h) >= 0) { showNode(h); }
+  });
+})();
+</script>
+</body>
+</html>

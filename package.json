@@ -1,0 +1,12 @@
+{
+  "name": "skill-to-webpage",
+  "private": true,
+  "description": "Dev dependencies for skills/skill-to-webpage/scripts/verify-page.js (Playwright page checks); the skill itself needs none of this to render.",
+  "scripts": {
+    "verify": "node skills/skill-to-webpage/scripts/verify-page.js",
+    "test": "python3 -m pytest -q tests"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

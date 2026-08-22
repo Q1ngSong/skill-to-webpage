@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="100%" role="img" aria-labelledby="t d">
+<title id="t">一条断言(claim)的生命周期:从 semantics.json 到页面出处</title>
+<desc id="d">一条带 source 与 quote 的断言经 validate_semantics.py 的四项检查,通过则进页面并挂 data-source,失败只作废该条;整体回落只在 schema/sha256/行数/layers/unanchored 失败时发生。</desc>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#3c3f46"/></marker>
+<marker id="ar-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#4f46e5"/></marker>
+<marker id="ar-w" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#d97706"/></marker>
+<marker id="ar-o" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#16a34a"/></marker>
+</defs>
+<rect width="1200" height="560" fill="#fafafa"/>
+<text x="24" y="44" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="19" fill="#1d1f24" font-weight="700">一条断言(claim)的生命周期 · 逐条回读,单条作废</text>
+<text x="24" y="66" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">唯一硬要求是每条断言带 source + quote,机器可核;通过的进页面挂出处,对不上的只作废该条。</text>
+<rect x="24" y="104" width="392" height="150" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="24" y="104" width="392" height="28" rx="10" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<rect x="24" y="122" width="392" height="10" rx="0" fill="#f4f4f7" stroke="none" stroke-width="1"/>
+<line x1="24" y1="132" x2="416" y2="132" stroke="#e3e4e8" stroke-width="1"/>
+<text x="38" y="123" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#5b5f6b" font-weight="600">一条断言 · semantics.json 里的一项</text>
+<text x="40" y="156" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#1d1f24" xml:space="preserve">{</text>
+<text x="40" y="177" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#1d1f24" xml:space="preserve">  &quot;text&quot;:   &quot;装机量优先 1K+&quot;,</text>
+<text x="40" y="198" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#4f46e5" xml:space="preserve">  &quot;source&quot;: &quot;SKILL.md:69&quot;,</text>
+<text x="40" y="219" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#16a34a" xml:space="preserve">  &quot;quote&quot;:  &quot;Prefer skills with 1K+ installs&quot;</text>
+<text x="40" y="240" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#1d1f24" xml:space="preserve">}</text>
+<text x="40" y="274" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">解析器产出;source 指 SKILL.md 行号,quote 是该行里的逐字原文</text>
+<rect x="452" y="92" width="322" height="186" rx="10" fill="#ffffff" stroke="#4f46e5" stroke-width="1.4"/>
+<rect x="452" y="92" width="322" height="30" rx="10" fill="#eef0fe" stroke="none" stroke-width="1"/>
+<rect x="452" y="112" width="322" height="10" rx="0" fill="#eef0fe" stroke="none" stroke-width="1"/>
+<line x1="452" y1="122" x2="774" y2="122" stroke="#d9dcfb" stroke-width="1"/>
+<text x="466" y="112" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">scripts/validate_semantics.py</text>
+<rect x="468" y="138" width="9" height="9" rx="2" fill="#ffffff" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="485" y="146" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24" font-weight="600">source 越界?</text>
+<text x="485" y="161" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">行号必须落在 SKILL.md 实际行数内</text>
+<rect x="468" y="172" width="9" height="9" rx="2" fill="#ffffff" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="485" y="180" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24" font-weight="600">quote 逐字回读?</text>
+<text x="485" y="195" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">在 source 指的行里逐字找得到</text>
+<rect x="468" y="206" width="9" height="9" rx="2" fill="#ffffff" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="485" y="214" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24" font-weight="600">端点存在?</text>
+<text x="485" y="229" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">nXX / nXX.k 在 static/ 坐标系里有</text>
+<rect x="468" y="240" width="9" height="9" rx="2" fill="#ffffff" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="485" y="248" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24" font-weight="600">delegate 有 cross-ref?</text>
+<text x="485" y="263" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">跨 skill 边要有 cross-refs.json 兜底</text>
+<text x="468" y="298" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">逐条回读核对(消费方行为);渲染 Agent 只做排版与衔接文案</text>
+<line x1="422" y1="179" x2="444" y2="179" stroke="#3c3f46" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="830" y="92" width="346" height="216" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="1.4"/>
+<rect x="830" y="92" width="346" height="30" rx="10" fill="#eaf7ee" stroke="none" stroke-width="1"/>
+<rect x="830" y="112" width="346" height="10" rx="0" fill="#eaf7ee" stroke="none" stroke-width="1"/>
+<line x1="830" y1="122" x2="1176" y2="122" stroke="#cbe9d3" stroke-width="1"/>
+<text x="844" y="112" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#16a34a" font-weight="700">✓ 通过 → 进页面</text>
+<text x="846" y="144" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">内容块挂 data-source,开「显示出处」可见引文</text>
+<rect x="846" y="156" width="314" height="62" rx="7" fill="#fbfbfd" stroke="#e3e4e8" stroke-width="1"/>
+<text x="858" y="180" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#1d1f24" font-weight="600">装机量优先 1K+</text>
+<text x="858" y="200" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#4f46e5">data-source=&quot;SKILL.md:69&quot;</text>
+<text x="1146" y="178" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#8a8f9b" font-weight="700" text-anchor="end">?</text>
+<rect x="862" y="230" width="290" height="46" rx="6" fill="#20232b" stroke="none" stroke-width="1"/>
+<path d="M886,230 L896,223 L906,230 z" fill="#20232b" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="874" y="248" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#a5b4fc">SKILL.md:69</text>
+<text x="874" y="264" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#e8e9ee">“Prefer skills with 1K+ installs”</text>
+<text x="846" y="328" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">hover tooltip + 全局「显示出处」开关,可回查具体行</text>
+<rect x="830" y="348" width="346" height="96" rx="10" fill="#ffffff" stroke="#d97706" stroke-width="1.4"/>
+<rect x="830" y="348" width="346" height="30" rx="10" fill="#fdf3e3" stroke="none" stroke-width="1"/>
+<rect x="830" y="368" width="346" height="10" rx="0" fill="#fdf3e3" stroke="none" stroke-width="1"/>
+<line x1="830" y1="378" x2="1176" y2="378" stroke="#f2ddb8" stroke-width="1"/>
+<text x="844" y="368" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#d97706" font-weight="700">✗ 作废 → 仅该条作废</text>
+<text x="846" y="400" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">其余照用,交付时列出作废原因</text>
+<text x="846" y="422" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#1d1f24">越界 / 缺 source / quote 对不上 / 派生视图无对应边</text>
+<path d="M782,185 L808,185 L808,152" fill="none" stroke="#16a34a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="808" y1="152" x2="822" y2="152" stroke="#16a34a" stroke-width="1.6" marker-end="url(#ar-o)"/>
+<path d="M782,185 L808,185 L808,394" fill="none" stroke="#d97706" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<line x1="808" y1="394" x2="822" y2="394" stroke="#d97706" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar-w)"/>
+<rect x="24" y="466" width="1152" height="66" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="24" y="466" width="4" height="66" rx="2" fill="#d97706" stroke="none" stroke-width="1"/>
+<text x="44" y="492" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#d97706" font-weight="700">整体回落</text>
+<text x="108" y="492" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">只在这些失败时发生 —— 该解析器整体作废并告知,其余解析器照跑,永不硬失败</text>
+<rect x="44" y="504" width="69.43" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="53" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">JSON 非法</text>
+<rect x="121.43" y="504" width="134.16" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="130.43" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">schema 不在 /1 /2 /3</text>
+<rect x="263.59" y="504" width="81.19" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="272.59" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">sha256 不符</text>
+<rect x="352.78" y="504" width="87.08" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="361.78" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">lines ≠ 实际</text>
+<rect x="447.86" y="504" width="104.73" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="456.86" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">unanchored 非空</text>
+<rect x="560.6" y="504" width="136.19" height="21" rx="10.5" fill="#fdf3e3" stroke="#f2ddb8" stroke-width="1"/><text x="569.6" y="518.46" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#d97706">layers 未覆盖全部节点</text>
+<text x="1156" y="519" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b" text-anchor="end">0 个可用解析器 → 渲染静态基线页,并说明</text>
+</svg>

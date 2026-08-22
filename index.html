@@ -1,0 +1,115 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>skill-to-webpage · 看见 Skill 怎么跑</title>
+<style>
+:root{--bg:#fafafa;--surface:#fff;--line:#e3e4e8;--ink:#1d1f24;--soft:#5b5f6b;--weak:#8a8f9b;--accent:#4f46e5;--code:#f3f3f6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:28px 20px 64px}
+.banner img{width:100%;display:block;border-radius:18px}
+.slogan{text-align:center;margin:14px 0 6px}.slogan strong{font-size:17px}.slogan sub{display:block;color:var(--weak);font-size:12.5px;vertical-align:baseline}
+.badges{text-align:center;margin-bottom:28px}.badges img{height:20px;margin:0 3px}
+nav.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:0 0 22px;font-size:14px}
+nav.tabs a{padding:8px 2px;color:var(--soft);text-decoration:none;border-bottom:2px solid transparent}nav.tabs a:hover{color:var(--accent);border-color:var(--accent)}
+h1{font-size:22px;margin:28px 0 4px}.lede{color:var(--soft);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.card{display:block;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .no{position:absolute;top:12px;right:14px;font:700 11px ui-monospace,Menlo,monospace;color:var(--weak)}
+.card h2{font-size:17px;margin:0 0 2px}.card .tag{margin:0 0 8px;font:600 11.5px ui-monospace,Menlo,monospace;color:var(--accent)}
+.card p{margin:0;color:var(--soft);font-size:13.5px}
+h3.sub{font-size:14px;color:var(--weak);margin:26px 0 10px;font-weight:600}
+.minis{display:flex;flex-wrap:wrap;gap:8px}.mini{display:inline-block;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--accent);text-decoration:none;font:12px ui-monospace,Menlo,monospace}
+.mini:hover{border-color:var(--accent)}
+.readme{margin-top:48px;padding-top:8px;border-top:1px solid var(--line)}
+.readme h2{font-size:21px;margin:40px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}.readme h3{font-size:16px;margin:26px 0 8px}
+.readme p{margin:10px 0}.readme img{max-width:100%;display:block;margin:14px auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.readme sub{color:var(--weak);font-size:12.5px}
+.readme code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:var(--code);padding:1px 5px;border-radius:4px}
+.readme pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:13px;line-height:1.6}.readme pre code{background:none;padding:0}
+.readme blockquote{margin:12px 0;padding:6px 16px;border-left:3px solid var(--accent);color:var(--soft);background:var(--surface);border-radius:0 8px 8px 0}
+.readme ul,.readme ol{padding-left:22px}.readme li{margin:4px 0}
+.readme .tbl{overflow-x:auto}.readme table{border-collapse:collapse;width:100%;font-size:14px}.readme th,.readme td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}.readme th{background:var(--surface)}
+.readme details{margin:12px 0;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.readme summary{cursor:pointer;color:var(--accent);font-weight:600}
+.readme a{color:var(--accent)}.readme .loading{color:var(--weak)}
+footer{margin-top:48px;color:var(--weak);font-size:12.5px}footer a{color:var(--accent)}
+</style></head><body><div class="wrap">
+<div class="banner"><img src="assets/00-banner.svg" alt="skill-to-webpage"></div>
+<p class="slogan"><strong>看见 Skill 怎么跑:步步可见、句句可核。</strong><sub>See how your skills actually run — every step visible, every claim traceable to a line in SKILL.md.</sub></p>
+<p class="badges"><a href="https://github.com/Q1ngSong/skill-to-webpage/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a> <a href="https://github.com/Q1ngSong/skill-to-webpage"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-Q1ngSong%2Fskill--to--webpage-1d1f24.svg"></a> <a href="https://arxiv.org/abs/2606.06893"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2606.06893-b31b1b.svg"></a></p>
+<nav class="tabs"><a href="#examples">已解析的 skill</a><a href="#readme">项目介绍</a><a href="https://github.com/Q1ngSong/skill-to-webpage">GitHub 仓库</a></nav>
+
+<h1 id="examples">已解析的 skill</h1>
+<p class="lede">每张卡片是一份现成的 workflow 页,单文件 HTML,直接打开。</p>
+<div class="grid"><a class="card" href="examples/0-self-skill-to-webpage/skill-to-webpage-workflow.html"><span class="no">0</span><h2>skill-to-webpage</h2><p class="tag">自解析 · 解析器 rwsa-lite</p><p>本项目用自己可视化自己:7 个节点、8 步编排主线、206 条带行号的断言。</p></a><a class="card" href="examples/1-static-find-skills/find-skills-workflow.html"><span class="no">1</span><h2>find-skills</h2><p class="tag">静态基线 · 零 LLM</p><p>只有结构拆解,没有语义层:看一个 skill 的目录骨架长什么样。</p></a><a class="card" href="examples/2-parser-rwsa-lite-find-skills/find-skills-workflow.html"><span class="no">2</span><h2>find-skills</h2><p class="tag">解析器 rwsa-lite</p><p>同一个 skill 叠加语义层:分组、条件弧、重试环、检查点、出处。</p></a><a class="card" href="examples/3-bundle-superpowers/superpowers-workflow.html"><span class="no">3</span><h2>superpowers</h2><p class="tag">skill 簇 · 14 个成员</p><p>总览页:skill 调用图 + 节点级调用图;点节点进成员单页。</p></a></div>
+<h3 class="sub">superpowers 簇的 14 个成员单页</h3>
+<div class="minis"><a class="mini" href="examples/3-bundle-superpowers/brainstorming/brainstorming-workflow.html">brainstorming</a><a class="mini" href="examples/3-bundle-superpowers/dispatching-parallel-agents/dispatching-parallel-agents-workflow.html">dispatching-parallel-agents</a><a class="mini" href="examples/3-bundle-superpowers/executing-plans/executing-plans-workflow.html">executing-plans</a><a class="mini" href="examples/3-bundle-superpowers/finishing-a-development-branch/finishing-a-development-branch-workflow.html">finishing-a-development-branch</a><a class="mini" href="examples/3-bundle-superpowers/receiving-code-review/receiving-code-review-workflow.html">receiving-code-review</a><a class="mini" href="examples/3-bundle-superpowers/requesting-code-review/requesting-code-review-workflow.html">requesting-code-review</a><a class="mini" href="examples/3-bundle-superpowers/subagent-driven-development/subagent-driven-development-workflow.html">subagent-driven-development</a><a class="mini" href="examples/3-bundle-superpowers/systematic-debugging/systematic-debugging-workflow.html">systematic-debugging</a><a class="mini" href="examples/3-bundle-superpowers/test-driven-development/test-driven-development-workflow.html">test-driven-development</a><a class="mini" href="examples/3-bundle-superpowers/using-git-worktrees/using-git-worktrees-workflow.html">using-git-worktrees</a><a class="mini" href="examples/3-bundle-superpowers/using-superpowers/using-superpowers-workflow.html">using-superpowers</a><a class="mini" href="examples/3-bundle-superpowers/verification-before-completion/verification-before-completion-workflow.html">verification-before-completion</a><a class="mini" href="examples/3-bundle-superpowers/writing-plans/writing-plans-workflow.html">writing-plans</a><a class="mini" href="examples/3-bundle-superpowers/writing-skills/writing-skills-workflow.html">writing-skills</a></div>
+
+<section class="readme" id="readme">
+<h1>项目介绍</h1>
+<div id="readmeBody"><p class="loading">正在读取 README.md …</p></div>
+</section>
+<footer>由 <a href="https://github.com/Q1ngSong/skill-to-webpage">skill-to-webpage</a> 生成 · 「项目介绍」</footer>
+</div>
+<script>
+/* —— 极简 Markdown 渲染器(只覆盖 README 用到的语法;零依赖)—— */
+var REPO = "https://github.com/Q1ngSong/skill-to-webpage";
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function inline(s) {
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, t, h) {
+    if (/\.md$/.test(h) && !/^https?:/.test(h)) { h = REPO + "/blob/main/" + h; }
+    return '<a href="' + h + '">' + t + "</a>";
+  });
+  return s;
+}
+function render(md) {
+  var lines = md.replace(/\r\n/g, "\n").split("\n"), out = [], para = [], i = 0, n = lines.length;
+  function flush() { if (para.length) { out.push("<p>" + inline(para.join(" ")) + "</p>"); para = []; } }
+  while (i < n) {
+    var ln = lines[i], st = ln.trim(), m;
+    if (st.indexOf("```") === 0) {
+      flush(); var lang = st.slice(3).trim(), buf = []; i++;
+      while (i < n && lines[i].trim().indexOf("```") !== 0) { buf.push(lines[i]); i++; }
+      out.push('<pre><code class="lang-' + esc(lang) + '">' + esc(buf.join("\n")) + "</code></pre>"); i++; continue;
+    }
+    if (st.charAt(0) === "<") { flush(); out.push(ln); i++; continue; }      /* HTML 行原样透传 */
+    if ((m = /^(#{1,6})\s+(.*)$/.exec(st))) { flush(); var l = m[1].length; out.push("<h" + l + ">" + inline(m[2]) + "</h" + l + ">"); i++; continue; }
+    if (st.charAt(0) === "|" && i + 1 < n && /^\|?\s*:?-{2,}/.test(lines[i + 1].trim())) {
+      flush(); var head = st.replace(/^\||\|$/g, "").split("|"), rows = []; i += 2;
+      while (i < n && lines[i].trim().charAt(0) === "|") { rows.push(lines[i].trim().replace(/^\||\|$/g, "").split("|")); i++; }
+      var th = head.map(function (c) { return "<th>" + inline(c.trim()) + "</th>"; }).join("");
+      var tb = rows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + inline(c.trim()) + "</td>"; }).join("") + "</tr>"; }).join("");
+      out.push('<div class="tbl"><table><thead><tr>' + th + "</tr></thead><tbody>" + tb + "</tbody></table></div>"); continue;
+    }
+    if (/^([-*]|\d+\.)\s+/.test(st)) {
+      flush(); var ordered = /^\d+\./.test(st), items = [];
+      while (i < n && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s+/, "")); i++; }
+      var tag = ordered ? "ol" : "ul";
+      out.push("<" + tag + ">" + items.map(function (x) { return "<li>" + inline(x) + "</li>"; }).join("") + "</" + tag + ">"); continue;
+    }
+    if (st.charAt(0) === ">") {
+      flush(); var q = [];
+      while (i < n && lines[i].trim().charAt(0) === ">") { var t = lines[i].trim().slice(1).trim(); if (t) { q.push("<p>" + inline(t) + "</p>"); } i++; }
+      out.push("<blockquote>" + q.join("") + "</blockquote>"); continue;
+    }
+    if (!st) { flush(); i++; continue; }
+    para.push(st); i++;
+  }
+  flush();
+  return out.join("\n");
+}
+(function () {
+  var box = document.getElementById("readmeBody");
+  if (!box || !window.fetch) { return; }
+  fetch("README.md", { cache: "no-cache" }).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.text(); }).then(function (md) {
+    var k = md.indexOf("</div>");                 /* 首页顶部已有 banner / slogan / 徽章,正文从其后开始 */
+    box.innerHTML = render(k >= 0 ? md.slice(k + 6) : md);
+  }).catch(function () {
+    box.innerHTML = '<p class="loading">本地以 file:// 打开时浏览器不允许读取 README.md;请用 <code>python3 -m http.server</code> 预览,或直接看 <a href="' + REPO + '#readme">GitHub 上的 README</a>。</p>';
+  });
+})();
+</script>
+</body></html>

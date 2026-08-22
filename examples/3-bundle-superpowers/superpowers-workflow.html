@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>superpowers · Skill Bundle</title>
+<style>
+/* ============================================================
+   skill-to-webpage 组合总览页(bundle.html)
+   布局:Hero + 图 1(skill 调用图)+ 图 2(节点调用图)+ 清单 + 印证
+   机制:与单页一致的 4 主题换肤 / data-source 出处开关 / 追问弹窗
+   顶栏、主题、出处、追问的样式与 IIFE 逐字取自 base.html,勿改名
+   下方 theme_styles 槽位注入全部主题 CSS(docs 的 :root 默认块 + 3 个
+   data-theme 覆盖块,见 templates/themes/)
+   ============================================================ */
+
+/* —— 主题层(渲染时整段注入 4 个 themes/*.css)—— */
+/* ============================================================
+   简洁文档(docs · 默认主题)
+   白底大留白,Linear/Notion 风,克制的靛蓝强调。
+   本文件的变量块 = base.html 中 :root 的默认值;
+   其余主题以 [data-theme="X"] 覆盖同名变量。
+   ============================================================ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f6;
+  --ink: #17181c;
+  --ink-soft: #3c3f46;
+  --muted: #7a7e88;
+  --line: #e6e7eb;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(79, 70, 229, .09);
+  --ok: #1a7f4e;
+  --warn: #b45309;
+  --chip: #eef0ff;
+  --code-bg: #f6f7f9;
+  --code-ink: #24292f;
+  --tooltip-bg: #17181c;
+  --tooltip-ink: #ffffff;
+  --radius: 10px;
+  --shadow: 0 10px 34px rgba(23, 24, 28, .07);
+  --font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-display: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+}
+/* ============================================================
+   技术蓝图(blueprint)
+   深蓝底 + 浅蓝描边 + 径向光晕,工程图纸感。
+   ============================================================ */
+[data-theme="blueprint"] {
+  --bg: radial-gradient(circle at 18% 8%, rgba(95, 176, 255, .10), transparent 30rem), linear-gradient(160deg, #0b1f3a 0%, #0d2547 100%);
+  --surface: #0e2544;
+  --surface-2: #12305a;
+  --ink: #dcebff;
+  --ink-soft: #b9d4f5;
+  --muted: #7fa3d1;
+  --line: #2c4a77;
+  --accent: #5fb0ff;
+  --on-accent: #04182e;
+  --accent-soft: rgba(95, 176, 255, .14);
+  --ok: #7fd6a0;
+  --warn: #ffc46b;
+  --chip: #12305a;
+  --code-bg: #091a31;
+  --code-ink: #9fd0ff;
+  --tooltip-bg: #dcebff;
+  --tooltip-ink: #0b1f3a;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .35);
+}
+
+/* 顶栏/流程带背景在渐变底上改为毛玻璃,避免出现色块断层 */
+[data-theme="blueprint"] .topbar,
+[data-theme="blueprint"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+/* ============================================================
+   终端 IDE(ide)
+   编辑器暗色调 + 语法高亮配色(蓝 accent / 橙 code / 绿 ok)。
+   ============================================================ */
+[data-theme="ide"] {
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-2: #2d2d30;
+  --ink: #d4d4d4;
+  --ink-soft: #c0c0c0;
+  --muted: #8a8a8a;
+  --line: #3a3a3a;
+  --accent: #569cd6;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(86, 156, 214, .14);
+  --ok: #6a9955;
+  --warn: #ce9178;
+  --chip: #2d2d30;
+  --code-bg: #1b1b1c;
+  --code-ink: #ce9178;
+  --tooltip-bg: #d4d4d4;
+  --tooltip-ink: #1e1e1e;
+  --shadow: 0 14px 44px rgba(0, 0, 0, .45);
+}
+
+/* 暗底上输入框用抬升面色,避免刺眼白底 */
+[data-theme="ide"] .dd-popover textarea { background: var(--surface-2); }
+/* ============================================================
+   白板手绘(whiteboard)
+   暖米底 + 大圆角便签卡片 + 马克笔红强调,轻松易懂。
+   ============================================================ */
+[data-theme="whiteboard"] {
+  --bg: linear-gradient(150deg, #fdf8ee 0%, #f8efdb 100%);
+  --surface: #fffdf6;
+  --surface-2: #fff4c2;
+  --ink: #3a2f1f;
+  --ink-soft: #5a4a33;
+  --muted: #8a7a5c;
+  --line: #e5d9b8;
+  --accent: #c9543f;
+  --on-accent: #fffdf6;
+  --accent-soft: rgba(201, 84, 63, .10);
+  --ok: #4a7c59;
+  --warn: #b07000;
+  --chip: #fff4c2;
+  --code-bg: #f7efdd;
+  --code-ink: #5a4a1f;
+  --tooltip-bg: #3a2f1f;
+  --tooltip-ink: #fffdf6;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(122, 96, 52, .16);
+}
+
+/* 便签质感:卡片描黄边、用米黄面 */
+[data-theme="whiteboard"] .card { border-width: 2px; border-color: #e0b84a; background: var(--surface-2); }
+[data-theme="whiteboard"] .topbar,
+[data-theme="whiteboard"] .rail-wrap { background: transparent; backdrop-filter: blur(10px); }
+
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+button { font: inherit; color: inherit; }
+
+.page {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 56px;
+}
+
+/* ——— 顶栏(同 base.html) ——— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand { font: 800 15px/1.2 var(--font-display); letter-spacing: .02em; }
+.topbar .brand .lens { color: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+.src-toggle {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-display);
+  color: var(--muted);
+  transition: all .2s;
+}
+
+.src-toggle:hover, .src-toggle.active { border-color: var(--accent); color: var(--accent); }
+
+.theme-picker {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+}
+
+/* ——— Hero ——— */
+.hero { padding: 44px 4px 8px; }
+
+.hero .eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font: 700 13px/1.3 var(--font-display);
+  letter-spacing: .14em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.8vw, 54px);
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.hero .lede {
+  margin: 18px 0 0;
+  max-width: 860px;
+  color: var(--ink-soft);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+
+.hero .thesis {
+  margin-top: 22px;
+  max-width: 860px;
+  border-left: 5px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
+
+/* ——— 两张图 ——— */
+.fig { margin: 40px 0 0; }
+
+.fig h2, .list h2, .recon h2 {
+  margin: 0 0 6px;
+  font: 800 20px/1.3 var(--font-display);
+  letter-spacing: -.01em;
+}
+
+.list h2, .recon h2 { margin-top: 26px; }
+
+.fig .lead {
+  margin: 0 0 14px;
+  max-width: 860px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+
+.fig-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.fig .toggle {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fig .toggle:hover { color: var(--accent); }
+
+.fig-scroll { overflow-x: auto; }
+.fig-scroll::-webkit-scrollbar { height: 6px; }
+.fig-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.fig-canvas {
+  position: relative;
+  min-height: 120px;
+  padding: 6px 4px 10px;
+}
+
+.fig-inner { position: relative; }
+
+.fig-svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink-soft);
+  z-index: 3; /* 连线在分组卡片(z-index 2,不透明底)之上:布线已避开全部节点盒,只会盖住卡片底色 */
+}
+
+/* 芯片 = 一个 skill(图 1) */
+.chip {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  transition: all .18s;
+  z-index: 2;
+}
+
+.chip .nid { color: var(--muted); font: 700 10.5px/1 var(--font-mono); letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .nt { font: 700 13px/1.25 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .sub { color: var(--muted); font: 500 10.5px/1.2 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.chip.iso { border-style: dashed; }
+
+/* 分组框 = 一个 skill 展开后的节点(图 2) */
+.cluster {
+  position: absolute;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 30px 16px 16px;
+  background: var(--surface);
+  /* 不设 z-index:卡片不形成层叠上下文,名字标签(.cl,z-index 4)才能浮到连线层(3)之上;卡片本身按文档顺序画在连线之下 */
+}
+
+.cluster .cl {
+  position: absolute; top: 4px; left: 8px; z-index: 4;  /* 在连线层(3)之上:线从名字下面穿过 */
+  padding: 2px 6px; border-radius: 8px;
+  font: 600 11px var(--font-mono); color: var(--muted);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);   /* 半透明"小沙丘" */
+  box-shadow: 0 0 10px 6px var(--bg);                           /* 柔化边缘:外发光与底色同色 */
+  box-shadow: 0 0 10px 6px color-mix(in srgb, var(--bg) 82%, transparent);
+}
+.cluster .nrow { display: flex; flex-wrap: wrap; gap: 12px; }   /* 行间空档 = 框内横向走线的轨道 */
+
+.nbox {
+  display: inline-block;
+  width: 112px;
+  height: 30px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nbox .nn { color: var(--muted); font: 700 10px/1.6 var(--font-mono); margin-right: 4px; }
+.nbox .nt { font: 600 11px/1.6 var(--font-display); }
+.nbox:hover { border-color: var(--accent); color: var(--accent); }
+.nbox.hidden { display: none; }
+#c2.expanded .nbox.hidden { display: inline-block; }
+
+.more { display: inline-block; padding: 6px 8px; color: var(--muted); font: 600 11px/1.4 var(--font-mono); }
+#c2.expanded .more { display: none; }
+#c2.expanded .narr { display: none; }   /* 展开后主线节点之间夹着支撑节点,箭头会误导 */
+
+/* 主线节点之间的顺序小箭头(纯 DOM,不进 SVG) */
+.narr { align-self: center; color: var(--muted); font: 700 12px/1 var(--font-mono); user-select: none; }
+
+/* 连线:与 base.html 子流程图同一套视觉(实线交棒 / 点线取用 / 橙色虚线回头) */
+.fe { fill: none; pointer-events: stroke; }
+.fe.delegate { stroke: var(--ink-soft); stroke-width: 1.5; }
+.fe.dependency { stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 2 3; }
+.fe.back { stroke: var(--warn); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.fe.mutual { stroke: var(--ink-soft); stroke-width: 1.6; }
+.fe.fallback, .fe.retry, .fe.condition_true, .fe.condition_false { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 4 3; }
+.fe:hover { stroke-width: 2.4; }
+
+/* 选中态:点线 / 点节点高亮相关的,其余降透明度(只动透明度,四套主题通用) */
+.fe, .chip, .nbox, .cluster, .narr { transition: opacity .12s ease, stroke-width .12s ease, border-color .12s ease; }
+.fe.dim { opacity: .18; }
+.fe.dim:hover { opacity: 1; }                    /* 悬停仍可预览被淡化的线 */
+.fe.focus { stroke-width: 2.6; }
+.chip.dim, .nbox.dim, .cluster.dim, .narr.dim { opacity: .35; }
+.chip.focus, .nbox.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.cluster.focus { border-color: var(--accent); border-style: solid; }
+.mk-e { fill: var(--ink-soft); } .mk-c { fill: var(--accent); } .mk-l { fill: var(--warn); } .mk-d { fill: var(--muted); }
+
+/* ——— 清单表格(同 base.html) ——— */
+.list, .recon { margin-top: 44px; }
+
+.scroll { overflow-x: auto; margin: 10px 0; }
+
+table.tbl { width: 100%; border-collapse: collapse; font: 13.5px/1.6 var(--font-body); }
+.tbl th, .tbl td { padding: 9px 11px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tbl th { background: var(--surface-2); font: 700 12.5px/1.4 var(--font-display); white-space: nowrap; }
+.tbl td { color: var(--ink-soft); }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+.tbl td.src { color: var(--muted); font: 500 11.5px/1.5 var(--font-mono); white-space: nowrap; }
+.tbl td.dd { width: 34px; text-align: center; }
+.tbl .deep-dive-btn { position: static; opacity: .45; }
+.tbl tbody tr:hover .deep-dive-btn { opacity: 1; }
+
+/* ——— 印证 ——— */
+.sem-h { margin: 12px 0 4px; color: var(--muted); font: 700 10.5px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sem-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+.sem-list li { margin: 2px 0; }
+.sem-list a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+.sem-list code { font: 600 12px var(--font-mono); background: var(--code-bg); color: var(--code-ink); padding: 1px 5px; border-radius: 4px; }
+
+.qt, .sem-list .q { display: none; margin-left: 6px; color: var(--muted); font: 500 12px/1.5 var(--font-body); }
+/* 引文是整整一列:表头 th.qt 必须和 td.qt 一起藏,否则关掉出处时留一个空列头 */
+.tbl th.qt { display: none; }
+body.show-sources .tbl th.qt, body.show-sources .tbl td.qt { display: table-cell; }
+.sem-list .why { display: block; color: var(--muted); font: 500 12px/1.6 var(--font-body); }
+body.show-sources .qt, body.show-sources .sem-list .q { display: inline; }
+.qt::before, .sem-list .q::before { content: "\201C"; }
+.qt::after, .sem-list .q::after { content: "\201D"; }
+
+/* ——— 出处标注(同 base.html:A 细条 + tooltip;B 全局开关) ——— */
+[data-source] { position: relative; }
+
+[data-source]::after {
+  content: attr(data-source);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 5px);
+  padding: 3px 9px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  font: 600 10.5px/1.4 var(--font-mono);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 60;
+}
+
+[data-source]:hover::after { opacity: 1; }
+
+.hero .lede[data-source], .hero .thesis[data-source] { border-left: 3px solid var(--line); transition: border-left-color .2s; }
+.hero .lede[data-source]:hover, .hero .thesis[data-source]:hover { border-left-color: var(--accent); }
+.hero .thesis[data-source] { border-left-width: 5px; border-left-color: var(--accent); }
+
+/* ——— 追问按钮 + 弹窗(同 base.html) ——— */
+.deep-dive-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-display);
+  opacity: 0;
+  transition: all .2s;
+  z-index: 2;
+}
+
+.deep-dive-btn:hover { opacity: 1 !important; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+.dd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, .38);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-overlay.active { display: flex; }
+
+.dd-popover {
+  width: min(540px, calc(100% - 32px));
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.dd-popover .dd-title { margin: 0 0 6px; font: 800 19px/1.3 var(--font-display); }
+.dd-popover .dd-ctx { margin: 0 0 14px; color: var(--muted); font: 500 12.5px/1.6 var(--font-display); }
+
+.dd-popover textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: 14.5px/1.6 var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.dd-actions { display: flex; gap: 8px; }
+
+.dd-submit {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+}
+
+.dd-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  color: var(--muted);
+}
+
+.dd-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 26px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  border-radius: 8px;
+  font: 600 13px/1.4 var(--font-display);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.dd-toast.show { opacity: 1; }
+
+/* ——— 页脚 ——— */
+.foot {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 12.5px/1.8 var(--font-display);
+}
+
+.foot code { font: 600 12px var(--font-mono); }
+
+@media (max-width: 640px) {
+  .hero { padding-top: 30px; }
+  .fig .lead { font-size: 13px; }
+}
+</style>
+</head>
+<body data-theme="docs" data-page="bundle">
+
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand"><span class="lens">◈</span> skill-to-webpage</span>
+    <span class="spacer"></span>
+    <button id="srcToggle" class="src-toggle" title="显示/隐藏出处">显示出处</button>
+    <select id="themePicker" class="theme-picker" title="切换主题">
+      <option value="docs">简洁文档</option>
+      <option value="blueprint">技术蓝图</option>
+      <option value="ide">终端 IDE</option>
+      <option value="whiteboard">白板手绘</option>
+    </select>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">SKILL BUNDLE · 14 SKILLS · 32 CROSS-SKILL EDGES</p>
+    <h1>superpowers</h1>
+    <p class="lede">obra/superpowers(v5.1.0)的 14 个 skill:一条从「想法 → 设计 → 计划 → 执行 → 收尾」的开发流水线,加上 TDD、调试、验证、代码审查等纪律型 skill,以及工作区隔离、并行分派两项工具型 skill。<strong>何时看这页:</strong>想知道做一件事要依次进哪些 skill、在哪分叉、哪里回头,或审计 skill 之间的引用关系。</p><div class="thesis"><span>主执行路径:using-superpowers → brainstorming → writing-plans → executing-plans / subagent-driven-development → finishing-a-development-branch;执行阶段把 TDD、代码审查、工作区隔离作为子 skill 调用;systematic-debugging 与 writing-skills 是独立入口,各自依赖 TDD 与 verification。跨 skill 的边全部来自各成员语义层(带行号引文、经校验);引用事实(cross-refs)零 LLM 抽取。</span></div>
+  </header>
+
+  <section class="fig" id="fig1">
+    <h2>图 1 · skill 调用图</h2>
+    <p class="lead">每张卡片是一个 skill;连线走行间轨道与右侧通道,不穿过卡片。<strong>实线</strong> = delegate(交棒)· <strong>点线</strong> = dependency(取用)· <strong>橙色虚线</strong> = 回头(指回上层或同层)· 双箭头 = 互调。<strong>单击</strong>选中并高亮两端(其余淡出)· <strong>双击</strong>进入该 skill 单页 · Esc 清除。</p>
+    <div class="fig-scroll"><div class="fig-canvas" id="c1"><svg class="fig-svg" id="s1"></svg><div class="fig-inner" style="height:484px;min-width:798px"><a class="chip" data-key="brainstorming" data-layer="1" href="brainstorming/brainstorming-workflow.html" style="left:312px;top:84px;width:150px"><span class="nid">L2</span><span class="nt">把想法聊成设计</span><span class="sub">九步清单按序执行</span></a><a class="chip iso" data-key="dispatching-parallel-agents" data-layer="iso" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html" style="left:648px;top:0px;width:150px"><span class="nid">孤立</span><span class="nt">并行分派子 agent</span><span class="sub">分域→写任务→并发→整合</span></a><a class="chip" data-key="executing-plans" data-layer="3" href="executing-plans/executing-plans-workflow.html" style="left:225px;top:252px;width:150px"><span class="nid">L4</span><span class="nt">按计划逐任务执行</span><span class="sub">宣告并判断平台</span></a><a class="chip" data-key="finishing-a-development-branch" data-layer="5" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html" style="left:51px;top:420px;width:150px"><span class="nid">L6</span><span class="nt">收尾:合并/PR/清理</span><span class="sub">六步收尾主流程</span></a><a class="chip iso" data-key="receiving-code-review" data-layer="iso" href="receiving-code-review/receiving-code-review-workflow.html" style="left:648px;top:84px;width:150px"><span class="nid">孤立</span><span class="nt">审慎接收审查意见</span><span class="sub">读→懂→核→判→答→改</span></a><a class="chip" data-key="requesting-code-review" data-layer="2" href="requesting-code-review/requesting-code-review-workflow.html" style="left:312px;top:168px;width:150px"><span class="nid">L3</span><span class="nt">发起代码审查</span><span class="sub">取SHA·派发·处理反馈</span></a><a class="chip" data-key="subagent-driven-development" data-layer="4" href="subagent-driven-development/subagent-driven-development-workflow.html" style="left:225px;top:336px;width:150px"><span class="nid">L5</span><span class="nt">子 agent 逐任务实现</span><span class="sub">派实现·双审·下一任务</span></a><a class="chip" data-key="systematic-debugging" data-layer="0" href="systematic-debugging/systematic-debugging-workflow.html" style="left:51px;top:0px;width:150px"><span class="nid">L1</span><span class="nt">先找根因再修</span><span class="sub">四阶段:查因到实施</span></a><a class="chip" data-key="test-driven-development" data-layer="5" href="test-driven-development/test-driven-development-workflow.html" style="left:225px;top:420px;width:150px"><span class="nid">L6</span><span class="nt">红-绿-重构</span><span class="sub">红-绿-重构主循环</span></a><a class="chip" data-key="using-git-worktrees" data-layer="5" href="using-git-worktrees/using-git-worktrees-workflow.html" style="left:399px;top:420px;width:150px"><span class="nid">L6</span><span class="nt">隔离工作区</span><span class="sub">宣告并立三步优先级</span></a><a class="chip" data-key="using-superpowers" data-layer="0" href="using-superpowers/using-superpowers-workflow.html" style="left:225px;top:0px;width:150px"><span class="nid">L1</span><span class="nt">先查有无适用 skill</span><span class="sub">查→调→宣告→照做</span></a><a class="chip" data-key="verification-before-completion" data-layer="1" href="verification-before-completion/verification-before-completion-workflow.html" style="left:138px;top:84px;width:150px"><span class="nid">L2</span><span class="nt">先验证再宣布完成</span><span class="sub">闸口五步走完才断言</span></a><a class="chip" data-key="writing-plans" data-layer="2" href="writing-plans/writing-plans-workflow.html" style="left:138px;top:168px;width:150px"><span class="nid">L3</span><span class="nt">把设计拆成计划</span><span class="sub">宣告·落盘·范围检查</span></a><a class="chip" data-key="writing-skills" data-layer="0" href="writing-skills/writing-skills-workflow.html" style="left:399px;top:0px;width:150px"><span class="nid">L1</span><span class="nt">编写与测试 skill</span><span class="sub">红-绿-重构循环</span></a></div></div></div>
+  </section>
+
+  <section class="fig" id="fig2">
+    <div class="fig-head">
+      <h2>图 2 · 节点调用图</h2>
+      <label class="toggle"><input type="checkbox" id="expandAll"> 全部展开</label>
+    </div>
+    <p class="lead">同一布局,每个 skill 展开为分组框:主线节点 + 参与跨 skill 边的节点;其余折叠为「+N 支撑」。线型同图 1:<strong>实线</strong> = 交棒 · <strong>点线</strong> = 取用 · <strong>橙色虚线</strong> = 回头。<strong>单击</strong>选中,<strong>双击</strong>进入该 skill 单页并定位到该节点 · Esc 清除。</p>
+    <div class="fig-scroll"><div class="fig-canvas" id="c2"><svg class="fig-svg" id="s2"></svg><div class="fig-inner" style="height:1334px;min-width:1080px"><div class="cluster" data-skill="brainstorming" data-layer="1" style="left:477px;top:292px;width:594px"><span class="cl">brainstorming</span><div class="nrow"><a class="nbox" data-key="brainstorming:n01" href="brainstorming/brainstorming-workflow.html#n01" title="九步清单按序执行"><span class="nn">n01</span><span class="nt">九步清单按序执行</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="brainstorming:n02" href="brainstorming/brainstorming-workflow.html#n02" title="分支与回环流程图"><span class="nn">n02</span><span class="nt">分支与回环流程图</span></a><a class="nbox" data-key="brainstorming:n03" href="brainstorming/brainstorming-workflow.html#n03" title="问·比选·呈现设计"><span class="nn">n03</span><span class="nt">问·比选·呈现设计</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="brainstorming:n04" href="brainstorming/brainstorming-workflow.html#n04" title="写规格·自查·移交"><span class="nn">n04</span><span class="nt">写规格·自查·移交</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="brainstorming:n05" href="brainstorming/brainstorming-workflow.html#n05" title="六条对话原则"><span class="nn">n05</span><span class="nt">六条对话原则</span></a><a class="nbox" data-key="brainstorming:n06" href="brainstorming/brainstorming-workflow.html#n06" title="可视化伴侧的用法"><span class="nn">n06</span><span class="nt">可视化伴侧的用法</span></a><span class="more">+1 支撑</span></div></div><div class="cluster" data-skill="dispatching-parallel-agents" data-layer="iso" style="left:9px;top:1164px;width:444px"><span class="cl">dispatching-parallel-agents</span><div class="nrow"><a class="nbox hidden" data-key="dispatching-parallel-agents:n01" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n01" title="隔离上下文,一域一 age…"><span class="nn">n01</span><span class="nt">隔离上下文,一域一 age…</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n02" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n02" title="判定独立且可并行"><span class="nn">n02</span><span class="nt">判定独立且可并行</span></a><a class="nbox" data-key="dispatching-parallel-agents:n03" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n03" title="分域→写任务→并发→整合"><span class="nn">n03</span><span class="nt">分域→写任务→并发→整合</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="dispatching-parallel-agents:n04" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n04" title="提示词三要素与模板"><span class="nn">n04</span><span class="nt">提示词三要素与模板</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n05" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n05" title="四类翻车写法对照"><span class="nn">n05</span><span class="nt">四类翻车写法对照</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n06" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n06" title="四种不该并行的情形"><span class="nn">n06</span><span class="nt">四种不该并行的情形</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n07" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n07" title="六个失败三个 agent …"><span class="nn">n07</span><span class="nt">六个失败三个 agent …</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n08" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n08" title="并行带来的四项收益"><span class="nn">n08</span><span class="nt">并行带来的四项收益</span></a><a class="nbox" data-key="dispatching-parallel-agents:n09" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n09" title="回收后的四步核验"><span class="nn">n09</span><span class="nt">回收后的四步核验</span></a><a class="nbox hidden" data-key="dispatching-parallel-agents:n10" href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html#n10" title="真实会话的成效数据"><span class="nn">n10</span><span class="nt">真实会话的成效数据</span></a><span class="more">+8 支撑</span></div></div><div class="cluster" data-skill="executing-plans" data-layer="3" style="left:168px;top:666px;width:744px"><span class="cl">executing-plans</span><div class="nrow"><a class="nbox" data-key="executing-plans:n01" href="executing-plans/executing-plans-workflow.html#n01" title="宣告并判断平台"><span class="nn">n01</span><span class="nt">宣告并判断平台</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="executing-plans:n02" href="executing-plans/executing-plans-workflow.html#n02" title="复核·执行·收尾"><span class="nn">n02</span><span class="nt">复核·执行·收尾</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="executing-plans:n03" href="executing-plans/executing-plans-workflow.html#n03" title="遇阻即停问人"><span class="nn">n03</span><span class="nt">遇阻即停问人</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="executing-plans:n04" href="executing-plans/executing-plans-workflow.html#n04" title="何时回到复核"><span class="nn">n04</span><span class="nt">何时回到复核</span></a><a class="nbox hidden" data-key="executing-plans:n05" href="executing-plans/executing-plans-workflow.html#n05" title="六条执行备忘"><span class="nn">n05</span><span class="nt">六条执行备忘</span></a><a class="nbox" data-key="executing-plans:n06" href="executing-plans/executing-plans-workflow.html#n06" title="三个必备配套"><span class="nn">n06</span><span class="nt">三个必备配套</span></a><span class="more">+1 支撑</span></div></div><div class="cluster" data-skill="finishing-a-development-branch" data-layer="5" style="left:0px;top:956px;width:444px"><span class="cl">finishing-a-development-branch</span><div class="nrow"><a class="nbox" data-key="finishing-a-development-branch:n01" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html#n01" title="开场声明与总原则"><span class="nn">n01</span><span class="nt">开场声明与总原则</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="finishing-a-development-branch:n02" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html#n02" title="六步收尾主流程"><span class="nn">n02</span><span class="nt">六步收尾主流程</span></a><a class="nbox hidden" data-key="finishing-a-development-branch:n03" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html#n03" title="四选项行为对照表"><span class="nn">n03</span><span class="nt">四选项行为对照表</span></a><a class="nbox hidden" data-key="finishing-a-development-branch:n04" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html#n04" title="七类常见翻车"><span class="nn">n04</span><span class="nt">七类常见翻车</span></a><a class="nbox hidden" data-key="finishing-a-development-branch:n05" href="finishing-a-development-branch/finishing-a-development-branch-workflow.html#n05" title="七禁七必红线"><span class="nn">n05</span><span class="nt">七禁七必红线</span></a><span class="more">+3 支撑</span></div></div><div class="cluster" data-skill="receiving-code-review" data-layer="iso" style="left:477px;top:1164px;width:594px"><span class="cl">receiving-code-review</span><div class="nrow"><a class="nbox" data-key="receiving-code-review:n01" href="receiving-code-review/receiving-code-review-workflow.html#n01" title="读→懂→核→判→答→改"><span class="nn">n01</span><span class="nt">读→懂→核→判→答→改</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="receiving-code-review:n02" href="receiving-code-review/receiving-code-review-workflow.html#n02" title="禁用话术与替代"><span class="nn">n02</span><span class="nt">禁用话术与替代</span></a><a class="nbox" data-key="receiving-code-review:n03" href="receiving-code-review/receiving-code-review-workflow.html#n03" title="有不清先停下问清"><span class="nn">n03</span><span class="nt">有不清先停下问清</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="receiving-code-review:n04" href="receiving-code-review/receiving-code-review-workflow.html#n04" title="按来源分流处理"><span class="nn">n04</span><span class="nt">按来源分流处理</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="receiving-code-review:n05" href="receiving-code-review/receiving-code-review-workflow.html#n05" title="grep 用量定去留"><span class="nn">n05</span><span class="nt">grep 用量定去留</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="receiving-code-review:n06" href="receiving-code-review/receiving-code-review-workflow.html#n06" title="先澄清再按优先级改"><span class="nn">n06</span><span class="nt">先澄清再按优先级改</span></a><a class="nbox hidden" data-key="receiving-code-review:n07" href="receiving-code-review/receiving-code-review-workflow.html#n07" title="何时该技术性反驳"><span class="nn">n07</span><span class="nt">何时该技术性反驳</span></a><a class="nbox hidden" data-key="receiving-code-review:n08" href="receiving-code-review/receiving-code-review-workflow.html#n08" title="认错只说改了什么"><span class="nn">n08</span><span class="nt">认错只说改了什么</span></a><a class="nbox hidden" data-key="receiving-code-review:n09" href="receiving-code-review/receiving-code-review-workflow.html#n09" title="反驳错了如何收场"><span class="nn">n09</span><span class="nt">反驳错了如何收场</span></a><a class="nbox hidden" data-key="receiving-code-review:n10" href="receiving-code-review/receiving-code-review-workflow.html#n10" title="七类常见翻车对照"><span class="nn">n10</span><span class="nt">七类常见翻车对照</span></a><a class="nbox hidden" data-key="receiving-code-review:n11" href="receiving-code-review/receiving-code-review-workflow.html#n11" title="四则实例与回帖法"><span class="nn">n11</span><span class="nt">四则实例与回帖法</span></a><a class="nbox hidden" data-key="receiving-code-review:n12" href="receiving-code-review/receiving-code-review-workflow.html#n12" title="评审是建议不是命令"><span class="nn">n12</span><span class="nt">评审是建议不是命令</span></a><span class="more">+7 支撑</span></div></div><div class="cluster" data-skill="requesting-code-review" data-layer="2" style="left:477px;top:458px;width:594px"><span class="cl">requesting-code-review</span><div class="nrow"><a class="nbox" data-key="requesting-code-review:n01" href="requesting-code-review/requesting-code-review-workflow.html#n01" title="判断该不该发起审查"><span class="nn">n01</span><span class="nt">判断该不该发起审查</span></a><a class="nbox" data-key="requesting-code-review:n02" href="requesting-code-review/requesting-code-review-workflow.html#n02" title="取SHA·派发·处理反馈"><span class="nn">n02</span><span class="nt">取SHA·派发·处理反馈</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="requesting-code-review:n03" href="requesting-code-review/requesting-code-review-workflow.html#n03" title="一次完整审查示例"><span class="nn">n03</span><span class="nt">一次完整审查示例</span></a><a class="nbox" data-key="requesting-code-review:n04" href="requesting-code-review/requesting-code-review-workflow.html#n04" title="各工作流的审查节奏"><span class="nn">n04</span><span class="nt">各工作流的审查节奏</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="requesting-code-review:n05" href="requesting-code-review/requesting-code-review-workflow.html#n05" title="红线与反驳的边界"><span class="nn">n05</span><span class="nt">红线与反驳的边界</span></a><span class="more">+1 支撑</span></div></div><div class="cluster" data-skill="subagent-driven-development" data-layer="4" style="left:168px;top:832px;width:744px"><span class="cl">subagent-driven-development</span><div class="nrow"><a class="nbox" data-key="subagent-driven-development:n01" href="subagent-driven-development/subagent-driven-development-workflow.html#n01" title="判断该不该走本流程"><span class="nn">n01</span><span class="nt">判断该不该走本流程</span></a><a class="nbox" data-key="subagent-driven-development:n02" href="subagent-driven-development/subagent-driven-development-workflow.html#n02" title="派实现·双审·下一任务"><span class="nn">n02</span><span class="nt">派实现·双审·下一任务</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="subagent-driven-development:n03" href="subagent-driven-development/subagent-driven-development-workflow.html#n03" title="按任务复杂度选模型"><span class="nn">n03</span><span class="nt">按任务复杂度选模型</span></a><a class="nbox" data-key="subagent-driven-development:n04" href="subagent-driven-development/subagent-driven-development-workflow.html#n04" title="四种回报状态的处置"><span class="nn">n04</span><span class="nt">四种回报状态的处置</span></a><a class="nbox hidden" data-key="subagent-driven-development:n05" href="subagent-driven-development/subagent-driven-development-workflow.html#n05" title="三份派发提示词"><span class="nn">n05</span><span class="nt">三份派发提示词</span></a><a class="nbox hidden" data-key="subagent-driven-development:n06" href="subagent-driven-development/subagent-driven-development-workflow.html#n06" title="两个任务的完整走查"><span class="nn">n06</span><span class="nt">两个任务的完整走查</span></a><a class="nbox hidden" data-key="subagent-driven-development:n07" href="subagent-driven-development/subagent-driven-development-workflow.html#n07" title="收益与成本对比"><span class="nn">n07</span><span class="nt">收益与成本对比</span></a><a class="nbox hidden" data-key="subagent-driven-development:n08" href="subagent-driven-development/subagent-driven-development-workflow.html#n08" title="绝不允许的行为"><span class="nn">n08</span><span class="nt">绝不允许的行为</span></a><a class="nbox" data-key="subagent-driven-development:n09" href="subagent-driven-development/subagent-driven-development-workflow.html#n09" title="配套 skill 与替代路线"><span class="nn">n09</span><span class="nt">配套 skill 与替代路线</span></a><span class="more">+5 支撑</span></div></div><div class="cluster" data-skill="systematic-debugging" data-layer="0" style="left:0px;top:0px;width:444px"><span class="cl">systematic-debugging</span><div class="nrow"><a class="nbox hidden" data-key="systematic-debugging:n01" href="systematic-debugging/systematic-debugging-workflow.html#n01" title="根因优先的核心原则"><span class="nn">n01</span><span class="nt">根因优先的核心原则</span></a><a class="nbox" data-key="systematic-debugging:n02" href="systematic-debugging/systematic-debugging-workflow.html#n02" title="无根因调查不许修"><span class="nn">n02</span><span class="nt">无根因调查不许修</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="systematic-debugging:n03" href="systematic-debugging/systematic-debugging-workflow.html#n03" title="任何技术问题都适用"><span class="nn">n03</span><span class="nt">任何技术问题都适用</span></a><a class="nbox" data-key="systematic-debugging:n04" href="systematic-debugging/systematic-debugging-workflow.html#n04" title="四阶段:查因到实施"><span class="nn">n04</span><span class="nt">四阶段:查因到实施</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="systematic-debugging:n05" href="systematic-debugging/systematic-debugging-workflow.html#n05" title="红旗话术即中止"><span class="nn">n05</span><span class="nt">红旗话术即中止</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="systematic-debugging:n06" href="systematic-debugging/systematic-debugging-workflow.html#n06" title="搭档信号即回退"><span class="nn">n06</span><span class="nt">搭档信号即回退</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="systematic-debugging:n07" href="systematic-debugging/systematic-debugging-workflow.html#n07" title="拆掉常见借口"><span class="nn">n07</span><span class="nt">拆掉常见借口</span></a><a class="nbox hidden" data-key="systematic-debugging:n08" href="systematic-debugging/systematic-debugging-workflow.html#n08" title="四阶段速查判据"><span class="nn">n08</span><span class="nt">四阶段速查判据</span></a><a class="nbox" data-key="systematic-debugging:n09" href="systematic-debugging/systematic-debugging-workflow.html#n09" title="确无根因时的收尾"><span class="nn">n09</span><span class="nt">确无根因时的收尾</span></a><a class="nbox" data-key="systematic-debugging:n10" href="systematic-debugging/systematic-debugging-workflow.html#n10" title="配套技法与外部资源"><span class="nn">n10</span><span class="nt">配套技法与外部资源</span></a><a class="nbox hidden" data-key="systematic-debugging:n11" href="systematic-debugging/systematic-debugging-workflow.html#n11" title="系统法的实测收益"><span class="nn">n11</span><span class="nt">系统法的实测收益</span></a><span class="more">+5 支撑</span></div></div><div class="cluster" data-skill="test-driven-development" data-layer="5" style="left:468px;top:956px;width:294px"><span class="cl">test-driven-development</span><div class="nrow"><a class="nbox hidden" data-key="test-driven-development:n01" href="test-driven-development/test-driven-development-workflow.html#n01" title="核心原则:看着它失败"><span class="nn">n01</span><span class="nt">核心原则:看着它失败</span></a><a class="nbox hidden" data-key="test-driven-development:n02" href="test-driven-development/test-driven-development-workflow.html#n02" title="总是用,例外先问人"><span class="nn">n02</span><span class="nt">总是用,例外先问人</span></a><a class="nbox" data-key="test-driven-development:n03" href="test-driven-development/test-driven-development-workflow.html#n03" title="无失败测试不写码"><span class="nn">n03</span><span class="nt">无失败测试不写码</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="test-driven-development:n04" href="test-driven-development/test-driven-development-workflow.html#n04" title="红-绿-重构主循环"><span class="nn">n04</span><span class="nt">红-绿-重构主循环</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="test-driven-development:n05" href="test-driven-development/test-driven-development-workflow.html#n05" title="好测试的三条判准"><span class="nn">n05</span><span class="nt">好测试的三条判准</span></a><a class="nbox hidden" data-key="test-driven-development:n06" href="test-driven-development/test-driven-development-workflow.html#n06" title="为什么必须先写"><span class="nn">n06</span><span class="nt">为什么必须先写</span></a><a class="nbox hidden" data-key="test-driven-development:n07" href="test-driven-development/test-driven-development-workflow.html#n07" title="十一条借口的回击"><span class="nn">n07</span><span class="nt">十一条借口的回击</span></a><a class="nbox" data-key="test-driven-development:n08" href="test-driven-development/test-driven-development-workflow.html#n08" title="红旗出现即删码重来"><span class="nn">n08</span><span class="nt">红旗出现即删码重来</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="test-driven-development:n09" href="test-driven-development/test-driven-development-workflow.html#n09" title="修 bug 的完整走查"><span class="nn">n09</span><span class="nt">修 bug 的完整走查</span></a><a class="nbox" data-key="test-driven-development:n10" href="test-driven-development/test-driven-development-workflow.html#n10" title="完工前逐条自检"><span class="nn">n10</span><span class="nt">完工前逐条自检</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="test-driven-development:n11" href="test-driven-development/test-driven-development-workflow.html#n11" title="卡住与调试接入"><span class="nn">n11</span><span class="nt">卡住与调试接入</span></a><a class="nbox hidden" data-key="test-driven-development:n12" href="test-driven-development/test-driven-development-workflow.html#n12" title="碰 mock 前读反模式"><span class="nn">n12</span><span class="nt">碰 mock 前读反模式</span></a><a class="nbox hidden" data-key="test-driven-development:n13" href="test-driven-development/test-driven-development-workflow.html#n13" title="终局判据与授权"><span class="nn">n13</span><span class="nt">终局判据与授权</span></a><span class="more">+8 支撑</span></div></div><div class="cluster" data-skill="using-git-worktrees" data-layer="5" style="left:786px;top:956px;width:294px"><span class="cl">using-git-worktrees</span><div class="nrow"><a class="nbox" data-key="using-git-worktrees:n01" href="using-git-worktrees/using-git-worktrees-workflow.html#n01" title="宣告并立三步优先级"><span class="nn">n01</span><span class="nt">宣告并立三步优先级</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="using-git-worktrees:n02" href="using-git-worktrees/using-git-worktrees-workflow.html#n02" title="先探测是否已隔离"><span class="nn">n02</span><span class="nt">先探测是否已隔离</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="using-git-worktrees:n03" href="using-git-worktrees/using-git-worktrees-workflow.html#n03" title="原生优先,git 兜底"><span class="nn">n03</span><span class="nt">原生优先,git 兜底</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="using-git-worktrees:n04" href="using-git-worktrees/using-git-worktrees-workflow.html#n04" title="按语言自动装依赖"><span class="nn">n04</span><span class="nt">按语言自动装依赖</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="using-git-worktrees:n05" href="using-git-worktrees/using-git-worktrees-workflow.html#n05" title="跑基线测试再开工"><span class="nn">n05</span><span class="nt">跑基线测试再开工</span></a><a class="nbox hidden" data-key="using-git-worktrees:n06" href="using-git-worktrees/using-git-worktrees-workflow.html#n06" title="情形到动作速查表"><span class="nn">n06</span><span class="nt">情形到动作速查表</span></a><a class="nbox hidden" data-key="using-git-worktrees:n07" href="using-git-worktrees/using-git-worktrees-workflow.html#n07" title="五类高频错误与修法"><span class="nn">n07</span><span class="nt">五类高频错误与修法</span></a><a class="nbox hidden" data-key="using-git-worktrees:n08" href="using-git-worktrees/using-git-worktrees-workflow.html#n08" title="六不做与六必做"><span class="nn">n08</span><span class="nt">六不做与六必做</span></a><span class="more">+3 支撑</span></div></div><div class="cluster" data-skill="using-superpowers" data-layer="0" style="left:468px;top:0px;width:294px"><span class="cl">using-superpowers</span><div class="nrow"><a class="nbox hidden" data-key="using-superpowers:n01" href="using-superpowers/using-superpowers-workflow.html#n01" title="谁的指令优先"><span class="nn">n01</span><span class="nt">谁的指令优先</span></a><a class="nbox hidden" data-key="using-superpowers:n02" href="using-superpowers/using-superpowers-workflow.html#n02" title="各平台如何调 skill"><span class="nn">n02</span><span class="nt">各平台如何调 skill</span></a><a class="nbox" data-key="using-superpowers:n03" href="using-superpowers/using-superpowers-workflow.html#n03" title="查→调→宣告→照做"><span class="nn">n03</span><span class="nt">查→调→宣告→照做</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="using-superpowers:n04" href="using-superpowers/using-superpowers-workflow.html#n04" title="自我合理化的红线"><span class="nn">n04</span><span class="nt">自我合理化的红线</span></a><a class="nbox" data-key="using-superpowers:n05" href="using-superpowers/using-superpowers-workflow.html#n05" title="多技能命中的顺序"><span class="nn">n05</span><span class="nt">多技能命中的顺序</span></a><a class="nbox hidden" data-key="using-superpowers:n06" href="using-superpowers/using-superpowers-workflow.html#n06" title="刚性与弹性之分"><span class="nn">n06</span><span class="nt">刚性与弹性之分</span></a><span class="more">+4 支撑</span></div></div><div class="cluster" data-skill="verification-before-completion" data-layer="1" style="left:9px;top:292px;width:444px"><span class="cl">verification-before-completion</span><div class="nrow"><a class="nbox hidden" data-key="verification-before-completion:n01" href="verification-before-completion/verification-before-completion-workflow.html#n01" title="核心原则:证据先行"><span class="nn">n01</span><span class="nt">核心原则:证据先行</span></a><a class="nbox hidden" data-key="verification-before-completion:n02" href="verification-before-completion/verification-before-completion-workflow.html#n02" title="铁律:无新证据不断言"><span class="nn">n02</span><span class="nt">铁律:无新证据不断言</span></a><a class="nbox" data-key="verification-before-completion:n03" href="verification-before-completion/verification-before-completion-workflow.html#n03" title="闸口五步走完才断言"><span class="nn">n03</span><span class="nt">闸口五步走完才断言</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="verification-before-completion:n04" href="verification-before-completion/verification-before-completion-workflow.html#n04" title="常见断言的证据要求"><span class="nn">n04</span><span class="nt">常见断言的证据要求</span></a><a class="nbox hidden" data-key="verification-before-completion:n05" href="verification-before-completion/verification-before-completion-workflow.html#n05" title="红旗信号:立刻停手"><span class="nn">n05</span><span class="nt">红旗信号:立刻停手</span></a><a class="nbox hidden" data-key="verification-before-completion:n06" href="verification-before-completion/verification-before-completion-workflow.html#n06" title="借口对照表全部驳回"><span class="nn">n06</span><span class="nt">借口对照表全部驳回</span></a><a class="nbox" data-key="verification-before-completion:n07" href="verification-before-completion/verification-before-completion-workflow.html#n07" title="五类断言的验证配方"><span class="nn">n07</span><span class="nt">五类断言的验证配方</span></a><a class="nbox hidden" data-key="verification-before-completion:n08" href="verification-before-completion/verification-before-completion-workflow.html#n08" title="失败记忆:代价与教训"><span class="nn">n08</span><span class="nt">失败记忆:代价与教训</span></a><a class="nbox hidden" data-key="verification-before-completion:n09" href="verification-before-completion/verification-before-completion-workflow.html#n09" title="何时必须先走闸口"><span class="nn">n09</span><span class="nt">何时必须先走闸口</span></a><a class="nbox hidden" data-key="verification-before-completion:n10" href="verification-before-completion/verification-before-completion-workflow.html#n10" title="不可协商的底线"><span class="nn">n10</span><span class="nt">不可协商的底线</span></a><span class="more">+8 支撑</span></div></div><div class="cluster" data-skill="writing-plans" data-layer="2" style="left:9px;top:458px;width:444px"><span class="cl">writing-plans</span><div class="nrow"><a class="nbox" data-key="writing-plans:n01" href="writing-plans/writing-plans-workflow.html#n01" title="宣告·落盘·范围检查"><span class="nn">n01</span><span class="nt">宣告·落盘·范围检查</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-plans:n02" href="writing-plans/writing-plans-workflow.html#n02" title="先定文件与职责"><span class="nn">n02</span><span class="nt">先定文件与职责</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="writing-plans:n03" href="writing-plans/writing-plans-workflow.html#n03" title="一步一动作的粒度"><span class="nn">n03</span><span class="nt">一步一动作的粒度</span></a><a class="nbox" data-key="writing-plans:n04" href="writing-plans/writing-plans-workflow.html#n04" title="写死计划文档头"><span class="nn">n04</span><span class="nt">写死计划文档头</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-plans:n05" href="writing-plans/writing-plans-workflow.html#n05" title="任务的标准写法"><span class="nn">n05</span><span class="nt">任务的标准写法</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="writing-plans:n06" href="writing-plans/writing-plans-workflow.html#n06" title="占位符即计划失败"><span class="nn">n06</span><span class="nt">占位符即计划失败</span></a><a class="nbox hidden" data-key="writing-plans:n07" href="writing-plans/writing-plans-workflow.html#n07" title="四条不可省"><span class="nn">n07</span><span class="nt">四条不可省</span></a><a class="nbox" data-key="writing-plans:n08" href="writing-plans/writing-plans-workflow.html#n08" title="三查一改自审"><span class="nn">n08</span><span class="nt">三查一改自审</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-plans:n09" href="writing-plans/writing-plans-workflow.html#n09" title="移交执行方式"><span class="nn">n09</span><span class="nt">移交执行方式</span></a><span class="more">+3 支撑</span></div></div><div class="cluster" data-skill="writing-skills" data-layer="0" style="left:786px;top:0px;width:294px"><span class="cl">writing-skills</span><div class="nrow"><a class="nbox" data-key="writing-skills:n01" href="writing-skills/writing-skills-workflow.html#n01" title="文档版的TDD"><span class="nn">n01</span><span class="nt">文档版的TDD</span></a><a class="nbox hidden" data-key="writing-skills:n02" href="writing-skills/writing-skills-workflow.html#n02" title="skill的定义边界"><span class="nn">n02</span><span class="nt">skill的定义边界</span></a><a class="nbox hidden" data-key="writing-skills:n03" href="writing-skills/writing-skills-workflow.html#n03" title="TDD概念逐条映射"><span class="nn">n03</span><span class="nt">TDD概念逐条映射</span></a><a class="nbox hidden" data-key="writing-skills:n04" href="writing-skills/writing-skills-workflow.html#n04" title="该不该建这条skill"><span class="nn">n04</span><span class="nt">该不该建这条skill</span></a><a class="nbox hidden" data-key="writing-skills:n05" href="writing-skills/writing-skills-workflow.html#n05" title="三类skill形态"><span class="nn">n05</span><span class="nt">三类skill形态</span></a><a class="nbox hidden" data-key="writing-skills:n06" href="writing-skills/writing-skills-workflow.html#n06" title="目录与拆文件规则"><span class="nn">n06</span><span class="nt">目录与拆文件规则</span></a><a class="nbox hidden" data-key="writing-skills:n07" href="writing-skills/writing-skills-workflow.html#n07" title="SKILL.md结构模板"><span class="nn">n07</span><span class="nt">SKILL.md结构模板</span></a><a class="nbox" data-key="writing-skills:n08" href="writing-skills/writing-skills-workflow.html#n08" title="让未来Claude找到"><span class="nn">n08</span><span class="nt">让未来Claude找到</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="writing-skills:n09" href="writing-skills/writing-skills-workflow.html#n09" title="何时该画流程图"><span class="nn">n09</span><span class="nt">何时该画流程图</span></a><a class="nbox hidden" data-key="writing-skills:n10" href="writing-skills/writing-skills-workflow.html#n10" title="一个好例子就够"><span class="nn">n10</span><span class="nt">一个好例子就够</span></a><a class="nbox hidden" data-key="writing-skills:n11" href="writing-skills/writing-skills-workflow.html#n11" title="三种文件组织形态"><span class="nn">n11</span><span class="nt">三种文件组织形态</span></a><a class="nbox" data-key="writing-skills:n12" href="writing-skills/writing-skills-workflow.html#n12" title="无失败测试不写"><span class="nn">n12</span><span class="nt">无失败测试不写</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-skills:n13" href="writing-skills/writing-skills-workflow.html#n13" title="按类型选测试法"><span class="nn">n13</span><span class="nt">按类型选测试法</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="writing-skills:n14" href="writing-skills/writing-skills-workflow.html#n14" title="跳过测试的借口"><span class="nn">n14</span><span class="nt">跳过测试的借口</span></a><a class="nbox" data-key="writing-skills:n15" href="writing-skills/writing-skills-workflow.html#n15" title="堵死合理化漏洞"><span class="nn">n15</span><span class="nt">堵死合理化漏洞</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-skills:n16" href="writing-skills/writing-skills-workflow.html#n16" title="红-绿-重构循环"><span class="nn">n16</span><span class="nt">红-绿-重构循环</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox hidden" data-key="writing-skills:n17" href="writing-skills/writing-skills-workflow.html#n17" title="四种反模式"><span class="nn">n17</span><span class="nt">四种反模式</span></a><a class="nbox" data-key="writing-skills:n18" href="writing-skills/writing-skills-workflow.html#n18" title="写完必须停下来"><span class="nn">n18</span><span class="nt">写完必须停下来</span></a><span class="narr" aria-hidden="true">→</span><a class="nbox" data-key="writing-skills:n19" href="writing-skills/writing-skills-workflow.html#n19" title="创建清单逐项勾"><span class="nn">n19</span><span class="nt">创建清单逐项勾</span></a><a class="nbox hidden" data-key="writing-skills:n20" href="writing-skills/writing-skills-workflow.html#n20" title="未来Claude检索路径"><span class="nn">n20</span><span class="nt">未来Claude检索路径</span></a><a class="nbox hidden" data-key="writing-skills:n21" href="writing-skills/writing-skills-workflow.html#n21" title="同一套纪律收束"><span class="nn">n21</span><span class="nt">同一套纪律收束</span></a><span class="more">+13 支撑</span></div></div></div></div></div>
+  </section>
+
+  <section class="list"><h2>跨 skill 边清单</h2><div class="scroll"><table class="tbl"><thead><tr><th>来源</th><th>目标</th><th>类型</th><th>条件</th><th>出处</th><th class="qt">引文</th><th></th></tr></thead><tbody><tr data-source="brainstorming/SKILL.md:32"><td>brainstorming:n01.10</td><td>writing-plans:n01</td><td>dependency</td><td>清单末项即把实现计划交给 writing-plans</td><td class="src">brainstorming/SKILL.md:32</td><td class="qt">invoke writing-plans skill to create implementation plan</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="brainstorming:n01.10 → writing-plans:n01" data-dd-source="brainstorming/SKILL.md:32">?</button></td></tr><tr data-source="brainstorming/SKILL.md:66"><td>brainstorming:n02</td><td>writing-plans:n01</td><td>dependency</td><td>终止态唯一允许的后继 skill</td><td class="src">brainstorming/SKILL.md:66</td><td class="qt">The ONLY skill you invoke after brainstorming is writing-plans</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="brainstorming:n02 → writing-plans:n01" data-dd-source="brainstorming/SKILL.md:66">?</button></td></tr><tr data-source="brainstorming/SKILL.md:135"><td>brainstorming:n04.8</td><td>writing-plans:n01</td><td>delegate</td><td>设计获批并提交规格之后,交给 writing-plans 产出实现计划</td><td class="src">brainstorming/SKILL.md:135</td><td class="qt">Invoke the writing-plans skill to create a detailed implementation plan</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="brainstorming:n04.8 → writing-plans:n01" data-dd-source="brainstorming/SKILL.md:135">?</button></td></tr><tr data-source="executing-plans/SKILL.md:14"><td>executing-plans:n01.2</td><td>subagent-driven-development:n02</td><td>delegate</td><td>平台支持子 agent</td><td class="src">executing-plans/SKILL.md:14</td><td class="qt">use superpowers:subagent-driven-development instead of this skill</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="executing-plans:n01.2 → subagent-driven-development:n02" data-dd-source="executing-plans/SKILL.md:14">?</button></td></tr><tr data-source="executing-plans/SKILL.md:36"><td>executing-plans:n02.3</td><td>finishing-a-development-branch:n02</td><td>delegate</td><td>任务全部完成并验证后进入收尾</td><td class="src">executing-plans/SKILL.md:36</td><td class="qt">**REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="executing-plans:n02.3 → finishing-a-development-branch:n02" data-dd-source="executing-plans/SKILL.md:36">?</button></td></tr><tr data-source="executing-plans/SKILL.md:68"><td>executing-plans:n06</td><td>using-git-worktrees:n02</td><td>delegate</td><td>开工前确保处在隔离工作区</td><td class="src">executing-plans/SKILL.md:68</td><td class="qt">**superpowers:using-git-worktrees** - Ensures isolated workspace</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="executing-plans:n06 → using-git-worktrees:n02" data-dd-source="executing-plans/SKILL.md:68">?</button></td></tr><tr data-source="executing-plans/SKILL.md:69"><td>executing-plans:n06</td><td>writing-plans:n09</td><td>dependency</td><td>本 skill 执行的计划由 writing-plans 产出并移交</td><td class="src">executing-plans/SKILL.md:69</td><td class="qt">**superpowers:writing-plans** - Creates the plan this skill executes</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="executing-plans:n06 → writing-plans:n09" data-dd-source="executing-plans/SKILL.md:69">?</button></td></tr><tr data-source="requesting-code-review/SKILL.md:15"><td>requesting-code-review:n01</td><td>subagent-driven-development:n01</td><td>dependency</td><td>触发节奏依赖子 agent 驱动开发的任务划分</td><td class="src">requesting-code-review/SKILL.md:15</td><td class="qt">After each task in subagent-driven development</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="requesting-code-review:n01 → subagent-driven-development:n01" data-dd-source="requesting-code-review/SKILL.md:15">?</button></td></tr><tr data-source="requesting-code-review/SKILL.md:77"><td>requesting-code-review:n04.2</td><td>subagent-driven-development:n02</td><td>dependency</td><td>审查节奏挂在子 agent 驱动开发的任务循环上</td><td class="src">requesting-code-review/SKILL.md:77</td><td class="qt">Subagent-Driven Development</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="requesting-code-review:n04.2 → subagent-driven-development:n02" data-dd-source="requesting-code-review/SKILL.md:77">?</button></td></tr><tr data-source="requesting-code-review/SKILL.md:82"><td>requesting-code-review:n04.3</td><td>executing-plans:n02</td><td>dependency</td><td>审查节奏挂在执行计划的任务与检查点上</td><td class="src">requesting-code-review/SKILL.md:82</td><td class="qt">Executing Plans</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="requesting-code-review:n04.3 → executing-plans:n02" data-dd-source="requesting-code-review/SKILL.md:82">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:32"><td>subagent-driven-development:n01</td><td>executing-plans:n02</td><td>fallback</td><td>不留在本会话:改用并行会话执行计划</td><td class="src">subagent-driven-development/SKILL.md:32</td><td class="qt">&quot;executing-plans&quot; [label=&quot;no - parallel session&quot;]</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n01 → executing-plans:n02" data-dd-source="subagent-driven-development/SKILL.md:32">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:85"><td>subagent-driven-development:n02.15</td><td>finishing-a-development-branch:n02</td><td>delegate</td><td>最终评审通过后交给分支收尾流程</td><td class="src">subagent-driven-development/SKILL.md:85</td><td class="qt">&quot;Use superpowers:finishing-a-development-branch&quot;</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n02.15 → finishing-a-development-branch:n02" data-dd-source="subagent-driven-development/SKILL.md:85">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:270"><td>subagent-driven-development:n09</td><td>using-git-worktrees:n01</td><td>delegate</td><td>开工前确保隔离工作区(新建或确认已有)</td><td class="src">subagent-driven-development/SKILL.md:270</td><td class="qt">superpowers:using-git-worktrees** - Ensures isolated workspace</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → using-git-worktrees:n01" data-dd-source="subagent-driven-development/SKILL.md:270">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:271"><td>subagent-driven-development:n09</td><td>writing-plans:n01</td><td>dependency</td><td>本 skill 执行的计划由 writing-plans 产出</td><td class="src">subagent-driven-development/SKILL.md:271</td><td class="qt">Creates the plan this skill executes</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → writing-plans:n01" data-dd-source="subagent-driven-development/SKILL.md:271">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:272"><td>subagent-driven-development:n09</td><td>requesting-code-review:n02</td><td>dependency</td><td>评审子 agent 复用其代码审查模板</td><td class="src">subagent-driven-development/SKILL.md:272</td><td class="qt">Code review template for reviewer subagents</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → requesting-code-review:n02" data-dd-source="subagent-driven-development/SKILL.md:272">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:273"><td>subagent-driven-development:n09</td><td>finishing-a-development-branch:n02</td><td>delegate</td><td>全部任务完成后收尾开发分支</td><td class="src">subagent-driven-development/SKILL.md:273</td><td class="qt">Complete development after all tasks</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → finishing-a-development-branch:n02" data-dd-source="subagent-driven-development/SKILL.md:273">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:276"><td>subagent-driven-development:n09</td><td>test-driven-development:n04</td><td>delegate</td><td>子 agent 每个任务都走 TDD</td><td class="src">subagent-driven-development/SKILL.md:276</td><td class="qt">Subagents follow TDD for each task</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → test-driven-development:n04" data-dd-source="subagent-driven-development/SKILL.md:276">?</button></td></tr><tr data-source="subagent-driven-development/SKILL.md:279"><td>subagent-driven-development:n09</td><td>executing-plans:n02</td><td>fallback</td><td>替代路线:改用并行会话而非同会话执行</td><td class="src">subagent-driven-development/SKILL.md:279</td><td class="qt">Use for parallel session instead of same-session execution</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="subagent-driven-development:n09 → executing-plans:n02" data-dd-source="subagent-driven-development/SKILL.md:279">?</button></td></tr><tr data-source="systematic-debugging/SKILL.md:179"><td>systematic-debugging:n04.10</td><td>test-driven-development:n04</td><td>delegate</td><td>写正经的失败测试交给 TDD 的红-绿-重构</td><td class="src">systematic-debugging/SKILL.md:179</td><td class="qt">superpowers:test-driven-development` skill for writing proper failing tests</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="systematic-debugging:n04.10 → test-driven-development:n04" data-dd-source="systematic-debugging/SKILL.md:179">?</button></td></tr><tr data-source="systematic-debugging/SKILL.md:287"><td>systematic-debugging:n10</td><td>test-driven-development:n04</td><td>delegate</td><td>Phase 4 第 1 步造失败测试</td><td class="src">systematic-debugging/SKILL.md:287</td><td class="qt">For creating failing test case (Phase 4, Step 1)</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="systematic-debugging:n10 → test-driven-development:n04" data-dd-source="systematic-debugging/SKILL.md:287">?</button></td></tr><tr data-source="systematic-debugging/SKILL.md:288"><td>systematic-debugging:n10</td><td>verification-before-completion:n03</td><td>delegate</td><td>宣称成功前先跑验证闸门</td><td class="src">systematic-debugging/SKILL.md:288</td><td class="qt">Verify fix worked before claiming success</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="systematic-debugging:n10 → verification-before-completion:n03" data-dd-source="systematic-debugging/SKILL.md:288">?</button></td></tr><tr data-source="systematic-debugging/SKILL.md:288"><td>systematic-debugging:n04.12</td><td>verification-before-completion:n03</td><td>dependency</td><td>验证修复需要真实证据而非自我宣称</td><td class="src">systematic-debugging/SKILL.md:288</td><td class="qt">Verify fix worked before claiming success</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="systematic-debugging:n04.12 → verification-before-completion:n03" data-dd-source="systematic-debugging/SKILL.md:288">?</button></td></tr><tr data-source="using-superpowers/SKILL.md:65"><td>using-superpowers:n03.3</td><td>brainstorming:n01</td><td>delegate</td><td>尚未 brainstorm 过,先交给 brainstorming 走完清单再回来</td><td class="src">using-superpowers/SKILL.md:65</td><td class="qt">&quot;Invoke brainstorming skill&quot; -&gt; &quot;Might any skill apply?&quot;;</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="using-superpowers:n03.3 → brainstorming:n01" data-dd-source="using-superpowers/SKILL.md:65">?</button></td></tr><tr data-source="using-superpowers/SKILL.md:104"><td>using-superpowers:n05.2</td><td>brainstorming:n01</td><td>dependency</td><td>创造类请求的流程类首选就是 brainstorming</td><td class="src">using-superpowers/SKILL.md:104</td><td class="qt">brainstorming first, then implementation skills.</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="using-superpowers:n05.2 → brainstorming:n01" data-dd-source="using-superpowers/SKILL.md:104">?</button></td></tr><tr data-source="writing-plans/SKILL.md:16"><td>writing-plans:n01.2</td><td>using-git-worktrees:n02</td><td>dependency</td><td>隔离工作区应已由该 skill 建好</td><td class="src">writing-plans/SKILL.md:16</td><td class="qt">it should have been created via the `superpowers:using-git-worktrees` skill</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n01.2 → using-git-worktrees:n02" data-dd-source="writing-plans/SKILL.md:16">?</button></td></tr><tr data-source="writing-plans/SKILL.md:23"><td>writing-plans:n01.4</td><td>brainstorming:n04</td><td>dependency</td><td>子项目 spec 本应在 brainstorming 阶段拆出</td><td class="src">writing-plans/SKILL.md:23</td><td class="qt">broken into sub-project specs during brainstorming</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n01.4 → brainstorming:n04" data-dd-source="writing-plans/SKILL.md:23">?</button></td></tr><tr data-source="writing-plans/SKILL.md:52"><td>writing-plans:n04.2</td><td>subagent-driven-development:n02</td><td>dependency</td><td>文档头点名的首选实现方式</td><td class="src">writing-plans/SKILL.md:52</td><td class="qt">REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended)</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n04.2 → subagent-driven-development:n02" data-dd-source="writing-plans/SKILL.md:52">?</button></td></tr><tr data-source="writing-plans/SKILL.md:52"><td>writing-plans:n04.2</td><td>executing-plans:n02</td><td>dependency</td><td>文档头点名的备选实现方式</td><td class="src">writing-plans/SKILL.md:52</td><td class="qt">or superpowers:executing-plans to implement this plan task-by-task</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n04.2 → executing-plans:n02" data-dd-source="writing-plans/SKILL.md:52">?</button></td></tr><tr data-source="writing-plans/SKILL.md:147"><td>writing-plans:n09.3</td><td>subagent-driven-development:n02</td><td>delegate</td><td>移交:每任务一个全新子 agent</td><td class="src">writing-plans/SKILL.md:147</td><td class="qt">**REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n09.3 → subagent-driven-development:n02" data-dd-source="writing-plans/SKILL.md:147">?</button></td></tr><tr data-source="writing-plans/SKILL.md:151"><td>writing-plans:n09.4</td><td>executing-plans:n02</td><td>delegate</td><td>移交:按批执行带检查点</td><td class="src">writing-plans/SKILL.md:151</td><td class="qt">**REQUIRED SUB-SKILL:** Use superpowers:executing-plans</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-plans:n09.4 → executing-plans:n02" data-dd-source="writing-plans/SKILL.md:151">?</button></td></tr><tr data-source="writing-skills/SKILL.md:18"><td>writing-skills:n01</td><td>test-driven-development:n04</td><td>delegate</td><td>使用本 skill 之前必须先掌握 TDD 的 RED-GREEN-REFACTOR 循环</td><td class="src">writing-skills/SKILL.md:18</td><td class="qt">You MUST understand superpowers:test-driven-development before using this skill</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-skills:n01 → test-driven-development:n04" data-dd-source="writing-skills/SKILL.md:18">?</button></td></tr><tr data-source="writing-skills/SKILL.md:393"><td>writing-skills:n12</td><td>test-driven-development:n03</td><td>dependency</td><td>铁律为何成立由 TDD skill 论证,同样的原则搬到文档上</td><td class="src">writing-skills/SKILL.md:393</td><td class="qt">The superpowers:test-driven-development skill explains why this matters.</td><td class="dd"><button class="deep-dive-btn" type="button" title="追问这条边" data-dd-label="writing-skills:n12 → test-driven-development:n03" data-dd-source="writing-skills/SKILL.md:393">?</button></td></tr></tbody></table></div><h2>skill 统计</h2><div class="scroll"><table class="tbl"><thead><tr><th>skill</th><th>出边</th><th>入边</th><th></th><th>语义层</th></tr></thead><tbody><tr><td>brainstorming</td><td>3</td><td>3</td><td></td><td>作废 0 条</td></tr><tr><td>dispatching-parallel-agents</td><td>0</td><td>0</td><td>孤立</td><td>作废 0 条</td></tr><tr><td>executing-plans</td><td>4</td><td>5</td><td></td><td>作废 0 条</td></tr><tr><td>finishing-a-development-branch</td><td>0</td><td>3</td><td></td><td>作废 0 条</td></tr><tr><td>receiving-code-review</td><td>0</td><td>0</td><td>孤立</td><td>作废 0 条</td></tr><tr><td>requesting-code-review</td><td>3</td><td>1</td><td></td><td>作废 0 条</td></tr><tr><td>subagent-driven-development</td><td>8</td><td>5</td><td></td><td>作废 0 条</td></tr><tr><td>systematic-debugging</td><td>4</td><td>0</td><td></td><td>作废 0 条</td></tr><tr><td>test-driven-development</td><td>0</td><td>5</td><td></td><td>作废 0 条</td></tr><tr><td>using-git-worktrees</td><td>0</td><td>3</td><td></td><td>作废 0 条</td></tr><tr><td>using-superpowers</td><td>2</td><td>0</td><td></td><td>作废 0 条</td></tr><tr><td>verification-before-completion</td><td>0</td><td>2</td><td></td><td>作废 0 条</td></tr><tr><td>writing-plans</td><td>6</td><td>5</td><td></td><td>作废 0 条</td></tr><tr><td>writing-skills</td><td>2</td><td>0</td><td></td><td>作废 0 条</td></tr></tbody></table></div></section>
+  <section class="recon"><h2>印证</h2><p class="sem-h">cross-refs 未被任何边采纳(6 / 47)</p><ul class="sem-list"><li data-source="executing-plans/SKILL.md:70"><code>executing-plans</code> → <code>finishing-a-development-branch</code> n06 · SKILL.md:70<span class="q">superpowers:finishing-a-development-branch</span><span class="why">原因:cross-ref SKILL.md:70(token 型,finishing-a-development-branch)是 Integration 清单对同一次移交的复述,不是第二次调用;若再建一条 n06 → finishing-a-development-branch:n02 的边会与 n02.3 的 delegate 重复表达同一语义,故仅登记于此。</span></li><li data-source="subagent-driven-development/SKILL.md:212"><code>subagent-driven-development</code> → <code>executing-plans</code> n07 · SKILL.md:212<span class="q">Executing Plans</span><span class="why">原因:正文另有两处以空格大写形式提到姊妹 skill(第 36 行 &quot;vs. Executing Plans (parallel session)&quot;、第 212 行 &quot;vs. Executing Plans&quot;、第 131 行 &quot;Subagent-Driven Development&quot;),静态提取器只匹配小写连字符写法,因此没有对应 cross-ref 行,不能用 delegate 表达;其语义已由第 32/279 行的 fallback 边覆盖。</span></li><li data-source="writing-skills/SKILL.md:162"><code>writing-skills</code> → <code>executing-plans</code> n08 · SKILL.md:162<span class="q">executing plans</span><span class="why">原因:语义层未说明</span></li><li data-source="writing-skills/SKILL.md:283"><code>writing-skills</code> → <code>test-driven-development</code> n08 · SKILL.md:283<span class="q">superpowers:test-driven-development</span><span class="why">原因:cross-refs 第 283 行(superpowers:test-driven-development)不是调用:它是「如何写交叉引用」的正面写法示例,引用的 skill 名只是占位举例,故不产出边,仅记入 n08.5 的 criteria。</span></li><li data-source="writing-skills/SKILL.md:284"><code>writing-skills</code> → <code>systematic-debugging</code> n08 · SKILL.md:284<span class="q">superpowers:systematic-debugging</span><span class="why">原因:cross-refs 第 284 行(superpowers:systematic-debugging)同上:是 REQUIRED BACKGROUND 标记的书写范例,本 skill 的流程并不依赖 systematic-debugging,故不产出任何指向它的边。</span></li><li data-source="writing-skills/SKILL.md:401"><code>writing-skills</code> → <code>verification-before-completion</code> n13 · SKILL.md:401<span class="q">verification-before-completion</span><span class="why">原因:cross-refs 第 401 行(verification-before-completion)不是调用:它出现在「纪律型 skill 有哪些」的举例列表里(TDD、verification-before-completion、designing-before-coding),用来说明该类别,故不产出边,仅记入 n13.2 的 examples。</span></li></ul><p class="sem-h">成员语义层</p><ul class="sem-list"><li><a href="brainstorming/brainstorming-workflow.html">brainstorming</a> · 作废 0 条</li><li><a href="dispatching-parallel-agents/dispatching-parallel-agents-workflow.html">dispatching-parallel-agents</a> · 作废 0 条</li><li><a href="executing-plans/executing-plans-workflow.html">executing-plans</a> · 作废 0 条</li><li><a href="finishing-a-development-branch/finishing-a-development-branch-workflow.html">finishing-a-development-branch</a> · 作废 0 条</li><li><a href="receiving-code-review/receiving-code-review-workflow.html">receiving-code-review</a> · 作废 0 条</li><li><a href="requesting-code-review/requesting-code-review-workflow.html">requesting-code-review</a> · 作废 0 条</li><li><a href="subagent-driven-development/subagent-driven-development-workflow.html">subagent-driven-development</a> · 作废 0 条</li><li><a href="systematic-debugging/systematic-debugging-workflow.html">systematic-debugging</a> · 作废 0 条</li><li><a href="test-driven-development/test-driven-development-workflow.html">test-driven-development</a> · 作废 0 条</li><li><a href="using-git-worktrees/using-git-worktrees-workflow.html">using-git-worktrees</a> · 作废 0 条</li><li><a href="using-superpowers/using-superpowers-workflow.html">using-superpowers</a> · 作废 0 条</li><li><a href="verification-before-completion/verification-before-completion-workflow.html">verification-before-completion</a> · 作废 0 条</li><li><a href="writing-plans/writing-plans-workflow.html">writing-plans</a> · 作废 0 条</li><li><a href="writing-skills/writing-skills-workflow.html">writing-skills</a> · 作废 0 条</li></ul></section>
+  <footer class="foot">由 <strong>skill-to-webpage</strong> 生成 · 组:<code>superpowers</code>(14 个成员)· 跨引用零 LLM 抽取(cross-refs.json)· 跨 skill 边来自各成员语义层(带前缀端点,经 validate_semantics.py --bundle 回读)· 2026-08-24</footer>
+</div>
+
+<!-- 追问弹窗 -->
+<div class="dd-overlay" id="ddOverlay">
+  <div class="dd-popover">
+    <p class="dd-title" id="ddTitle"></p>
+    <p class="dd-ctx" id="ddCtx"></p>
+    <textarea id="ddInput" placeholder="输入你想追问的细节…"></textarea>
+    <div class="dd-actions">
+      <button class="dd-submit" id="ddSubmit">打包复制追问到剪贴板</button>
+      <button class="dd-cancel" id="ddCancel">取消</button>
+    </div>
+  </div>
+</div>
+<div class="dd-toast" id="ddToast"></div>
+
+<script>
+/* JS 安全规则(CRITICAL):var / function() / DOM 前 null 守卫 / 字符串内无中文弯引号 */
+
+var LAYOUT = {"fig1": {"edges": [{"from": "brainstorming", "to": "writing-plans", "type": "delegate", "back": false, "mutual": false, "source": "brainstorming/SKILL.md:32", "quote": "invoke writing-plans skill to create implementation plan"}, {"from": "executing-plans", "to": "finishing-a-development-branch", "type": "delegate", "back": false, "mutual": false, "source": "executing-plans/SKILL.md:36", "quote": "**REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch"}, {"from": "executing-plans", "to": "subagent-driven-development", "type": "delegate", "back": false, "mutual": false, "source": "executing-plans/SKILL.md:14", "quote": "use superpowers:subagent-driven-development instead of this skill"}, {"from": "executing-plans", "to": "using-git-worktrees", "type": "delegate", "back": false, "mutual": false, "source": "executing-plans/SKILL.md:68", "quote": "**superpowers:using-git-worktrees** - Ensures isolated workspace"}, {"from": "executing-plans", "to": "writing-plans", "type": "dependency", "back": true, "mutual": false, "source": "executing-plans/SKILL.md:69", "quote": "**superpowers:writing-plans** - Creates the plan this skill executes"}, {"from": "requesting-code-review", "to": "executing-plans", "type": "dependency", "back": false, "mutual": false, "source": "requesting-code-review/SKILL.md:82", "quote": "Executing Plans"}, {"from": "requesting-code-review", "to": "subagent-driven-development", "type": "dependency", "back": false, "mutual": false, "source": "requesting-code-review/SKILL.md:15", "quote": "After each task in subagent-driven development"}, {"from": "subagent-driven-development", "to": "executing-plans", "type": "fallback", "back": true, "mutual": false, "source": "subagent-driven-development/SKILL.md:32", "quote": "&quot;executing-plans&quot; [label=&quot;no - parallel session&quot;]"}, {"from": "subagent-driven-development", "to": "finishing-a-development-branch", "type": "delegate", "back": false, "mutual": false, "source": "subagent-driven-development/SKILL.md:85", "quote": "&quot;Use superpowers:finishing-a-development-branch&quot;"}, {"from": "subagent-driven-development", "to": "requesting-code-review", "type": "dependency", "back": true, "mutual": false, "source": "subagent-driven-development/SKILL.md:272", "quote": "Code review template for reviewer subagents"}, {"from": "subagent-driven-development", "to": "test-driven-development", "type": "delegate", "back": false, "mutual": false, "source": "subagent-driven-development/SKILL.md:276", "quote": "Subagents follow TDD for each task"}, {"from": "subagent-driven-development", "to": "using-git-worktrees", "type": "delegate", "back": false, "mutual": false, "source": "subagent-driven-development/SKILL.md:270", "quote": "superpowers:using-git-worktrees** - Ensures isolated workspace"}, {"from": "subagent-driven-development", "to": "writing-plans", "type": "dependency", "back": true, "mutual": false, "source": "subagent-driven-development/SKILL.md:271", "quote": "Creates the plan this skill executes"}, {"from": "systematic-debugging", "to": "test-driven-development", "type": "delegate", "back": false, "mutual": false, "source": "systematic-debugging/SKILL.md:179", "quote": "superpowers:test-driven-development` skill for writing proper failing tests"}, {"from": "systematic-debugging", "to": "verification-before-completion", "type": "delegate", "back": false, "mutual": false, "source": "systematic-debugging/SKILL.md:288", "quote": "Verify fix worked before claiming success"}, {"from": "using-superpowers", "to": "brainstorming", "type": "delegate", "back": false, "mutual": false, "source": "using-superpowers/SKILL.md:65", "quote": "&quot;Invoke brainstorming skill&quot; -&gt; &quot;Might any skill apply?&quot;;"}, {"from": "writing-plans", "to": "brainstorming", "type": "dependency", "back": true, "mutual": false, "source": "writing-plans/SKILL.md:23", "quote": "broken into sub-project specs during brainstorming"}, {"from": "writing-plans", "to": "executing-plans", "type": "delegate", "back": false, "mutual": false, "source": "writing-plans/SKILL.md:52", "quote": "or superpowers:executing-plans to implement this plan task-by-task"}, {"from": "writing-plans", "to": "subagent-driven-development", "type": "delegate", "back": false, "mutual": false, "source": "writing-plans/SKILL.md:52", "quote": "REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended)"}, {"from": "writing-plans", "to": "using-git-worktrees", "type": "dependency", "back": false, "mutual": false, "source": "writing-plans/SKILL.md:16", "quote": "it should have been created via the `superpowers:using-git-worktrees` skill"}, {"from": "writing-skills", "to": "test-driven-development", "type": "delegate", "back": false, "mutual": false, "source": "writing-skills/SKILL.md:18", "quote": "You MUST understand superpowers:test-driven-development before using this skill"}]}, "fig2": {"edges": [{"from": "brainstorming:n01", "to": "writing-plans:n01", "type": "dependency", "back": false, "source": "brainstorming/SKILL.md:32", "quote": "invoke writing-plans skill to create implementation plan"}, {"from": "brainstorming:n02", "to": "writing-plans:n01", "type": "dependency", "back": false, "source": "brainstorming/SKILL.md:66", "quote": "The ONLY skill you invoke after brainstorming is writing-plans"}, {"from": "brainstorming:n04", "to": "writing-plans:n01", "type": "delegate", "back": false, "source": "brainstorming/SKILL.md:135", "quote": "Invoke the writing-plans skill to create a detailed implementation plan"}, {"from": "executing-plans:n01", "to": "subagent-driven-development:n02", "type": "delegate", "back": false, "source": "executing-plans/SKILL.md:14", "quote": "use superpowers:subagent-driven-development instead of this skill"}, {"from": "executing-plans:n02", "to": "finishing-a-development-branch:n02", "type": "delegate", "back": false, "source": "executing-plans/SKILL.md:36", "quote": "**REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch"}, {"from": "executing-plans:n06", "to": "using-git-worktrees:n02", "type": "delegate", "back": false, "source": "executing-plans/SKILL.md:68", "quote": "**superpowers:using-git-worktrees** - Ensures isolated workspace"}, {"from": "executing-plans:n06", "to": "writing-plans:n09", "type": "dependency", "back": true, "source": "executing-plans/SKILL.md:69", "quote": "**superpowers:writing-plans** - Creates the plan this skill executes"}, {"from": "requesting-code-review:n01", "to": "subagent-driven-development:n01", "type": "dependency", "back": false, "source": "requesting-code-review/SKILL.md:15", "quote": "After each task in subagent-driven development"}, {"from": "requesting-code-review:n04", "to": "subagent-driven-development:n02", "type": "dependency", "back": false, "source": "requesting-code-review/SKILL.md:77", "quote": "Subagent-Driven Development"}, {"from": "requesting-code-review:n04", "to": "executing-plans:n02", "type": "dependency", "back": false, "source": "requesting-code-review/SKILL.md:82", "quote": "Executing Plans"}, {"from": "subagent-driven-development:n01", "to": "executing-plans:n02", "type": "fallback", "back": true, "source": "subagent-driven-development/SKILL.md:32", "quote": "&quot;executing-plans&quot; [label=&quot;no - parallel session&quot;]"}, {"from": "subagent-driven-development:n02", "to": "finishing-a-development-branch:n02", "type": "delegate", "back": false, "source": "subagent-driven-development/SKILL.md:85", "quote": "&quot;Use superpowers:finishing-a-development-branch&quot;"}, {"from": "subagent-driven-development:n09", "to": "using-git-worktrees:n01", "type": "delegate", "back": false, "source": "subagent-driven-development/SKILL.md:270", "quote": "superpowers:using-git-worktrees** - Ensures isolated workspace"}, {"from": "subagent-driven-development:n09", "to": "writing-plans:n01", "type": "dependency", "back": true, "source": "subagent-driven-development/SKILL.md:271", "quote": "Creates the plan this skill executes"}, {"from": "subagent-driven-development:n09", "to": "requesting-code-review:n02", "type": "dependency", "back": true, "source": "subagent-driven-development/SKILL.md:272", "quote": "Code review template for reviewer subagents"}, {"from": "subagent-driven-development:n09", "to": "finishing-a-development-branch:n02", "type": "delegate", "back": false, "source": "subagent-driven-development/SKILL.md:273", "quote": "Complete development after all tasks"}, {"from": "subagent-driven-development:n09", "to": "test-driven-development:n04", "type": "delegate", "back": false, "source": "subagent-driven-development/SKILL.md:276", "quote": "Subagents follow TDD for each task"}, {"from": "subagent-driven-development:n09", "to": "executing-plans:n02", "type": "fallback", "back": true, "source": "subagent-driven-development/SKILL.md:279", "quote": "Use for parallel session instead of same-session execution"}, {"from": "systematic-debugging:n04", "to": "test-driven-development:n04", "type": "delegate", "back": false, "source": "systematic-debugging/SKILL.md:179", "quote": "superpowers:test-driven-development` skill for writing proper failing tests"}, {"from": "systematic-debugging:n10", "to": "test-driven-development:n04", "type": "delegate", "back": false, "source": "systematic-debugging/SKILL.md:287", "quote": "For creating failing test case (Phase 4, Step 1)"}, {"from": "systematic-debugging:n10", "to": "verification-before-completion:n03", "type": "delegate", "back": false, "source": "systematic-debugging/SKILL.md:288", "quote": "Verify fix worked before claiming success"}, {"from": "systematic-debugging:n04", "to": "verification-before-completion:n03", "type": "dependency", "back": false, "source": "systematic-debugging/SKILL.md:288", "quote": "Verify fix worked before claiming success"}, {"from": "using-superpowers:n03", "to": "brainstorming:n01", "type": "delegate", "back": false, "source": "using-superpowers/SKILL.md:65", "quote": "&quot;Invoke brainstorming skill&quot; -&gt; &quot;Might any skill apply?&quot;;"}, {"from": "using-superpowers:n05", "to": "brainstorming:n01", "type": "dependency", "back": false, "source": "using-superpowers/SKILL.md:104", "quote": "brainstorming first, then implementation skills."}, {"from": "writing-plans:n01", "to": "using-git-worktrees:n02", "type": "dependency", "back": false, "source": "writing-plans/SKILL.md:16", "quote": "it should have been created via the `superpowers:using-git-worktrees` skill"}, {"from": "writing-plans:n01", "to": "brainstorming:n04", "type": "dependency", "back": true, "source": "writing-plans/SKILL.md:23", "quote": "broken into sub-project specs during brainstorming"}, {"from": "writing-plans:n04", "to": "subagent-driven-development:n02", "type": "dependency", "back": false, "source": "writing-plans/SKILL.md:52", "quote": "REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended)"}, {"from": "writing-plans:n04", "to": "executing-plans:n02", "type": "dependency", "back": false, "source": "writing-plans/SKILL.md:52", "quote": "or superpowers:executing-plans to implement this plan task-by-task"}, {"from": "writing-plans:n09", "to": "subagent-driven-development:n02", "type": "delegate", "back": false, "source": "writing-plans/SKILL.md:147", "quote": "**REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development"}, {"from": "writing-plans:n09", "to": "executing-plans:n02", "type": "delegate", "back": false, "source": "writing-plans/SKILL.md:151", "quote": "**REQUIRED SUB-SKILL:** Use superpowers:executing-plans"}, {"from": "writing-skills:n01", "to": "test-driven-development:n04", "type": "delegate", "back": false, "source": "writing-skills/SKILL.md:18", "quote": "You MUST understand superpowers:test-driven-development before using this skill"}, {"from": "writing-skills:n12", "to": "test-driven-development:n03", "type": "dependency", "back": false, "source": "writing-skills/SKILL.md:393", "quote": "The superpowers:test-driven-development skill explains why this matters."}]}};  /* {fig1:{edges:[{from,to,type,back,source,quote}]}, fig2:{edges:[…]}} */
+
+var SKILL_DIRS = {"brainstorming": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/brainstorming", "dispatching-parallel-agents": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/dispatching-parallel-agents", "executing-plans": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/executing-plans", "finishing-a-development-branch": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/finishing-a-development-branch", "receiving-code-review": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/receiving-code-review", "requesting-code-review": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/requesting-code-review", "subagent-driven-development": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/subagent-driven-development", "systematic-debugging": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/systematic-debugging", "test-driven-development": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/test-driven-development", "using-git-worktrees": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/using-git-worktrees", "using-superpowers": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/using-superpowers", "verification-before-completion": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/verification-before-completion", "writing-plans": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/writing-plans", "writing-skills": "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/superpowers/writing-skills"};   /* {成员名: 该 skill 的源目录绝对路径} */
+var _h1 = document.querySelector(".hero h1");
+var GROUP = _h1 ? _h1.textContent : "";
+
+/* 一维放置:每个盒子想居中于其关联盒子正下方;与邻居重叠则并成一簇共同居中;簇不越过左界 minLeft */
+function semPlace1D(items, minLeft, gap) {
+  items.sort(function (p, q) { return p.want - q.want; });
+  var clusters = [];
+  var i, k;
+  for (i = 0; i < items.length; i++) {
+    items[i].off = 0;
+    var c = { items: [items[i]], w: items[i].w, sum: items[i].want, left: Math.max(minLeft, items[i].want) };
+    while (clusters.length > 0 && clusters[clusters.length - 1].left + clusters[clusters.length - 1].w + gap > c.left) {
+      var p = clusters.pop();
+      for (k = 0; k < c.items.length; k++) { c.items[k].off += p.w + gap; p.items.push(c.items[k]); }
+      p.sum += c.sum - c.items.length * (p.w + gap);
+      p.w += gap + c.w;
+      p.left = Math.max(minLeft, p.sum / p.items.length);
+      c = p;
+    }
+    clusters.push(c);
+  }
+  for (i = 0; i < clusters.length; i++) {
+    for (k = 0; k < clusters[i].items.length; k++) { clusters[i].items[k].left = clusters[i].left + clusters[i].items[k].off; }
+  }
+}
+
+/* 正交折线:(x0,y0) 先竖直到轨道 yt,再水平,再竖直到 (x1,y1);拐角圆弧半径 r */
+function orthoPath(x0, y0, x1, y1, yt, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var dx = x1 - x0;
+  if (Math.abs(dx) < 2) { return "M " + f(x0) + " " + f(y0) + " L " + f(x1) + " " + f(y1); }
+  var sx = dx > 0 ? 1 : -1;
+  var s0 = yt > y0 ? 1 : -1;
+  var s1 = y1 > yt ? 1 : -1;
+  var rr = Math.min(r, Math.abs(dx) / 2, Math.abs(yt - y0), Math.abs(y1 - yt));
+  return "M " + f(x0) + " " + f(y0) + " L " + f(x0) + " " + f(yt - s0 * rr) + " Q " + f(x0) + " " + f(yt) + " " + f(x0 + sx * rr) + " " + f(yt) +
+    " L " + f(x1 - sx * rr) + " " + f(yt) + " Q " + f(x1) + " " + f(yt) + " " + f(x1) + " " + f(yt + s1 * rr) + " L " + f(x1) + " " + f(y1);
+}
+
+/* 卫星栏布线:主行在上、卫星栏在下,轨道夹在两者之间(yTop..yBot)。
+   links = [{rowBox, satBox, rowKey, satKey, dir:"up"|"down"}]:up = 箭头汇入主行盒子(依赖来源),down = 箭头汇入卫星盒子(兜底去向)。
+   端口沿盒边按对侧盒子的横向位置排序分散;每条线独占一条水平轨道;轨道次序取交叉最少者(≤8 条穷举,更多用邻换贪心)。 */
+function semRouteLane(links, yTop, yBot) {
+  var i, j, g, cc;
+  function spread(keyName, boxName, otherName, portName) {
+    var groups = {};
+    for (i = 0; i < links.length; i++) {
+      if (!groups[links[i][keyName]]) { groups[links[i][keyName]] = []; }
+      groups[links[i][keyName]].push(links[i]);
+    }
+    for (g in groups) {
+      if (!groups.hasOwnProperty(g)) { continue; }
+      var arr = groups[g];
+      arr.sort(function (p, q) { return (p[otherName].l + p[otherName].w / 2) - (q[otherName].l + q[otherName].w / 2); });
+      for (j = 0; j < arr.length; j++) { arr[j][portName] = arr[j][boxName].l + arr[j][boxName].w * (j + 1) / (arr.length + 1); }
+    }
+  }
+  spread("rowKey", "rowBox", "satBox", "xs");
+  spread("satKey", "satBox", "rowBox", "xe");
+  for (i = 0; i < links.length; i++) {
+    links[i].lo = Math.min(links[i].xs, links[i].xe);
+    links[i].hi = Math.max(links[i].xs, links[i].xe);
+    links[i].span = links[i].hi - links[i].lo;
+  }
+  /* up 在上轨、dn 在下轨时的交叉数:dn 的上竖段穿过 up 的横段 / up 的下竖段穿过 dn 的横段 */
+  function pairCross(up, dn) {
+    var c = 0;
+    if (dn.xs > up.lo + 0.5 && dn.xs < up.hi - 0.5) { c++; }
+    if (up.xe > dn.lo + 0.5 && up.xe < dn.hi - 0.5) { c++; }
+    return c;
+  }
+  function cost(order) {
+    var c = 0, a, b;
+    for (a = 0; a < order.length; a++) { for (b = a + 1; b < order.length; b++) { c += pairCross(order[a], order[b]); } }
+    return c;
+  }
+  function drift(order) { var s = 0, a; for (a = 0; a < order.length; a++) { s += a * order[a].span; } return s; }
+  var best = links.slice().sort(function (p, q) { return q.span - p.span; });
+  var bestC = cost(best), bestD = drift(best);
+  var n = best.length;
+  if (n > 1 && n <= 8) {
+    var arr2 = best.slice(), cnt = [], k = 0, tmp, sw;
+    for (i = 0; i < n; i++) { cnt[i] = 0; }
+    while (k < n) {
+      if (cnt[k] < k) {
+        sw = (k % 2 === 0) ? 0 : cnt[k];
+        tmp = arr2[sw]; arr2[sw] = arr2[k]; arr2[k] = tmp;
+        cc = cost(arr2);
+        if (cc < bestC || (cc === bestC && drift(arr2) < bestD)) { best = arr2.slice(); bestC = cc; bestD = drift(arr2); }
+        cnt[k] += 1; k = 0;
+      } else { cnt[k] = 0; k += 1; }
+    }
+  } else if (n > 8) {
+    var pass, improved = true;
+    for (pass = 0; pass < 30 && improved; pass++) {
+      improved = false;
+      for (i = 0; i + 1 < n; i++) {
+        var t1 = best[i]; best[i] = best[i + 1]; best[i + 1] = t1;
+        cc = cost(best);
+        if (cc < bestC) { bestC = cc; improved = true; } else { best[i + 1] = best[i]; best[i] = t1; }
+      }
+    }
+  }
+  for (i = 0; i < n; i++) {
+    var lk = best[i];
+    var yt = yTop + (yBot - yTop) * (i + 1) / (n + 1);
+    if (lk.dir === "down") {
+      lk.d = orthoPath(lk.xs, lk.rowBox.t + lk.rowBox.h + 1, lk.xe, lk.satBox.t - 2, yt, 8);
+    } else {
+      lk.d = orthoPath(lk.xe, lk.satBox.t - 1, lk.xs, lk.rowBox.t + lk.rowBox.h + 3, yt, 8);
+    }
+  }
+  return best;
+}
+
+/* ——— 图 1 / 图 2 的连线:与单页子流程图同一套正交布线 ———
+   竖直出源端口 → 在行间空档的独立轨道上水平走 → 竖直进目标顶端口;
+   跨层 / 回头的边不穿过盒子,走图右侧的通道列。轨道与端口分散的做法同 flow-lib.js 的 semRouteLane。 */
+var FIG_GAP = 24, FIG_ROW_GAP = 36, TRACK_H = 14, TRACK_PAD = 20;
+var CHAN_GAP = 12, CHAN_PAD = 18, CORNER = 8;
+
+/* 元素在画布坐标系里的矩形(.nbox 嵌在绝对定位的 .cluster 里,要一路累加) */
+function figRect(canvas, el) {
+  var l = 0, t = 0, n = el;
+  while (n && n !== canvas) { l += n.offsetLeft; t += n.offsetTop; n = n.offsetParent; }
+  return { l: l, t: t, w: el.offsetWidth, h: el.offsetHeight, r: l + el.offsetWidth, b: t + el.offsetHeight };
+}
+
+/* 盒子所属的"行"元素:图 1 是芯片自己,图 2 是它所在的分组框(都带 data-layer) */
+function figRowEl(el, canvas) {
+  var n = el;
+  while (n && n !== canvas) {
+    if (n.getAttribute && n.getAttribute("data-layer") !== null) { return n; }
+    n = n.parentNode;
+  }
+  return null;
+}
+
+/* 折线清理:去掉重合点与共线的中间点 */
+function figSimplify(pts) {
+  var out = [], i;
+  for (i = 0; i < pts.length; i++) {
+    if (out.length > 0 && Math.abs(out[out.length - 1][0] - pts[i][0]) < 0.6 && Math.abs(out[out.length - 1][1] - pts[i][1]) < 0.6) { continue; }
+    out.push([pts[i][0], pts[i][1]]);
+  }
+  var res = [out[0]], j;
+  for (j = 1; j < out.length - 1; j++) {
+    var a = res[res.length - 1], b = out[j], c = out[j + 1];
+    var col = (Math.abs(a[0] - b[0]) < 0.6 && Math.abs(b[0] - c[0]) < 0.6) || (Math.abs(a[1] - b[1]) < 0.6 && Math.abs(b[1] - c[1]) < 0.6);
+    if (!col) { res.push(b); }
+  }
+  if (out.length > 1) { res.push(out[out.length - 1]); }
+  return res;
+}
+
+/* 正交折线 + 圆角(orthoPath 的多段版:通道路由要 5 段,flow-lib 的三段版本套不下) */
+function orthoPoly(pts, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var d = "M " + f(pts[0][0]) + " " + f(pts[0][1]), i;
+  for (i = 1; i < pts.length - 1; i++) {
+    var p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+    var v0x = p1[0] - p0[0], v0y = p1[1] - p0[1], v1x = p2[0] - p1[0], v1y = p2[1] - p1[1];
+    var rr = Math.min(r, (Math.abs(v0x) + Math.abs(v0y)) / 2, (Math.abs(v1x) + Math.abs(v1y)) / 2);
+    function sg(v) { return v === 0 ? 0 : (v > 0 ? 1 : -1); }
+    d += " L " + f(p1[0] - sg(v0x) * rr) + " " + f(p1[1] - sg(v0y) * rr)
+      + " Q " + f(p1[0]) + " " + f(p1[1]) + " " + f(p1[0] + sg(v1x) * rr) + " " + f(p1[1] + sg(v1y) * rr);
+  }
+  var last = pts[pts.length - 1];
+  return d + " L " + f(last[0]) + " " + f(last[1]);
+}
+
+/* 箭头定义:与 base.html 子流程图逐字同款(orient=auto-start-reverse,颜色走 mk-* 变量) */
+function figMarker(id, cls, size) {
+  return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="' + size
+    + '" markerHeight="' + size + '" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="' + cls + '"></path></marker>';
+}
+
+/* 线型词汇:实线 = delegate(交棒)· 点线 = dependency(取用)· 橙色虚线 = 回头 / 互调 */
+function figEdgeCls(e) {
+  if (e.mutual) { return { cls: "fe delegate mutual", mk: "-me" }; }
+  if (e.back) { return { cls: "fe back", mk: "-ml" }; }
+  if (e.type === "delegate") { return { cls: "fe delegate", mk: "-me" }; }
+  if (e.type === "dependency") { return { cls: "fe dependency", mk: "-mc" }; }
+  return { cls: "fe " + e.type, mk: "-md" };
+}
+
+function renderFig(cfg) {
+  var canvas = document.getElementById(cfg.canvas), svg = document.getElementById(cfg.svg);
+  if (!canvas || !svg) { return; }
+  var inner = canvas.querySelector(".fig-inner");
+  if (!inner) { return; }
+  var i, j, r, k;
+
+  /* —— 1. 行:按 data-layer 分组(图 1 的孤立列不参与行排布,保持右侧一列) —— */
+  var all = canvas.querySelectorAll("[data-layer]"), rowMap = {}, keys = [];
+  for (i = 0; i < all.length; i++) {
+    var kk = all[i].getAttribute("data-layer");
+    if (kk === "iso" && !cfg.isoRow) { continue; }
+    if (!rowMap[kk]) { rowMap[kk] = []; keys.push(kk); }
+    rowMap[kk].push(all[i]);
+  }
+  keys.sort(function (a, b) {
+    if (a === "iso") { return 1; }
+    if (b === "iso") { return -1; }
+    return parseInt(a, 10) - parseInt(b, 10);
+  });
+
+  /* —— 2. 边:找到两端盒子与所在行 —— */
+  var links = [];
+  for (i = 0; i < cfg.edges.length; i++) {
+    var e = cfg.edges[i];
+    var a = canvas.querySelector(cfg.boxSel + '[data-key="' + e.from + '"]');
+    var b = canvas.querySelector(cfg.boxSel + '[data-key="' + e.to + '"]');
+    if (!a || !b || a.offsetParent === null || b.offsetParent === null) { continue; }
+    var ra = figRowEl(a, canvas), rb = figRowEl(b, canvas);
+    if (!ra || !rb) { continue; }
+    var ai = keys.indexOf(ra.getAttribute("data-layer")), bi = keys.indexOf(rb.getAttribute("data-layer"));
+    if (ai < 0 || bi < 0) { continue; }
+    links.push({ e: e, idx: i, aEl: a, bEl: b, aRow: ra, bRow: rb, ai: ai, bi: bi,
+      kind: e.mutual ? "mutual" : (bi === ai + 1 && !e.back ? "down" : "channel") });
+  }
+
+  /* —— 3. 每条边在行间空档里占一条轨道:空档高度 = max(基准, 14 * 轨道数 + 20) —— */
+  var gt = [];
+  function useTrack(g, lk, key) {
+    if (!gt[g]) { gt[g] = []; }
+    lk[key] = gt[g].length;
+    gt[g].push(lk);
+  }
+  for (i = 0; i < links.length; i++) {
+    if (links[i].kind === "down") { useTrack(links[i].bi, links[i], "t1"); }
+    else if (links[i].kind === "channel") {
+      useTrack(links[i].ai + 1, links[i], "t1");     /* 源下方的空档 */
+      useTrack(links[i].bi, links[i], "t2");         /* 目标上方的空档 */
+    }
+  }
+  var gSize = [];
+  for (g = 0; g <= keys.length; g++) {
+    var n = (gt[g] || []).length;
+    var base = g === 0 ? 0 : (g === keys.length ? 12 : FIG_ROW_GAP);
+    gSize[g] = n > 0 ? Math.max(base, TRACK_H * n + TRACK_PAD) : base;
+  }
+
+  /* —— 4. 排行:纵向按空档堆叠;图 2 顺带把每行水平居中 —— */
+  var avail = Math.max(320, canvas.clientWidth - 8), widest = 0;
+  if (cfg.center) {
+    for (r = 0; r < keys.length; r++) {
+      var wsum = 0, row0 = rowMap[keys[r]];
+      for (j = 0; j < row0.length; j++) { wsum += row0[j].offsetWidth + (j > 0 ? FIG_GAP : 0); }
+      widest = Math.max(widest, wsum);
+    }
+  }
+  var totalW = Math.max(avail, widest, parseInt(inner.style.minWidth, 10) || 0);
+  var top = gSize[0], rowTop = [], rowBot = [];
+  for (r = 0; r < keys.length; r++) {
+    var row = rowMap[keys[r]], high = 0;
+    if (cfg.center) {
+      var rw = 0;
+      for (j = 0; j < row.length; j++) { rw += row[j].offsetWidth + (j > 0 ? FIG_GAP : 0); }
+      var x = rw <= totalW ? Math.round((totalW - rw) / 2) : 0;
+      for (j = 0; j < row.length; j++) { row[j].style.left = Math.round(x) + "px"; x += row[j].offsetWidth + FIG_GAP; }
+    }
+    for (j = 0; j < row.length; j++) { row[j].style.top = Math.round(top) + "px"; high = Math.max(high, row[j].offsetHeight); }
+    rowTop[r] = top;
+    rowBot[r] = top + high;
+    top += high + gSize[r + 1];
+  }
+
+  /* —— 5. 端口 + 框内引线:线要落在节点盒子上;从节点到分组框边借行间空档与内边距走,不压别的节点 —— */
+  function spread(sideEl, otherEl, portX, portY, atTop) {
+    var groups = {}, key, arr;
+    for (i = 0; i < links.length; i++) {
+      key = links[i][sideEl].getAttribute("data-key");
+      if (!groups[key]) { groups[key] = []; }
+      groups[key].push(links[i]);
+    }
+    for (key in groups) {
+      if (!groups.hasOwnProperty(key)) { continue; }
+      arr = groups[key];
+      arr.sort(function (p, q) {
+        var pr = figRect(canvas, p[otherEl]), qr = figRect(canvas, q[otherEl]);
+        return (pr.l + pr.w / 2) - (qr.l + qr.w / 2);
+      });
+      for (j = 0; j < arr.length; j++) {
+        var bx = figRect(canvas, arr[j][sideEl]);
+        arr[j][portX] = Math.round(bx.l + bx.w * (j + 1) / (arr.length + 1));
+        arr[j][portY] = atTop ? bx.t : bx.b;      /* 端口在节点盒子的上/下边 */
+      }
+    }
+  }
+  spread("aEl", "bEl", "ax", "ay", false);
+  spread("bEl", "aEl", "bx", "by", true);
+
+  /* 分组框里的节点按行归拢(图 1 的芯片自己就是一行) */
+  function clusterRows(rowEl) {
+    var els = rowEl.querySelectorAll(cfg.boxSel), out = [], i2, j2, placed;
+    for (i2 = 0; i2 < els.length; i2++) {
+      if (els[i2].offsetParent === null) { continue; }
+      var rc = figRect(canvas, els[i2]);
+      placed = false;
+      for (j2 = 0; j2 < out.length; j2++) {
+        if (Math.abs(out[j2].t - rc.t) < 5) { out[j2].boxes.push(rc); out[j2].b = Math.max(out[j2].b, rc.b); placed = true; break; }
+      }
+      if (!placed) { out.push({ t: rc.t, b: rc.b, boxes: [rc] }); }
+    }
+    out.sort(function (p2, q2) { return p2.t - q2.t; });
+    return out;
+  }
+
+  /* 节点 → 分组框边:末行(首行)直上直下;隔着别的行就先横穿相邻的行间空档,再挑一条竖直走廊下(上)到框边 */
+  function clusterLeg(lk, isSrc) {
+    var boxEl = isSrc ? lk.aEl : lk.bEl, rowEl = isSrc ? lk.aRow : lk.bRow;
+    var px = isSrc ? lk.ax : lk.bx;
+    if (boxEl === rowEl) { return { pts: [], cx: px }; }
+    var cl = figRect(canvas, rowEl), rows2 = clusterRows(rowEl), me = figRect(canvas, boxEl);
+    var ri = 0, i2, j2, k2;
+    for (i2 = 0; i2 < rows2.length; i2++) { if (Math.abs(rows2[i2].t - me.t) < 5) { ri = i2; } }
+    var blocked = [], gapY;
+    if (isSrc) {
+      if (ri >= rows2.length - 1) { return { pts: [], cx: px }; }
+      gapY = (rows2[ri].b + rows2[ri + 1].t) / 2;
+      for (i2 = ri + 1; i2 < rows2.length; i2++) { blocked.push(rows2[i2]); }
+    } else {
+      if (ri === 0) { return { pts: [], cx: px }; }
+      gapY = (rows2[ri - 1].b + rows2[ri].t) / 2;
+      for (i2 = 0; i2 < ri; i2++) { blocked.push(rows2[i2]); }
+    }
+    var cands = [cl.l + 8, cl.r - 8], bs;
+    for (i2 = 0; i2 < blocked.length; i2++) {
+      bs = blocked[i2].boxes.slice().sort(function (p2, q2) { return p2.l - q2.l; });
+      for (j2 = 0; j2 + 1 < bs.length; j2++) { cands.push((bs[j2].r + bs[j2 + 1].l) / 2); }
+    }
+    var best = null, bestD = 1e9;
+    for (i2 = 0; i2 < cands.length; i2++) {
+      var x2 = Math.round(cands[i2]), ok = true;
+      for (j2 = 0; j2 < blocked.length && ok; j2++) {
+        for (k2 = 0; k2 < blocked[j2].boxes.length; k2++) {
+          var bb = blocked[j2].boxes[k2];
+          if (x2 > bb.l - 5 && x2 < bb.r + 5) { ok = false; break; }
+        }
+      }
+      if (ok && Math.abs(x2 - px) < bestD) { bestD = Math.abs(x2 - px); best = x2; }
+    }
+    if (best === null) { best = Math.round(cl.r - 8); }
+    return { pts: [[px, gapY], [best, gapY]], cx: best };
+  }
+
+  function trackY(g, idx) {
+    var n2 = (gt[g] || []).length;
+    var yA = g === 0 ? 0 : rowBot[g - 1];
+    var yB = g === keys.length ? top : rowTop[g];
+    return yA + (yB - yA) * (idx + 1) / (n2 + 1);
+  }
+
+  /* —— 6. 通道列:跨层 / 回头的边走图形右侧,每条一列,竖段互不重叠 —— */
+  var maxRight = 0;
+  for (i = 0; i < all.length; i++) {
+    if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { continue; }   /* 右侧孤立列单独安置 */
+    maxRight = Math.max(maxRight, figRect(canvas, all[i]).r);
+  }
+  var chans = [];
+  for (i = 0; i < links.length; i++) { if (links[i].kind === "channel") { chans.push(links[i]); } }
+
+  /* 6a. 图内竖直走廊:两行之间的空隙 / 行两侧的留白,只要竖段全程躲得开盒子就走图内,
+         省得每条跨层边都绕到最右边(线绕来绕去的主因)。躲不开才退回右侧通道列。 */
+  function boxesOfRow(r) {
+    var out = [], row = rowMap[keys[r]] || [], j2;
+    for (j2 = 0; j2 < row.length; j2++) { out.push(figRect(canvas, row[j2])); }
+    out.sort(function (p2, q2) { return p2.l - q2.l; });
+    return out;
+  }
+  var isoBoxes = [];
+  for (i = 0; i < all.length; i++) {
+    if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { isoBoxes.push(figRect(canvas, all[i])); }
+  }
+  function corridorFree(x, r0, r1, used, yA, yB) {
+    var r2, j2, bs;
+    for (j2 = 0; j2 < isoBoxes.length; j2++) {
+      if (x > isoBoxes[j2].l - 9 && x < isoBoxes[j2].r + 9 && isoBoxes[j2].b > yA && isoBoxes[j2].t < yB) { return false; }
+    }
+    for (r2 = r0; r2 <= r1; r2++) {
+      bs = boxesOfRow(r2);
+      for (j2 = 0; j2 < bs.length; j2++) { if (x > bs[j2].l - 9 && x < bs[j2].r + 9) { return false; } }
+    }
+    for (j2 = 0; j2 < used.length; j2++) {
+      if (Math.abs(used[j2].x - x) < 9 && used[j2].b > yA - 8 && used[j2].a < yB + 8) { return false; }
+    }
+    return true;
+  }
+  var usedCorridors = [];
+  for (i = 0; i < chans.length; i++) {
+    var lk0 = chans[i];
+    var gA = lk0.ai + 1, gB = lk0.bi;
+    var r0 = Math.min(gA, gB), r1 = Math.max(gA, gB) - 1;      /* 竖段穿过的行 */
+    var yA0 = Math.min(trackY(gA, lk0.t1), trackY(gB, lk0.t2));
+    var yB0 = Math.max(trackY(gA, lk0.t1), trackY(gB, lk0.t2));
+    if (r1 < r0) { continue; }
+    var cands = [], rr, bs2, j3;
+    for (rr = r0; rr <= r1; rr++) {
+      bs2 = boxesOfRow(rr);
+      if (bs2.length === 0) { continue; }
+      cands.push((0 + bs2[0].l) / 2);
+      cands.push((bs2[bs2.length - 1].r + totalW) / 2);
+      for (j3 = 0; j3 + 1 < bs2.length; j3++) { cands.push((bs2[j3].r + bs2[j3 + 1].l) / 2); }
+    }
+    var pref = (lk0.ax + lk0.bx) / 2, bestX = null, bestD = 1e9;
+    for (j3 = 0; j3 < cands.length; j3++) {
+      var cx0 = Math.round(cands[j3]);
+      if (cx0 < 6 || cx0 > totalW - 6) { continue; }
+      if (!corridorFree(cx0, r0, r1, usedCorridors, yA0, yB0)) { continue; }
+      if (Math.abs(cx0 - pref) < bestD) { bestD = Math.abs(cx0 - pref); bestX = cx0; }
+    }
+    if (bestX !== null) {
+      lk0.cx = bestX;
+      lk0.inside = true;
+      usedCorridors.push({ x: bestX, a: yA0, b: yB0 });
+    }
+  }
+  chans = [];
+  for (i = 0; i < links.length; i++) { if (links[i].kind === "channel" && !links[i].inside) { chans.push(links[i]); } }
+  for (i = 0; i < chans.length; i++) {
+    var y1 = trackY(chans[i].ai + 1, chans[i].t1), y2 = trackY(chans[i].bi, chans[i].t2);
+    chans[i].cyA = Math.min(y1, y2);
+    chans[i].cyB = Math.max(y1, y2);
+  }
+  chans.sort(function (p, q) { return p.cyA - q.cyA || p.idx - q.idx; });
+  /* 竖段不重叠的边共用一列(区间着色):不然十几条边就是十几列,图白白宽出几百像素 */
+  var colEnd = [];
+  for (i = 0; i < chans.length; i++) {
+    var col = 0;
+    while (col < colEnd.length && colEnd[col] > chans[i].cyA - 10) { col += 1; }
+    colEnd[col] = chans[i].cyB;
+    chans[i].cx = maxRight + CHAN_PAD + CHAN_GAP * col;
+  }
+  var chanRight = colEnd.length > 0 ? maxRight + CHAN_PAD + CHAN_GAP * (colEnd.length - 1) : maxRight;
+  var needW = chanRight + CHAN_PAD;
+  if (isoBoxes.length > 0) {
+    /* 孤立芯片没有任何连线:整列安置在通道列右边(绝对位置,重画不累加),
+       轨道横段与通道竖段就不会从它们身上压过去——只挪列的位置,不改列内排布 */
+    var isoLeft = chanRight + CHAN_PAD + 6, isoW = 0;
+    for (i = 0; i < all.length; i++) {
+      if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) {
+        all[i].style.left = Math.round(isoLeft) + "px";
+        isoW = Math.max(isoW, all[i].offsetWidth);
+      }
+    }
+    needW = isoLeft + isoW + 12;
+    isoBoxes = [];
+    for (i = 0; i < all.length; i++) {
+      if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { isoBoxes.push(figRect(canvas, all[i])); }
+    }
+  }
+  inner.style.minWidth = Math.round(Math.max(totalW, needW)) + "px";
+  inner.style.height = Math.round(Math.max(top - gSize[keys.length] + 24, 60)) + "px";
+
+  /* —— 7. 出路径 —— */
+  var parts = [];
+  for (i = 0; i < links.length; i++) {
+    var lk = links[i], vis = figEdgeCls(lk.e), d;
+    if (lk.kind === "mutual") {
+      var ra2 = figRect(canvas, lk.aRow), rb2 = figRect(canvas, lk.bRow);
+      var lf = ra2.l <= rb2.l ? ra2 : rb2, rt = ra2.l <= rb2.l ? rb2 : ra2;
+      d = "M " + Math.round(lf.r + 1) + " " + Math.round(lf.t + lf.h / 2)
+        + " L " + Math.round(rt.l - 1) + " " + Math.round(rt.t + rt.h / 2);
+    } else {
+      var legA = clusterLeg(lk, true), legB = clusterLeg(lk, false);
+      var clA = figRect(canvas, lk.aRow), clB = figRect(canvas, lk.bRow);
+      var pts = [[lk.ax, lk.ay]], m;
+      for (m = 0; m < legA.pts.length; m++) { pts.push(legA.pts[m]); }
+      pts.push([legA.cx, clA.b]);
+      if (lk.kind === "down") {
+        var yt = trackY(lk.bi, lk.t1);
+        pts.push([legA.cx, yt]);
+        pts.push([legB.cx, yt]);
+      } else {
+        var ytA = trackY(lk.ai + 1, lk.t1), ytB = trackY(lk.bi, lk.t2);
+        pts.push([legA.cx, ytA]);
+        pts.push([lk.cx, ytA]);
+        pts.push([lk.cx, ytB]);
+        pts.push([legB.cx, ytB]);
+      }
+      pts.push([legB.cx, clB.t]);
+      for (m = legB.pts.length - 1; m >= 0; m--) { pts.push(legB.pts[m]); }
+      pts.push([lk.bx, lk.by]);
+      pts = figSimplify(pts);
+      d = (pts.length === 4 && lk.kind === "down")
+        ? orthoPath(pts[0][0], pts[0][1], pts[3][0], pts[3][1], pts[1][1], CORNER)   /* 四点直落:用 flow-lib 的三段折线 */
+        : orthoPoly(pts, CORNER);
+    }
+    var arrow = lk.kind === "mutual" ? " ⇄ " : " → ";
+    parts.push('<path d="' + d + '" class="' + vis.cls + '" data-i="' + lk.idx + '" data-source="' + lk.e.source + '"'
+      + (lk.kind === "mutual" ? ' marker-start="url(#' + cfg.svg + vis.mk + ')"' : "")
+      + ' marker-end="url(#' + cfg.svg + vis.mk + ')"><title>' + lk.e.from + arrow + lk.e.to + " · " + lk.e.type
+      + " · " + lk.e.source + "\n" + lk.e.quote + "</title></path>");
+  }
+  svg.setAttribute("width", canvas.scrollWidth);
+  svg.setAttribute("height", canvas.scrollHeight);
+  svg.innerHTML = "<defs>" + figMarker(cfg.svg + "-me", "mk-e", 6.5) + figMarker(cfg.svg + "-mc", "mk-c", 6.5)
+    + figMarker(cfg.svg + "-ml", "mk-l", 6.5) + figMarker(cfg.svg + "-md", "mk-d", 6) + "</defs>" + parts.join("");
+}
+
+function drawAll() {
+  renderFig({ canvas: "c1", svg: "s1", edges: LAYOUT.fig1.edges, boxSel: ".chip", center: false, isoRow: false });
+  renderFig({ canvas: "c2", svg: "s2", edges: LAYOUT.fig2.edges, boxSel: ".nbox", center: true, isoRow: true });
+  applyFocus();                       /* 重画会换掉 svg 内容,选中态要跟着回来 */
+}
+
+/* ——— 选中态:{fig, type:"edge"|"box", key} ——— */
+var FOCUS = null;
+
+function figSetCls(el, name, want) {
+  var cur = el.getAttribute("class") || "";
+  var has = (" " + cur + " ").indexOf(" " + name + " ") >= 0;
+  if (want === has) { return; }
+  el.setAttribute("class", want ? (cur + " " + name)
+    : (" " + cur + " ").replace(" " + name + " ", " ").replace(/^\s+|\s+$/g, ""));
+}
+
+function applyFocus() {
+  var ids = ["c1", "c2"], n, i, q;
+  for (n = 0; n < ids.length; n++) {
+    var cid = ids[n], canvas = document.getElementById(cid);
+    if (!canvas) { continue; }
+    var svg = document.getElementById(cid === "c1" ? "s1" : "s2");
+    var eds = cid === "c1" ? LAYOUT.fig1.edges : LAYOUT.fig2.edges;
+    var act = FOCUS && FOCUS.fig === cid ? FOCUS : null;
+    var keepBox = {}, keepEdge = {};
+    if (act) {
+      if (act.type === "edge") {
+        var e0 = eds[act.key];
+        if (e0) { keepEdge[act.key] = 1; keepBox[e0.from] = 1; keepBox[e0.to] = 1; }
+      } else {
+        keepBox[act.key] = 1;
+        for (i = 0; i < eds.length; i++) {
+          if (eds[i].from === act.key || eds[i].to === act.key) {
+            keepEdge[i] = 1; keepBox[eds[i].from] = 1; keepBox[eds[i].to] = 1;
+          }
+        }
+      }
+    }
+    var on = act !== null;
+    var paths = svg ? svg.querySelectorAll("path.fe") : [];
+    for (i = 0; i < paths.length; i++) {
+      var hitE = on && keepEdge[parseInt(paths[i].getAttribute("data-i"), 10)] === 1;
+      figSetCls(paths[i], "focus", on && hitE);
+      figSetCls(paths[i], "dim", on && !hitE);
+    }
+    var boxes = canvas.querySelectorAll("[data-key]");
+    for (i = 0; i < boxes.length; i++) {
+      var hitB = on && keepBox[boxes[i].getAttribute("data-key")] === 1;
+      figSetCls(boxes[i], "focus", on && hitB);
+      figSetCls(boxes[i], "dim", on && !hitB);
+    }
+    var cls = canvas.querySelectorAll(".cluster");
+    for (i = 0; i < cls.length; i++) {
+      var kids = cls[i].querySelectorAll("[data-key]"), any = false;
+      for (q = 0; q < kids.length; q++) {
+        if (keepBox[kids[q].getAttribute("data-key")] === 1) { any = true; break; }
+      }
+      figSetCls(cls[i], "focus", on && any);
+      figSetCls(cls[i], "dim", on && !any);
+      var ar = cls[i].querySelectorAll(".narr");
+      for (q = 0; q < ar.length; q++) { figSetCls(ar[q], "dim", on && !any); }
+    }
+  }
+}
+
+/* 单击 = 选中(不跳转),双击 = 进单页;点空白或再点一次 = 清除;Esc 也清除 */
+(function bindFocus() {
+  var ids = ["c1", "c2"], n;
+  function hit(ev) {
+    var el = ev.target;
+    while (el && el !== document.body) {
+      if (el.getAttribute) {
+        if (el.getAttribute("data-i") !== null) { return { type: "edge", key: parseInt(el.getAttribute("data-i"), 10) }; }
+        if (el.getAttribute("data-key") !== null) { return { type: "box", key: el.getAttribute("data-key") }; }
+      }
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function bind(cid) {
+    var canvas = document.getElementById(cid);
+    if (!canvas) { return; }
+    canvas.addEventListener("click", function (ev) {
+      var h = hit(ev);
+      if (h && h.type === "box") {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey) { return; }   /* 带修饰键仍按链接走 */
+        ev.preventDefault();
+      }
+      if (!h || (FOCUS && FOCUS.fig === cid && FOCUS.type === h.type && FOCUS.key === h.key)) { FOCUS = null; }
+      else { FOCUS = { fig: cid, type: h.type, key: h.key }; }
+      applyFocus();
+    });
+    canvas.addEventListener("dblclick", function (ev) {
+      var el = ev.target;
+      while (el && el !== canvas) {
+        if (el.tagName && el.tagName.toLowerCase() === "a" && el.getAttribute("href")) {
+          window.location.href = el.getAttribute("href");
+          return;
+        }
+        el = el.parentNode;
+      }
+    });
+  }
+  for (n = 0; n < ids.length; n++) { bind(ids[n]); }
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" || ev.keyCode === 27) { FOCUS = null; applyFocus(); }
+  });
+})();
+
+(function bindExpand() {
+  var cb = document.getElementById("expandAll"), c2 = document.getElementById("c2");
+  if (!cb || !c2) { return; }
+  cb.onchange = function () { if (cb.checked) { c2.classList.add("expanded"); } else { c2.classList.remove("expanded"); } drawAll(); };
+})();
+window.addEventListener("load", drawAll);
+window.addEventListener("resize", drawAll);
+setTimeout(drawAll, 250);
+
+/* ——— 主题切换 + localStorage ——— */
+(function bindTheme() {
+  var picker = document.getElementById("themePicker");
+  if (!picker) { return; }
+  picker.value = document.body.getAttribute("data-theme") || "docs";
+  var saved = null;
+  try { saved = localStorage.getItem("s2w-theme"); } catch (e) { saved = null; }
+  if (saved) {
+    document.body.setAttribute("data-theme", saved);
+    picker.value = saved;
+  }
+  picker.onchange = function () {
+    document.body.setAttribute("data-theme", picker.value);
+    try { localStorage.setItem("s2w-theme", picker.value); } catch (e) {}
+  };
+})();
+
+/* ——— 出处开关 ——— */
+(function bindSrcToggle() {
+  var toggle = document.getElementById("srcToggle");
+  if (!toggle) { return; }
+  toggle.onclick = function () {
+    document.body.classList.toggle("show-sources");
+    toggle.classList.toggle("active");
+    toggle.textContent = document.body.classList.contains("show-sources") ? "隐藏出处" : "显示出处";
+  };
+})();
+
+/* ——— 追问弹窗:总览页版本(边 → 成员 skill 的原文位置),打包复制给 Agent ——— */
+(function bindDeepDive() {
+  var overlay = document.getElementById("ddOverlay");
+  var titleEl = document.getElementById("ddTitle");
+  var ctxEl = document.getElementById("ddCtx");
+  var input = document.getElementById("ddInput");
+  var toast = document.getElementById("ddToast");
+  if (!overlay || !titleEl || !ctxEl || !input || !toast) { return; }
+  var curLabel = "", curSource = "";
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+  window.flashToast = showToast;
+
+  window.openDeepDive = function (label, source) {
+    curLabel = label;
+    curSource = source;
+    titleEl.textContent = "追问「" + label + "」";
+    ctxEl.textContent = "出处:" + source + " | 提交后把提问 + 位置打包复制到剪贴板,贴给 Agent 即可。";
+    input.value = "";
+    overlay.classList.add("active");
+    setTimeout(function () { input.focus(); }, 180);
+  };
+
+  /* 事件委托读 data-*:按钮上不写 onclick,省得引号被 HTML 解码后把 JS 串断开 */
+  document.addEventListener("click", function (ev) {
+    var el = ev.target;
+    while (el && el !== document.body) {
+      if (el.getAttribute && el.getAttribute("data-dd-source")) {
+        window.openDeepDive(el.getAttribute("data-dd-label") || "", el.getAttribute("data-dd-source"));
+        return;
+      }
+      el = el.parentNode;
+    }
+  });
+
+  var cancelBtn = document.getElementById("ddCancel");
+  if (cancelBtn) { cancelBtn.onclick = function () { overlay.classList.remove("active"); }; }
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) { overlay.classList.remove("active"); }
+  };
+
+  var submitBtn = document.getElementById("ddSubmit");
+  if (submitBtn) {
+    submitBtn.onclick = function () {
+      var q = input.value.replace(/^\s+|\s+$/g, "");
+      if (!q) { showToast("请输入你的问题"); return; }
+      var member = curSource.split("/")[0];
+      var loc = curSource.replace(/^[^/]*\//, "");            /* SKILL.md:32 */
+      var dir = SKILL_DIRS[member] || "";
+      var prompt = "【追问 · 由 skill-to-webpage 组合总览页打包】\n"
+        + "- 组合:" + GROUP + "\n"
+        + "- Skill:" + member + (dir ? "(源目录:" + dir + ")" : "") + "\n"
+        + "- 提问对象:" + curLabel + "\n"
+        + "- 原文位置:" + (dir ? dir + "/" : "") + loc.replace(/^SKILL\.md:/, "SKILL.md 第 ") + " 行\n"
+        + "- 我的问题:" + q + "\n\n"
+        + "请先读原文位置(以及该 skill 单页上这条边的两端节点),再回答。";
+      window.__lastPrompt = prompt;
+      function fallbackShow() {
+        input.value = prompt;
+        showToast("剪贴板不可用,已把打包内容放入输入框,请手动全选复制");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(prompt).then(function () {
+          overlay.classList.remove("active");
+          showToast("追问已打包复制(提问 + 位置),贴给 Agent 即可");
+        }).catch(fallbackShow);
+      } else {
+        fallbackShow();
+      }
+    };
+  }
+})();
+</script>
+</body>
+</html>

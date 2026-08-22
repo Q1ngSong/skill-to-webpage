@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 512" width="100%" role="img" aria-labelledby="t d" preserveAspectRatio="xMidYMid meet">
+<title id="t">4 套主题</title>
+<desc id="d">同一页面的顶栏 + Hero + 流程带在 docs / blueprint / ide / whiteboard 四套主题下的真实配色,右上角选择器即时切换。</desc>
+<style>
+@keyframes th0{0%{opacity:1}0.5%{opacity:1}21.5%{opacity:1}25.5%{opacity:0}100%{opacity:1}}
+@keyframes th1{0%{opacity:0}21.5%{opacity:0}25.5%{opacity:1}46.5%{opacity:1}50.5%{opacity:0}100%{opacity:0}}
+@keyframes th2{0%{opacity:0}46.5%{opacity:0}50.5%{opacity:1}71.5%{opacity:1}75.5%{opacity:0}100%{opacity:0}}
+@keyframes th3{0%{opacity:0}71.5%{opacity:0}75.5%{opacity:1}96.5%{opacity:1}100%{opacity:0}}
+.th0{animation:th0 8s linear infinite;}
+.th1{animation:th1 8s linear infinite;}
+.th2{animation:th2 8s linear infinite;}
+.th3{animation:th3 8s linear infinite;}
+</style>
+<rect x="0" y="0" width="1200" height="512" fill="#fafafa"/>
+<defs>
+<linearGradient id="g8_1" gradientUnits="userSpaceOnUse" x1="456.9" y1="-153.02" x2="743.1" y2="633.32"><stop offset="0" stop-color="#0b1f3a"/><stop offset="1" stop-color="#0d2547"/></linearGradient>
+<linearGradient id="g8_3" gradientUnits="userSpaceOnUse" x1="353.61" y1="-186.61" x2="846.39" y2="666.91"><stop offset="0" stop-color="#fdf8ee"/><stop offset="1" stop-color="#f8efdb"/></linearGradient>
+<clipPath id="c8"><rect x="20" y="6" width="1160" height="468.3" rx="12"/></clipPath>
+</defs>
+<g class="th0" clip-path="url(#c8)">
+<rect x="20" y="6" width="1160" height="468.3" fill="#fafafa" rx="12" stroke="#e6e7eb" stroke-width="1.2"/>
+<line x1="26" y1="67.77" x2="1174" y2="67.77" stroke="#e6e7eb" stroke-width="1"/>
+<text x="36.73" y="44.42" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.01" fill="#17181c" font-weight="700">◈ skill-to-webpage</text>
+<rect x="995.96" y="25.29" width="72.5" height="28.25" fill="none" rx="999" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="1032.21" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#4f46e5" font-weight="600" text-anchor="middle">显示出处</text>
+<rect x="1068" y="23.15" width="106" height="32.53" fill="#ffffff" rx="8" stroke="#e6e7eb" stroke-width="1.1"/>
+<text x="1079" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#17181c" font-weight="600">简洁文档  ▾</text>
+<text x="36.73" y="88.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#7a7e88" font-weight="700" letter-spacing="1.09">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES · SEMANTICS BY RWSA-LITE/0.2 · 84 CLAIMS VERIFIED</text>
+<text x="36.73" y="151.39" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="57.63" fill="#17181c" font-weight="800">find-skills</text>
+<text x="36.73" y="199.73" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#3c3f46" font-weight="500">帮用户从开放 agent skills 生态中发现并安装技能。何时用:用户问 &quot;how do I do X&quot;、&quot;find a skill for X&quot;、&quot;is there a skill that can…&quot;,或…</text>
+<rect x="27.44" y="246.76" width="1145.13" height="220.6" fill="rgba(0,0,0,0)" rx="12" stroke="#e6e7eb" stroke-width="1" opacity="0.5"/>
+<path d="M 669.71 386.47 L 669.71 361.37 Q 669.71 353.93 662.28 353.93 L 307.21 353.93 Q 299.78 353.93 299.78 346.5 L 299.78 337.2" fill="none" stroke="#7a7e88" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 472.66 386.47 L 472.66 372.52 Q 472.66 365.09 465.22 365.09 L 278.4 365.09 Q 270.96 365.09 270.96 357.65 L 270.96 337.2" fill="none" stroke="#7a7e88" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 275.61 386.47 L 275.61 383.68 Q 275.61 376.24 268.17 376.24 L 249.58 376.24 Q 242.15 376.24 242.15 368.81 L 242.15 337.2" fill="none" stroke="#7a7e88" stroke-width="1.3" stroke-dasharray="2 4"/>
+<rect x="36.73" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#e6e7eb" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="46.96" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="700" letter-spacing="1.1">R · 触发</text>
+<rect x="203.11" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="213.33" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#4f46e5" font-weight="700" letter-spacing="1.1">W · 执行主线</text>
+<rect x="393.78" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#e6e7eb" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="404.01" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="700" letter-spacing="1.1">W · 兜底</text>
+<text x="187.77" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#4f46e5" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="171.33" y="302.63" width="32.88" height="17" fill="#ffffff" rx="4"/>
+<text x="187.77" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#b45309" font-weight="600" text-anchor="middle">进入</text>
+<text x="366.3" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#4f46e5" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="331.1" y="302.63" width="70.4" height="17" fill="#ffffff" rx="4"/>
+<text x="366.3" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#b45309" font-weight="600" text-anchor="middle">找不到时 ⤓</text>
+<text x="42.31" y="426.76" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="600">支撑层 S / A · 点线 = …</text>
+<rect x="46.96" y="275.58" width="115.26" height="58.87" fill="#4f46e5" rx="6.51" stroke="#4f46e5" stroke-width="1.1"/>
+<text x="57.18" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#ffffff" font-weight="700" opacity=".78">n01 · R</text>
+<text x="57.18" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#ffffff" font-weight="700">何时触发</text>
+<text x="57.18" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffffff" font-weight="500" opacity=".78">六类触发信号</text>
+<rect x="213.33" y="275.58" width="115.26" height="58.87" fill="#ffffff" rx="6.51" stroke="#e6e7eb" stroke-width="1.1"/>
+<text x="223.56" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7a7e88" font-weight="700">n03 · W</text>
+<text x="223.56" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#17181c" font-weight="700">帮用户找 skill</text>
+<text x="223.56" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="500">需求 → 推荐 → …</text>
+<rect x="404.01" y="275.58" width="115.26" height="58.87" fill="#ffffff" rx="6.51" stroke="#e6e7eb" stroke-width="1.1"/>
+<text x="414.23" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7a7e88" font-weight="700">n06 · W</text>
+<text x="414.23" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#17181c" font-weight="700">找不到时</text>
+<text x="414.23" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="500">兜底与自建建议</text>
+<rect x="182.66" y="387.44" width="185.9" height="70.64" fill="#ffffff" rx="6.51" stroke="#e6e7eb" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="192.88" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7a7e88" font-weight="700">n02 · A</text>
+<text x="192.88" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#17181c" font-weight="700">Skills CLI</text>
+<text x="192.88" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="500">npx skills 三命令 · → Step …</text>
+<rect x="379.71" y="387.44" width="185.9" height="70.64" fill="#ffffff" rx="6.51" stroke="#e6e7eb" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="389.94" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7a7e88" font-weight="700">n04 · S</text>
+<text x="389.94" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#17181c" font-weight="700">常见类目</text>
+<text x="389.94" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="500">7 类查询词参考 · → Step 3</text>
+<rect x="576.76" y="387.44" width="185.9" height="70.64" fill="#ffffff" rx="6.51" stroke="#e6e7eb" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="586.99" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7a7e88" font-weight="700">n05 · S</text>
+<text x="586.99" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#17181c" font-weight="700">检索技巧</text>
+<text x="586.99" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7a7e88" font-weight="500">3 条搜索经验 · → Step 3</text>
+<rect x="1044.16" y="438.3" width="125.84" height="26" fill="#4f46e5" rx="999"/>
+<text x="1107.08" y="456.3" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#ffffff" font-weight="700" text-anchor="middle">简洁文档 · docs</text>
+</g>
+<g class="th1" clip-path="url(#c8)" opacity="0">
+<rect x="20" y="6" width="1160" height="468.3" fill="url(#g8_1)" rx="12" stroke="#2c4a77" stroke-width="1.2"/>
+<line x1="26" y1="67.77" x2="1174" y2="67.77" stroke="#2c4a77" stroke-width="1"/>
+<text x="36.73" y="44.42" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.01" fill="#dcebff" font-weight="700">◈ skill-to-webpage</text>
+<rect x="995.96" y="25.29" width="72.5" height="28.25" fill="none" rx="999" stroke="#5fb0ff" stroke-width="1.2"/>
+<text x="1032.21" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#5fb0ff" font-weight="600" text-anchor="middle">显示出处</text>
+<rect x="1068" y="23.15" width="106" height="32.53" fill="#0e2544" rx="8" stroke="#2c4a77" stroke-width="1.1"/>
+<text x="1079" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#dcebff" font-weight="600">技术蓝图  ▾</text>
+<text x="36.73" y="88.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#7fa3d1" font-weight="700" letter-spacing="1.09">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES · SEMANTICS BY RWSA-LITE/0.2 · 84 CLAIMS VERIFIED</text>
+<text x="36.73" y="151.39" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="57.63" fill="#dcebff" font-weight="800">find-skills</text>
+<text x="36.73" y="199.73" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#b9d4f5" font-weight="500">帮用户从开放 agent skills 生态中发现并安装技能。何时用:用户问 &quot;how do I do X&quot;、&quot;find a skill for X&quot;、&quot;is there a skill that can…&quot;,或…</text>
+<rect x="27.44" y="246.76" width="1145.13" height="220.6" fill="rgba(0,0,0,0)" rx="12" stroke="#2c4a77" stroke-width="1" opacity="0.5"/>
+<path d="M 669.71 386.47 L 669.71 361.37 Q 669.71 353.93 662.28 353.93 L 307.21 353.93 Q 299.78 353.93 299.78 346.5 L 299.78 337.2" fill="none" stroke="#7fa3d1" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 472.66 386.47 L 472.66 372.52 Q 472.66 365.09 465.22 365.09 L 278.4 365.09 Q 270.96 365.09 270.96 357.65 L 270.96 337.2" fill="none" stroke="#7fa3d1" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 275.61 386.47 L 275.61 383.68 Q 275.61 376.24 268.17 376.24 L 249.58 376.24 Q 242.15 376.24 242.15 368.81 L 242.15 337.2" fill="none" stroke="#7fa3d1" stroke-width="1.3" stroke-dasharray="2 4"/>
+<rect x="36.73" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#2c4a77" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="46.96" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="700" letter-spacing="1.1">R · 触发</text>
+<rect x="203.11" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#5fb0ff" stroke-width="1.2"/>
+<text x="213.33" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#5fb0ff" font-weight="700" letter-spacing="1.1">W · 执行主线</text>
+<rect x="393.78" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#2c4a77" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="404.01" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="700" letter-spacing="1.1">W · 兜底</text>
+<text x="187.77" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#5fb0ff" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="171.33" y="302.63" width="32.88" height="17" fill="#0e2544" rx="4"/>
+<text x="187.77" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffc46b" font-weight="600" text-anchor="middle">进入</text>
+<text x="366.3" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#5fb0ff" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="331.1" y="302.63" width="70.4" height="17" fill="#0e2544" rx="4"/>
+<text x="366.3" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffc46b" font-weight="600" text-anchor="middle">找不到时 ⤓</text>
+<text x="42.31" y="426.76" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="600">支撑层 S / A · 点线 = …</text>
+<rect x="46.96" y="275.58" width="115.26" height="58.87" fill="#5fb0ff" rx="6.51" stroke="#5fb0ff" stroke-width="1.1"/>
+<text x="57.18" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#ffffff" font-weight="700" opacity=".78">n01 · R</text>
+<text x="57.18" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#ffffff" font-weight="700">何时触发</text>
+<text x="57.18" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffffff" font-weight="500" opacity=".78">六类触发信号</text>
+<rect x="213.33" y="275.58" width="115.26" height="58.87" fill="#0e2544" rx="6.51" stroke="#2c4a77" stroke-width="1.1"/>
+<text x="223.56" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7fa3d1" font-weight="700">n03 · W</text>
+<text x="223.56" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#dcebff" font-weight="700">帮用户找 skill</text>
+<text x="223.56" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="500">需求 → 推荐 → …</text>
+<rect x="404.01" y="275.58" width="115.26" height="58.87" fill="#0e2544" rx="6.51" stroke="#2c4a77" stroke-width="1.1"/>
+<text x="414.23" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7fa3d1" font-weight="700">n06 · W</text>
+<text x="414.23" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#dcebff" font-weight="700">找不到时</text>
+<text x="414.23" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="500">兜底与自建建议</text>
+<rect x="182.66" y="387.44" width="185.9" height="70.64" fill="#0e2544" rx="6.51" stroke="#2c4a77" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="192.88" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7fa3d1" font-weight="700">n02 · A</text>
+<text x="192.88" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#dcebff" font-weight="700">Skills CLI</text>
+<text x="192.88" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="500">npx skills 三命令 · → Step …</text>
+<rect x="379.71" y="387.44" width="185.9" height="70.64" fill="#0e2544" rx="6.51" stroke="#2c4a77" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="389.94" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7fa3d1" font-weight="700">n04 · S</text>
+<text x="389.94" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#dcebff" font-weight="700">常见类目</text>
+<text x="389.94" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="500">7 类查询词参考 · → Step 3</text>
+<rect x="576.76" y="387.44" width="185.9" height="70.64" fill="#0e2544" rx="6.51" stroke="#2c4a77" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="586.99" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#7fa3d1" font-weight="700">n05 · S</text>
+<text x="586.99" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#dcebff" font-weight="700">检索技巧</text>
+<text x="586.99" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#7fa3d1" font-weight="500">3 条搜索经验 · → Step 3</text>
+<rect x="1015.17" y="438.3" width="154.83" height="26" fill="#5fb0ff" rx="999"/>
+<text x="1092.59" y="456.3" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#ffffff" font-weight="700" text-anchor="middle">技术蓝图 · blueprint</text>
+</g>
+<g class="th2" clip-path="url(#c8)" opacity="0">
+<rect x="20" y="6" width="1160" height="468.3" fill="#1e1e1e" rx="12" stroke="#3a3a3a" stroke-width="1.2"/>
+<line x1="26" y1="67.77" x2="1174" y2="67.77" stroke="#3a3a3a" stroke-width="1"/>
+<text x="36.73" y="44.42" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.01" fill="#d4d4d4" font-weight="700">◈ skill-to-webpage</text>
+<rect x="995.96" y="25.29" width="72.5" height="28.25" fill="none" rx="999" stroke="#569cd6" stroke-width="1.2"/>
+<text x="1032.21" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#569cd6" font-weight="600" text-anchor="middle">显示出处</text>
+<rect x="1068" y="23.15" width="106" height="32.53" fill="#252526" rx="8" stroke="#3a3a3a" stroke-width="1.1"/>
+<text x="1079" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#d4d4d4" font-weight="600">终端 IDE  ▾</text>
+<text x="36.73" y="88.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#8a8a8a" font-weight="700" letter-spacing="1.09">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES · SEMANTICS BY RWSA-LITE/0.2 · 84 CLAIMS VERIFIED</text>
+<text x="36.73" y="151.39" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="57.63" fill="#d4d4d4" font-weight="800">find-skills</text>
+<text x="36.73" y="199.73" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#c0c0c0" font-weight="500">帮用户从开放 agent skills 生态中发现并安装技能。何时用:用户问 &quot;how do I do X&quot;、&quot;find a skill for X&quot;、&quot;is there a skill that can…&quot;,或…</text>
+<rect x="27.44" y="246.76" width="1145.13" height="220.6" fill="rgba(0,0,0,0)" rx="12" stroke="#3a3a3a" stroke-width="1" opacity="0.5"/>
+<path d="M 669.71 386.47 L 669.71 361.37 Q 669.71 353.93 662.28 353.93 L 307.21 353.93 Q 299.78 353.93 299.78 346.5 L 299.78 337.2" fill="none" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 472.66 386.47 L 472.66 372.52 Q 472.66 365.09 465.22 365.09 L 278.4 365.09 Q 270.96 365.09 270.96 357.65 L 270.96 337.2" fill="none" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 275.61 386.47 L 275.61 383.68 Q 275.61 376.24 268.17 376.24 L 249.58 376.24 Q 242.15 376.24 242.15 368.81 L 242.15 337.2" fill="none" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="2 4"/>
+<rect x="36.73" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#3a3a3a" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="46.96" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="700" letter-spacing="1.1">R · 触发</text>
+<rect x="203.11" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#569cd6" stroke-width="1.2"/>
+<text x="213.33" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#569cd6" font-weight="700" letter-spacing="1.1">W · 执行主线</text>
+<rect x="393.78" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#3a3a3a" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="404.01" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="700" letter-spacing="1.1">W · 兜底</text>
+<text x="187.77" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#569cd6" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="171.33" y="302.63" width="32.88" height="17" fill="#252526" rx="4"/>
+<text x="187.77" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ce9178" font-weight="600" text-anchor="middle">进入</text>
+<text x="366.3" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#569cd6" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="331.1" y="302.63" width="70.4" height="17" fill="#252526" rx="4"/>
+<text x="366.3" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ce9178" font-weight="600" text-anchor="middle">找不到时 ⤓</text>
+<text x="42.31" y="426.76" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="600">支撑层 S / A · 点线 = …</text>
+<rect x="46.96" y="275.58" width="115.26" height="58.87" fill="#569cd6" rx="6.51" stroke="#569cd6" stroke-width="1.1"/>
+<text x="57.18" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#ffffff" font-weight="700" opacity=".78">n01 · R</text>
+<text x="57.18" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#ffffff" font-weight="700">何时触发</text>
+<text x="57.18" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffffff" font-weight="500" opacity=".78">六类触发信号</text>
+<rect x="213.33" y="275.58" width="115.26" height="58.87" fill="#252526" rx="6.51" stroke="#3a3a3a" stroke-width="1.1"/>
+<text x="223.56" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a8a8a" font-weight="700">n03 · W</text>
+<text x="223.56" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#d4d4d4" font-weight="700">帮用户找 skill</text>
+<text x="223.56" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="500">需求 → 推荐 → …</text>
+<rect x="404.01" y="275.58" width="115.26" height="58.87" fill="#252526" rx="6.51" stroke="#3a3a3a" stroke-width="1.1"/>
+<text x="414.23" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a8a8a" font-weight="700">n06 · W</text>
+<text x="414.23" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#d4d4d4" font-weight="700">找不到时</text>
+<text x="414.23" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="500">兜底与自建建议</text>
+<rect x="182.66" y="387.44" width="185.9" height="70.64" fill="#252526" rx="6.51" stroke="#3a3a3a" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="192.88" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a8a8a" font-weight="700">n02 · A</text>
+<text x="192.88" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#d4d4d4" font-weight="700">Skills CLI</text>
+<text x="192.88" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="500">npx skills 三命令 · → Step …</text>
+<rect x="379.71" y="387.44" width="185.9" height="70.64" fill="#252526" rx="6.51" stroke="#3a3a3a" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="389.94" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a8a8a" font-weight="700">n04 · S</text>
+<text x="389.94" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#d4d4d4" font-weight="700">常见类目</text>
+<text x="389.94" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="500">7 类查询词参考 · → Step 3</text>
+<rect x="576.76" y="387.44" width="185.9" height="70.64" fill="#252526" rx="6.51" stroke="#3a3a3a" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="586.99" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a8a8a" font-weight="700">n05 · S</text>
+<text x="586.99" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#d4d4d4" font-weight="700">检索技巧</text>
+<text x="586.99" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a8a8a" font-weight="500">3 条搜索经验 · → Step 3</text>
+<rect x="1054.82" y="438.3" width="115.18" height="26" fill="#569cd6" rx="999"/>
+<text x="1112.41" y="456.3" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#ffffff" font-weight="700" text-anchor="middle">终端 IDE · ide</text>
+</g>
+<g class="th3" clip-path="url(#c8)" opacity="0">
+<rect x="20" y="6" width="1160" height="468.3" fill="url(#g8_3)" rx="12" stroke="#e5d9b8" stroke-width="1.2"/>
+<line x1="26" y1="67.77" x2="1174" y2="67.77" stroke="#e5d9b8" stroke-width="1"/>
+<text x="36.73" y="44.42" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.01" fill="#3a2f1f" font-weight="700">◈ skill-to-webpage</text>
+<rect x="995.96" y="25.29" width="72.5" height="28.25" fill="none" rx="999" stroke="#c9543f" stroke-width="1.2"/>
+<text x="1032.21" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#c9543f" font-weight="600" text-anchor="middle">显示出处</text>
+<rect x="1068" y="23.15" width="106" height="32.53" fill="#fffdf6" rx="8" stroke="#e5d9b8" stroke-width="1.1"/>
+<text x="1079" y="43.82" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.15" fill="#3a2f1f" font-weight="600">白板手绘  ▾</text>
+<text x="36.73" y="88.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#8a7a5c" font-weight="700" letter-spacing="1.09">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES · SEMANTICS BY RWSA-LITE/0.2 · 84 CLAIMS VERIFIED</text>
+<text x="36.73" y="151.39" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="57.63" fill="#3a2f1f" font-weight="800">find-skills</text>
+<text x="36.73" y="199.73" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#5a4a33" font-weight="500">帮用户从开放 agent skills 生态中发现并安装技能。何时用:用户问 &quot;how do I do X&quot;、&quot;find a skill for X&quot;、&quot;is there a skill that can…&quot;,或…</text>
+<rect x="27.44" y="246.76" width="1145.13" height="220.6" fill="rgba(0,0,0,0)" rx="12" stroke="#e5d9b8" stroke-width="1" opacity="0.5"/>
+<path d="M 669.71 386.47 L 669.71 361.37 Q 669.71 353.93 662.28 353.93 L 307.21 353.93 Q 299.78 353.93 299.78 346.5 L 299.78 337.2" fill="none" stroke="#8a7a5c" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 472.66 386.47 L 472.66 372.52 Q 472.66 365.09 465.22 365.09 L 278.4 365.09 Q 270.96 365.09 270.96 357.65 L 270.96 337.2" fill="none" stroke="#8a7a5c" stroke-width="1.3" stroke-dasharray="2 4"/>
+<path d="M 275.61 386.47 L 275.61 383.68 Q 275.61 376.24 268.17 376.24 L 249.58 376.24 Q 242.15 376.24 242.15 368.81 L 242.15 337.2" fill="none" stroke="#8a7a5c" stroke-width="1.3" stroke-dasharray="2 4"/>
+<rect x="36.73" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#e5d9b8" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="46.96" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="700" letter-spacing="1.1">R · 触发</text>
+<rect x="203.11" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#c9543f" stroke-width="1.2"/>
+<text x="213.33" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#c9543f" font-weight="700" letter-spacing="1.1">W · 执行主线</text>
+<rect x="393.78" y="256.06" width="135.71" height="86.76" fill="none" rx="7.44" stroke="#e5d9b8" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="404.01" y="270" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="700" letter-spacing="1.1">W · 兜底</text>
+<text x="187.77" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#c9543f" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="171.33" y="302.63" width="32.88" height="17" fill="#fffdf6" rx="4"/>
+<text x="187.77" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#b07000" font-weight="600" text-anchor="middle">进入</text>
+<text x="366.3" y="300.18" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="17.66" fill="#c9543f" font-weight="700" text-anchor="middle">⇒</text>
+<rect x="331.1" y="302.63" width="70.4" height="17" fill="#fffdf6" rx="4"/>
+<text x="366.3" y="312.63" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#b07000" font-weight="600" text-anchor="middle">找不到时 ⤓</text>
+<text x="42.31" y="426.76" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="600">支撑层 S / A · 点线 = …</text>
+<rect x="46.96" y="275.58" width="115.26" height="58.87" fill="#c9543f" rx="6.51" stroke="#c9543f" stroke-width="1.1"/>
+<text x="57.18" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#ffffff" font-weight="700" opacity=".78">n01 · R</text>
+<text x="57.18" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#ffffff" font-weight="700">何时触发</text>
+<text x="57.18" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#ffffff" font-weight="500" opacity=".78">六类触发信号</text>
+<rect x="213.33" y="275.58" width="115.26" height="58.87" fill="#fffdf6" rx="6.51" stroke="#e5d9b8" stroke-width="1.1"/>
+<text x="223.56" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a7a5c" font-weight="700">n03 · W</text>
+<text x="223.56" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#3a2f1f" font-weight="700">帮用户找 skill</text>
+<text x="223.56" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="500">需求 → 推荐 → …</text>
+<rect x="404.01" y="275.58" width="115.26" height="58.87" fill="#fffdf6" rx="6.51" stroke="#e5d9b8" stroke-width="1.1"/>
+<text x="414.23" y="294.97" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a7a5c" font-weight="700">n06 · W</text>
+<text x="414.23" y="311.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#3a2f1f" font-weight="700">找不到时</text>
+<text x="414.23" y="326.07" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="500">兜底与自建建议</text>
+<rect x="182.66" y="387.44" width="185.9" height="70.64" fill="#fffdf6" rx="6.51" stroke="#e5d9b8" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="192.88" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a7a5c" font-weight="700">n02 · A</text>
+<text x="192.88" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#3a2f1f" font-weight="700">Skills CLI</text>
+<text x="192.88" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="500">npx skills 三命令 · → Step …</text>
+<rect x="379.71" y="387.44" width="185.9" height="70.64" fill="#fffdf6" rx="6.51" stroke="#e5d9b8" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="389.94" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a7a5c" font-weight="700">n04 · S</text>
+<text x="389.94" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#3a2f1f" font-weight="700">常见类目</text>
+<text x="389.94" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="500">7 类查询词参考 · → Step 3</text>
+<rect x="576.76" y="387.44" width="185.9" height="70.64" fill="#fffdf6" rx="6.51" stroke="#e5d9b8" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="586.99" y="412.71" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11" fill="#8a7a5c" font-weight="700">n05 · S</text>
+<text x="586.99" y="428.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.1" fill="#3a2f1f" font-weight="700">检索技巧</text>
+<text x="586.99" y="443.81" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11" fill="#8a7a5c" font-weight="500">3 条搜索经验 · → Step 3</text>
+<rect x="1003.86" y="438.3" width="166.14" height="26" fill="#c9543f" rx="999"/>
+<text x="1086.93" y="456.3" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#ffffff" font-weight="700" text-anchor="middle">白板手绘 · whiteboard</text>
+</g>
+<rect x="20.5" y="6.5" width="1159" height="467.3" fill="none" rx="12" stroke="#e3e4e8" stroke-width="1"/>
+<text x="600" y="496" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#5b5f6b" font-weight="500" text-anchor="middle">4 套主题,右上角实时切换,单文件内置</text>
+</svg>

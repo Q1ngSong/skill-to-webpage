@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" role="img" aria-labelledby="t d" preserveAspectRatio="xMidYMid meet">
+<title id="t">追问打包</title>
+<desc id="d">卡片上的 ? 打开追问弹窗,提交后把提问、节点/步骤位置、SKILL.md 行号、依赖文件与知识库路径打成一段文本复制到剪贴板。</desc>
+<style>
+@keyframes d_hit{0%{opacity:0}6.14%{opacity:0}7.86%{opacity:0.9}13.57%{opacity:0}100%{opacity:0}}
+@keyframes d_s1{0%{opacity:1}41.43%{opacity:1}48.57%{opacity:0}93.57%{opacity:0}98.57%{opacity:1}100%{opacity:1}}
+@keyframes d_pop{0%{opacity:0}14.29%{opacity:0}20%{opacity:1}41.43%{opacity:1}48.57%{opacity:0}100%{opacity:0}}
+@keyframes d_s2{0%{opacity:0}43.57%{opacity:0}50%{opacity:1}93.57%{opacity:1}98.57%{opacity:0}100%{opacity:0}}
+@keyframes d_toast{0%{opacity:0}80%{opacity:0}84.29%{opacity:1}95%{opacity:1}100%{opacity:0}}
+@keyframes d_ok{0%{opacity:0}37.14%{opacity:0}39.29%{opacity:0.9}45.71%{opacity:0}100%{opacity:0}}
+@keyframes d_ph{0%{opacity:1}25%{opacity:1}27.86%{opacity:0}100%{opacity:0}}
+@keyframes d_type{0%{opacity:0}25%{opacity:0}28.57%{opacity:1}100%{opacity:1}}
+@keyframes d_l0{0%{opacity:0}47.86%{opacity:0}52.14%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l1{0%{opacity:0}51.29%{opacity:0}55.57%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l2{0%{opacity:0}54.71%{opacity:0}59%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l3{0%{opacity:0}58.14%{opacity:0}62.43%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l4{0%{opacity:0}61.57%{opacity:0}65.86%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l5{0%{opacity:0}65%{opacity:0}69.29%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l6{0%{opacity:0}68.43%{opacity:0}72.71%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l7{0%{opacity:0}71.86%{opacity:0}76.14%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+@keyframes d_l8{0%{opacity:0}75.29%{opacity:0}79.57%{opacity:1}92.86%{opacity:1}97.14%{opacity:0}100%{opacity:0}}
+.d_hit{animation:d_hit 7s linear infinite;}
+.d_s1{animation:d_s1 7s linear infinite;}
+.d_pop{animation:d_pop 7s linear infinite;}
+.d_s2{animation:d_s2 7s linear infinite;}
+.d_toast{animation:d_toast 7s linear infinite;}
+.d_ok{animation:d_ok 7s linear infinite;}
+.d_ph{animation:d_ph 7s linear infinite;}
+.d_type{animation:d_type 7s linear infinite;}
+.d_l0{animation:d_l0 7s linear infinite;}
+.d_l1{animation:d_l1 7s linear infinite;}
+.d_l2{animation:d_l2 7s linear infinite;}
+.d_l3{animation:d_l3 7s linear infinite;}
+.d_l4{animation:d_l4 7s linear infinite;}
+.d_l5{animation:d_l5 7s linear infinite;}
+.d_l6{animation:d_l6 7s linear infinite;}
+.d_l7{animation:d_l7 7s linear infinite;}
+.d_l8{animation:d_l8 7s linear infinite;}
+</style>
+<rect x="0" y="0" width="1200" height="400" fill="#fafafa"/><rect x="0.5" y="0.5" width="1199" height="399" fill="none" rx="10" stroke="#e3e4e8" stroke-width="1"/>
+<text x="24" y="28" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12.5" fill="#8a8f9b" font-weight="600">find-skills · rwsa-lite · explain-card 追问</text>
+<text x="1176" y="28" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="12" fill="#8a8f9b" font-weight="600" text-anchor="end">.deep-dive-btn → .dd-popover</text>
+<g class="d_s1">
+<clipPath id="c7"><rect x="24" y="84" width="384" height="162" rx="10"/></clipPath>
+<g clip-path="url(#c7)">
+<rect x="24" y="84" width="384" height="162" fill="#ffffff"/>
+<rect x="0" y="84" width="408" height="162" fill="none" rx="10" stroke="#e3e4e8" stroke-width="1.2"/>
+<text x="40" y="112" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#1d1f24" font-weight="700">Step 3 · CLI 搜索 TOOL_CALL</text>
+<text x="40" y="136" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#8a8f9b" font-weight="600">SKILL.md:51-64</text>
+<text x="40" y="164" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12" fill="#c3c6cf" font-weight="500">⋯(卡片正文:目标 / 规则 / 技巧 / 示例 / 原文)</text>
+</g>
+<circle cx="386" cy="205" r="13" fill="#ffffff" stroke="#e3e4e8" stroke-width="1.1"/>
+<text x="386" y="209.6" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13" fill="#8a8f9b" font-weight="700" text-anchor="middle">?</text>
+<circle cx="386" cy="205" r="21" fill="rgba(79,70,229,.09)" class="d_hit" opacity="0"/>
+<path d="M0,0 L0,14 L4,10.6 L6.6,16 L9.4,14.6 L6.8,9.4 L11.6,9 Z" fill="#1d1f24" transform="translate(389 207)"/>
+<text x="26" y="276" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#5b5f6b" font-weight="600">① 每张卡片右下角的 ? = 追问</text>
+</g>
+<g class="d_pop" opacity="0">
+<rect x="557" y="47" width="558" height="289.23" fill="rgba(10,10,14,.05)" rx="18" stroke="none" stroke-width="0"/>
+<rect x="566" y="56" width="540" height="271.23" fill="#ffffff" rx="12" stroke="#e3e4e8" stroke-width="1.2"/>
+<text x="593" y="99.34" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="19" fill="#1d1f24" font-weight="800">追问「Step 3 CLI 搜索」</text>
+<text x="593" y="127.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="11.5" fill="#8a8f9b" font-weight="500">出处:SKILL.md:51-64 | 提交后把提问 + 位置 + 依赖文件打包复制到剪贴板,贴给 Agent 即…</text>
+<rect x="593" y="167.68" width="486" height="76" fill="#fafafa" rx="8" stroke="#e3e4e8" stroke-width="1.1"/>
+<text x="605" y="193.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#c3c6cf" class="d_ph">输入你想追问的细节…</text>
+<text x="605" y="193.68" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#1d1f24" font-weight="500" class="d_type" opacity="0">换词重搜的自环什么时候该停?</text>
+<rect x="593" y="260.68" width="175" height="39.55" fill="#4f46e5" rx="8"/>
+<text x="680.5" y="285.45" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.5" fill="#ffffff" font-weight="700" text-anchor="middle">打包复制追问到剪贴板</text>
+<rect x="776" y="260.68" width="61" height="39.55" fill="none" rx="8" stroke="#e3e4e8" stroke-width="1.1"/>
+<text x="806.5" y="285.45" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13.5" fill="#8a8f9b" font-weight="700" text-anchor="middle">取消</text>
+<circle cx="680.5" cy="280.45" r="27" fill="rgba(79,70,229,.09)" class="d_ok" opacity="0"/>
+<text x="566" y="353.23" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="12.5" fill="#5b5f6b" font-weight="600">② 追问弹窗:标题 · 出处 · 输入框 · 打包按钮</text>
+</g>
+<g class="d_s2" opacity="0">
+<rect x="24" y="68" width="1152" height="210" fill="#f4f4f6" rx="10" stroke="#e3e4e8" stroke-width="1"/>
+<text x="40" y="89" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#8a8f9b" font-weight="700">③ 打包后的追问文本(已复制到剪贴板)</text>
+<text x="41" y="110" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#1d1f24" font-weight="700" class="d_l0" opacity="0">【追问 · 由 skill-to-webpage 页面打包】</text>
+<text x="41" y="128" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l1" opacity="0">- Skill:find-skills(源目录:&lt;skill 目录&gt;)</text>
+<text x="41" y="146" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l2" opacity="0">- 提问对象:n03「How to Help Users Find Skills」 &gt; 「Step 3 CLI 搜索」</text>
+<text x="41" y="164" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l3" opacity="0">- 原文位置:&lt;skill 目录&gt;/SKILL.md 的 第 51-64 行</text>
+<text x="41" y="182" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l4" opacity="0">- 涉及依赖文件:</text>
+<text x="41" y="200" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l5" opacity="0">  - (该内容块未显式引用依赖文件)</text>
+<text x="41" y="218" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l6" opacity="0">- 知识库:&lt;output&gt;/find-skills/static/(full_text.md 行号与原文位置一致,节点摘要在 nodes/)</text>
+<text x="41" y="236" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#5b5f6b" font-weight="500" class="d_l7" opacity="0">- 我的问题:换词重搜的自环什么时候该停?</text>
+<text x="41" y="254" font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size="11.5" fill="#1d1f24" font-weight="500" class="d_l8" opacity="0">请先读原文位置与涉及的依赖文件,再回答。</text>
+</g>
+<g class="d_toast" opacity="0">
+<rect x="795.51" y="290" width="380.49" height="36" fill="#1d1f24" rx="8"/>
+<text x="813.51" y="314" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="13" fill="#ffffff" font-weight="600">追问已打包复制(提问 + 位置 + 依赖文件),贴给 Agent 即可</text>
+</g>
+<text x="600" y="380" font-family='-apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif' font-size="14.5" fill="#5b5f6b" font-weight="500" text-anchor="middle">追问打包:一键把问题 + 位置 + 行号 + 依赖文件交给 Agent</text>
+</svg>

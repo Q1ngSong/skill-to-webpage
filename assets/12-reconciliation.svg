@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 952" width="100%" role="img" aria-labelledby="t d">
+<title id="t">印证报告:目录 ≠ 流程图</title>
+<desc id="d">find-skills 页面 #p-recon 面板的忠实再现——摘要标签、目录 vs 分层对照表,以及非流程标题 / 隐含步骤 / 顺序偏差 / 跨锚定 / 裁定记录各节。</desc>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#3c3f46"/></marker>
+<marker id="ar-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#4f46e5"/></marker>
+<marker id="ar-w" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#d97706"/></marker>
+<marker id="ar-o" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#16a34a"/></marker>
+</defs>
+<rect width="1200" height="952" fill="#fafafa"/>
+<text x="24" y="44" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#8a8f9b">印证 · 静态目录 vs 语义流程 · merge(rwsa-lite)</text>
+<text x="24" y="70" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="20" fill="#1d1f24" font-weight="700">印证报告</text>
+<text x="24" y="92" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">结构拆解的目录是坐标系;语义层只能叠加。这里列出两者对不上的地方,以及多个解析器之间的一致与冲突。</text>
+<rect x="24" y="119" width="274.25" height="25" rx="12.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="35" y="135.64" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">schema s2w-semantics/2 · merge(rwsa-lite)</text>
+<rect x="307.25" y="119" width="217.27" height="25" rx="12.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="318.25" y="135.64" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">断言 84:explicit 76 · inferred 8</text>
+<rect x="533.52" y="119" width="274.25" height="25" rx="12.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="544.52" y="135.64" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">W/S/A 3/2/2 · Full Runtime Workflow Skill</text>
+<rect x="816.78" y="119" width="285.47" height="25" rx="12.5" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/><text x="827.78" y="135.64" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">解析器:rwsa-lite · 一致 0 · 独有 12 · 冲突 0</text>
+<text x="24" y="168" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">目录(静态 ## 标题)vs 分层(语义)</text>
+<rect x="24" y="176" width="1152" height="30" rx="6" fill="#f4f4f7" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="196" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#5b5f6b" font-weight="600">节点</text>
+<text x="108" y="196" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b" font-weight="600">标题</text>
+<text x="404" y="196" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#5b5f6b" font-weight="600">行号</text>
+<text x="496" y="196" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="#5b5f6b" font-weight="600">### 步数</text>
+<text x="588" y="196" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b" font-weight="600">归属 / 角色</text>
+<text x="814" y="196" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b" font-weight="600">印证结论</text>
+<line x1="24" y1="206" x2="1176" y2="206" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="226" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n01</text>
+<text x="108" y="226" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">When to Use This Skill</text>
+<text x="404" y="226" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">10-20</text>
+<text x="496" y="226" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">0</text>
+<text x="588" y="226" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">R / activation</text>
+<text x="814" y="226" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="600">非流程标题 → R 层</text>
+<rect x="24" y="236" width="1152" height="30" rx="0" fill="#f7f7fa" stroke="none" stroke-width="1"/>
+<line x1="24" y1="236" x2="1176" y2="236" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="256" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n02</text>
+<text x="108" y="256" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">What is the Skills CLI?</text>
+<text x="404" y="256" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">21-32</text>
+<text x="496" y="256" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">0</text>
+<text x="588" y="256" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">A / tool_action</text>
+<text x="814" y="256" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="600">非流程标题 → A 层</text>
+<line x1="24" y1="266" x2="1176" y2="266" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="286" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n03</text>
+<text x="108" y="286" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">How to Help Users Find Skills</text>
+<text x="404" y="286" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">33-104</text>
+<text x="496" y="286" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">6</text>
+<text x="588" y="286" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">W / main_flow</text>
+<text x="814" y="286" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#16a34a" font-weight="600">流程节点</text>
+<rect x="24" y="296" width="1152" height="30" rx="0" fill="#f7f7fa" stroke="none" stroke-width="1"/>
+<line x1="24" y1="296" x2="1176" y2="296" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n04</text>
+<text x="108" y="316" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">Common Skill Categories</text>
+<text x="404" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">105-118</text>
+<text x="496" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">0</text>
+<text x="588" y="316" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">S / domain_rules</text>
+<text x="814" y="316" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="600">非流程标题 → S 层</text>
+<line x1="24" y1="326" x2="1176" y2="326" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="346" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n05</text>
+<text x="108" y="346" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">Tips for Effective Searches</text>
+<text x="404" y="346" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">119-124</text>
+<text x="496" y="346" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">0</text>
+<text x="588" y="346" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">S / heuristics</text>
+<text x="814" y="346" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#d97706" font-weight="600">非流程标题 → S 层</text>
+<rect x="24" y="356" width="1152" height="30" rx="0" fill="#f7f7fa" stroke="none" stroke-width="1"/>
+<line x1="24" y1="356" x2="1176" y2="356" stroke="#e3e4e8" stroke-width="1"/>
+<text x="36" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#4f46e5" font-weight="600">n06</text>
+<text x="108" y="376" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#1d1f24">When No Skills Are Found</text>
+<text x="404" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">125-141</text>
+<text x="496" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#1d1f24">0</text>
+<text x="588" y="376" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5b5f6b">W / fallback</text>
+<text x="814" y="376" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#16a34a" font-weight="600">流程节点</text>
+<rect x="24" y="176" width="1152" height="210" rx="6" fill="none" stroke="#e3e4e8" stroke-width="1"/>
+<line x1="96" y1="176" x2="96" y2="386" stroke="#e3e4e8" stroke-width="1" opacity="0.75"/>
+<line x1="392" y1="176" x2="392" y2="386" stroke="#e3e4e8" stroke-width="1" opacity="0.75"/>
+<line x1="484" y1="176" x2="484" y2="386" stroke="#e3e4e8" stroke-width="1" opacity="0.75"/>
+<line x1="576" y1="176" x2="576" y2="386" stroke="#e3e4e8" stroke-width="1" opacity="0.75"/>
+<line x1="802" y1="176" x2="802" y2="386" stroke="#e3e4e8" stroke-width="1" opacity="0.75"/>
+<text x="24" y="428" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">非流程标题(4)</text>
+<line x1="24" y1="436" x2="585" y2="436" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="28" cy="452" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="456" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n01 → R 层:触发条件清单,是路由不是步骤</text>
+<circle cx="28" cy="475" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="479" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n02 → A 层:CLI 命令与网址清单,是工具附件</text>
+<circle cx="28" cy="498" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="502" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n04 → S 层:类目 → 查询词表,是领域知识</text>
+<circle cx="28" cy="521" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="525" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n05 → S 层:检索技巧,是启发式</text>
+<text x="24" y="576" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">隐含步骤(文本有、目录无)(1)</text>
+<line x1="24" y1="584" x2="585" y2="584" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="28" cy="600" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="604" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">锚 n06 找不到时,3 步(SKILL.md:129-131)</text>
+<text x="24" y="655" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">顺序偏差(文档顺序 ≠ 执行顺序)(3)</text>
+<line x1="24" y1="663" x2="585" y2="663" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="28" cy="679" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="683" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n05 检索技巧在文档中位于主线之后,执行上属于 n03.3 重搜环内部(SKILL.md:122)</text>
+<circle cx="28" cy="702" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="706" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n06 兜底在文档末尾,执行上由 n03.3 / n03.4 触发(SKILL.md:127)</text>
+<circle cx="28" cy="725" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="729" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n04 类目表在文档中位于主线之后,执行上是 n03.3 的查询词来源(SKILL.md:107)</text>
+<text x="615" y="428" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">跨锚定(知识写在别处)(4)</text>
+<line x1="615" y1="436" x2="1176" y2="436" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="619" cy="452" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="456" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.3 heuristics ← n05(SKILL.md:121-123)</text>
+<circle cx="619" cy="475" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="479" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.3 domain_rules ← n04(SKILL.md:107-117)</text>
+<circle cx="619" cy="498" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="502" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.3 tools(定义) ← n02(SKILL.md:27)</text>
+<circle cx="619" cy="521" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="525" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.6 tools(定义) ← n02(SKILL.md:28)</text>
+<text x="615" y="576" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">裁定记录(4)</text>
+<line x1="615" y1="584" x2="1176" y2="584" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="619" cy="600" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="604" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.1 三项识别内容是步骤内的推理程序(procedure),不是三个子步骤(SKILL.md:39-41)</text>
+<circle cx="619" cy="623" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="627" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.5 四要素是输出质量标准(quality_standards),不是四个子步骤(SKILL.md:77-80)</text>
+<circle cx="619" cy="646" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="650" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.2 排行榜命中 → 直接呈现 是条件句的逆命题,记 inferred(0.1 版误标为 explicit)(SKILL.md:</text>
+<text x="629" y="667" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#5b5f6b">53)</text>
+<circle cx="619" cy="686" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="690" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">n03.5 示例回复块里的命令属于呈现模板,不算工具调用(SKILL.md:84-93)</text>
+<text x="24" y="780" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">备注</text>
+<line x1="24" y1="788" x2="585" y2="788" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="28" cy="804" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="808" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">全文无 finish / stop / complete 等显式终止词,终止条件均为推断</text>
+<circle cx="28" cy="827" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="38" y="831" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">6 个静态标题中仅 2 个是流程节点(n03 主线、n06 兜底),其余 4 个是 R/S/A 附着层——目录 ≠ 流程图</text>
+<text x="615" y="780" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12.5" fill="#1d1f24" font-weight="700">校验</text>
+<line x1="615" y1="788" x2="1176" y2="788" stroke="#e3e4e8" stroke-width="1"/>
+<circle cx="619" cy="804" r="2.2" fill="#8a8f9b" stroke="none" stroke-width="1"/>
+<text x="629" y="808" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11.5" fill="#1d1f24">merged:作废 0 条</text>
+<rect x="24" y="876" width="1152" height="52" rx="10" fill="#ffffff" stroke="#e3e4e8" stroke-width="1"/>
+<rect x="24" y="876" width="4" height="52" rx="2" fill="#4f46e5" stroke="none" stroke-width="1"/>
+<text x="44" y="898" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#1d1f24" font-weight="700">目录 ≠ 流程图:偏差写进印证区,不改目录</text>
+<text x="44" y="916" font-family="-apple-system, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="11" fill="#8a8f9b">静态拆解永远先跑,它是坐标系;语义层只能叠加。上表与各节均取自真实页面 output/find-skills/find-skills-workflow.html 的 #p-recon 面板。</text>
+</svg>

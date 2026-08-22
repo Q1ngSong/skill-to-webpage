@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<style>
+/* ============================================================
+   skill-to-webpage 组合总览页(bundle.html)
+   布局:Hero + 图 1(skill 调用图)+ 图 2(节点调用图)+ 清单 + 印证
+   机制:与单页一致的 4 主题换肤 / data-source 出处开关 / 追问弹窗
+   顶栏、主题、出处、追问的样式与 IIFE 逐字取自 base.html,勿改名
+   下方 theme_styles 槽位注入全部主题 CSS(docs 的 :root 默认块 + 3 个
+   data-theme 覆盖块,见 templates/themes/)
+   ============================================================ */
+
+/* —— 主题层(渲染时整段注入 4 个 themes/*.css)—— */
+{{theme_styles}}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+button { font: inherit; color: inherit; }
+
+.page {
+  width: min(1220px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 56px;
+}
+
+/* ——— 顶栏(同 base.html) ——— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand { font: 800 15px/1.2 var(--font-display); letter-spacing: .02em; }
+.topbar .brand .lens { color: var(--accent); }
+.topbar .spacer { flex: 1; }
+
+.src-toggle {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-display);
+  color: var(--muted);
+  transition: all .2s;
+}
+
+.src-toggle:hover, .src-toggle.active { border-color: var(--accent); color: var(--accent); }
+
+.theme-picker {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+}
+
+/* ——— Hero ——— */
+.hero { padding: 44px 4px 8px; }
+
+.hero .eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font: 700 13px/1.3 var(--font-display);
+  letter-spacing: .14em;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.8vw, 54px);
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.hero .lede {
+  margin: 18px 0 0;
+  max-width: 860px;
+  color: var(--ink-soft);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+
+.hero .thesis {
+  margin-top: 22px;
+  max-width: 860px;
+  border-left: 5px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
+
+/* ——— 两张图 ——— */
+.fig { margin: 40px 0 0; }
+
+.fig h2, .list h2, .recon h2 {
+  margin: 0 0 6px;
+  font: 800 20px/1.3 var(--font-display);
+  letter-spacing: -.01em;
+}
+
+.list h2, .recon h2 { margin-top: 26px; }
+
+.fig .lead {
+  margin: 0 0 14px;
+  max-width: 860px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+
+.fig-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.fig .toggle {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font: 600 12px/1.2 var(--font-display);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fig .toggle:hover { color: var(--accent); }
+
+.fig-scroll { overflow-x: auto; }
+.fig-scroll::-webkit-scrollbar { height: 6px; }
+.fig-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.fig-canvas {
+  position: relative;
+  min-height: 120px;
+  padding: 6px 4px 10px;
+}
+
+.fig-inner { position: relative; }
+
+.fig-svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink-soft);
+  z-index: 3; /* 连线在分组卡片(z-index 2,不透明底)之上:布线已避开全部节点盒,只会盖住卡片底色 */
+}
+
+/* 芯片 = 一个 skill(图 1) */
+.chip {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  transition: all .18s;
+  z-index: 2;
+}
+
+.chip .nid { color: var(--muted); font: 700 10.5px/1 var(--font-mono); letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .nt { font: 700 13px/1.25 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .sub { color: var(--muted); font: 500 10.5px/1.2 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.chip.iso { border-style: dashed; }
+
+/* 分组框 = 一个 skill 展开后的节点(图 2) */
+.cluster {
+  position: absolute;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 30px 16px 16px;
+  background: var(--surface);
+  /* 不设 z-index:卡片不形成层叠上下文,名字标签(.cl,z-index 4)才能浮到连线层(3)之上;卡片本身按文档顺序画在连线之下 */
+}
+
+.cluster .cl {
+  position: absolute; top: 4px; left: 8px; z-index: 4;  /* 在连线层(3)之上:线从名字下面穿过 */
+  padding: 2px 6px; border-radius: 8px;
+  font: 600 11px var(--font-mono); color: var(--muted);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);   /* 半透明"小沙丘" */
+  box-shadow: 0 0 10px 6px var(--bg);                           /* 柔化边缘:外发光与底色同色 */
+  box-shadow: 0 0 10px 6px color-mix(in srgb, var(--bg) 82%, transparent);
+}
+.cluster .nrow { display: flex; flex-wrap: wrap; gap: 12px; }   /* 行间空档 = 框内横向走线的轨道 */
+
+.nbox {
+  display: inline-block;
+  width: 112px;
+  height: 30px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nbox .nn { color: var(--muted); font: 700 10px/1.6 var(--font-mono); margin-right: 4px; }
+.nbox .nt { font: 600 11px/1.6 var(--font-display); }
+.nbox:hover { border-color: var(--accent); color: var(--accent); }
+.nbox.hidden { display: none; }
+#c2.expanded .nbox.hidden { display: inline-block; }
+
+.more { display: inline-block; padding: 6px 8px; color: var(--muted); font: 600 11px/1.4 var(--font-mono); }
+#c2.expanded .more { display: none; }
+#c2.expanded .narr { display: none; }   /* 展开后主线节点之间夹着支撑节点,箭头会误导 */
+
+/* 主线节点之间的顺序小箭头(纯 DOM,不进 SVG) */
+.narr { align-self: center; color: var(--muted); font: 700 12px/1 var(--font-mono); user-select: none; }
+
+/* 连线:与 base.html 子流程图同一套视觉(实线交棒 / 点线取用 / 橙色虚线回头) */
+.fe { fill: none; pointer-events: stroke; }
+.fe.delegate { stroke: var(--ink-soft); stroke-width: 1.5; }
+.fe.dependency { stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 2 3; }
+.fe.back { stroke: var(--warn); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.fe.mutual { stroke: var(--ink-soft); stroke-width: 1.6; }
+.fe.fallback, .fe.retry, .fe.condition_true, .fe.condition_false { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 4 3; }
+.fe:hover { stroke-width: 2.4; }
+
+/* 选中态:点线 / 点节点高亮相关的,其余降透明度(只动透明度,四套主题通用) */
+.fe, .chip, .nbox, .cluster, .narr { transition: opacity .12s ease, stroke-width .12s ease, border-color .12s ease; }
+.fe.dim { opacity: .18; }
+.fe.dim:hover { opacity: 1; }                    /* 悬停仍可预览被淡化的线 */
+.fe.focus { stroke-width: 2.6; }
+.chip.dim, .nbox.dim, .cluster.dim, .narr.dim { opacity: .35; }
+.chip.focus, .nbox.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.cluster.focus { border-color: var(--accent); border-style: solid; }
+.mk-e { fill: var(--ink-soft); } .mk-c { fill: var(--accent); } .mk-l { fill: var(--warn); } .mk-d { fill: var(--muted); }
+
+/* ——— 清单表格(同 base.html) ——— */
+.list, .recon { margin-top: 44px; }
+
+.scroll { overflow-x: auto; margin: 10px 0; }
+
+table.tbl { width: 100%; border-collapse: collapse; font: 13.5px/1.6 var(--font-body); }
+.tbl th, .tbl td { padding: 9px 11px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tbl th { background: var(--surface-2); font: 700 12.5px/1.4 var(--font-display); white-space: nowrap; }
+.tbl td { color: var(--ink-soft); }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+.tbl td.src { color: var(--muted); font: 500 11.5px/1.5 var(--font-mono); white-space: nowrap; }
+.tbl td.dd { width: 34px; text-align: center; }
+.tbl .deep-dive-btn { position: static; opacity: .45; }
+.tbl tbody tr:hover .deep-dive-btn { opacity: 1; }
+
+/* ——— 印证 ——— */
+.sem-h { margin: 12px 0 4px; color: var(--muted); font: 700 10.5px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sem-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; }
+.sem-list li { margin: 2px 0; }
+.sem-list a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+.sem-list code { font: 600 12px var(--font-mono); background: var(--code-bg); color: var(--code-ink); padding: 1px 5px; border-radius: 4px; }
+
+.qt, .sem-list .q { display: none; margin-left: 6px; color: var(--muted); font: 500 12px/1.5 var(--font-body); }
+/* 引文是整整一列:表头 th.qt 必须和 td.qt 一起藏,否则关掉出处时留一个空列头 */
+.tbl th.qt { display: none; }
+body.show-sources .tbl th.qt, body.show-sources .tbl td.qt { display: table-cell; }
+.sem-list .why { display: block; color: var(--muted); font: 500 12px/1.6 var(--font-body); }
+body.show-sources .qt, body.show-sources .sem-list .q { display: inline; }
+.qt::before, .sem-list .q::before { content: "\201C"; }
+.qt::after, .sem-list .q::after { content: "\201D"; }
+
+/* ——— 出处标注(同 base.html:A 细条 + tooltip;B 全局开关) ——— */
+[data-source] { position: relative; }
+
+[data-source]::after {
+  content: attr(data-source);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 5px);
+  padding: 3px 9px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  font: 600 10.5px/1.4 var(--font-mono);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 60;
+}
+
+[data-source]:hover::after { opacity: 1; }
+
+.hero .lede[data-source], .hero .thesis[data-source] { border-left: 3px solid var(--line); transition: border-left-color .2s; }
+.hero .lede[data-source]:hover, .hero .thesis[data-source]:hover { border-left-color: var(--accent); }
+.hero .thesis[data-source] { border-left-width: 5px; border-left-color: var(--accent); }
+
+/* ——— 追问按钮 + 弹窗(同 base.html) ——— */
+.deep-dive-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-display);
+  opacity: 0;
+  transition: all .2s;
+  z-index: 2;
+}
+
+.deep-dive-btn:hover { opacity: 1 !important; background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+.dd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, .38);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-overlay.active { display: flex; }
+
+.dd-popover {
+  width: min(540px, calc(100% - 32px));
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.dd-popover .dd-title { margin: 0 0 6px; font: 800 19px/1.3 var(--font-display); }
+.dd-popover .dd-ctx { margin: 0 0 14px; color: var(--muted); font: 500 12.5px/1.6 var(--font-display); }
+
+.dd-popover textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: 14.5px/1.6 var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.dd-actions { display: flex; gap: 8px; }
+
+.dd-submit {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+}
+
+.dd-cancel {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font: 700 13.5px/1.3 var(--font-display);
+  color: var(--muted);
+}
+
+.dd-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 13px 26px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-ink);
+  border-radius: 8px;
+  font: 600 13px/1.4 var(--font-display);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.dd-toast.show { opacity: 1; }
+
+/* ——— 页脚 ——— */
+.foot {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 12.5px/1.8 var(--font-display);
+}
+
+.foot code { font: 600 12px var(--font-mono); }
+
+@media (max-width: 640px) {
+  .hero { padding-top: 30px; }
+  .fig .lead { font-size: 13px; }
+}
+</style>
+</head>
+<body data-theme="{{default_theme}}" data-page="bundle">
+
+<div class="page">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="brand"><span class="lens">◈</span> skill-to-webpage</span>
+    <span class="spacer"></span>
+    <button id="srcToggle" class="src-toggle" title="显示/隐藏出处">显示出处</button>
+    <select id="themePicker" class="theme-picker" title="切换主题">
+      <option value="docs">简洁文档</option>
+      <option value="blueprint">技术蓝图</option>
+      <option value="ide">终端 IDE</option>
+      <option value="whiteboard">白板手绘</option>
+    </select>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">{{eyebrow}}</p>
+    <h1>{{group}}</h1>
+    {{hero_html}}
+  </header>
+
+  <section class="fig" id="fig1">
+    <h2>图 1 · skill 调用图</h2>
+    <p class="lead">每张卡片是一个 skill;连线走行间轨道与右侧通道,不穿过卡片。<strong>实线</strong> = delegate(交棒)· <strong>点线</strong> = dependency(取用)· <strong>橙色虚线</strong> = 回头(指回上层或同层)· 双箭头 = 互调。<strong>单击</strong>选中并高亮两端(其余淡出)· <strong>双击</strong>进入该 skill 单页 · Esc 清除。</p>
+    <div class="fig-scroll"><div class="fig-canvas" id="c1"><svg class="fig-svg" id="s1"></svg>{{fig1_html}}</div></div>
+  </section>
+
+  <section class="fig" id="fig2">
+    <div class="fig-head">
+      <h2>图 2 · 节点调用图</h2>
+      <label class="toggle"><input type="checkbox" id="expandAll"> 全部展开</label>
+    </div>
+    <p class="lead">同一布局,每个 skill 展开为分组框:主线节点 + 参与跨 skill 边的节点;其余折叠为「+N 支撑」。线型同图 1:<strong>实线</strong> = 交棒 · <strong>点线</strong> = 取用 · <strong>橙色虚线</strong> = 回头。<strong>单击</strong>选中,<strong>双击</strong>进入该 skill 单页并定位到该节点 · Esc 清除。</p>
+    <div class="fig-scroll"><div class="fig-canvas" id="c2"><svg class="fig-svg" id="s2"></svg>{{fig2_html}}</div></div>
+  </section>
+
+  <section class="list"><h2>跨 skill 边清单</h2>{{edges_table}}<h2>skill 统计</h2>{{stats_table}}</section>
+  <section class="recon"><h2>印证</h2>{{recon_html}}</section>
+  <footer class="foot">{{footer_note}}</footer>
+</div>
+
+<!-- 追问弹窗 -->
+<div class="dd-overlay" id="ddOverlay">
+  <div class="dd-popover">
+    <p class="dd-title" id="ddTitle"></p>
+    <p class="dd-ctx" id="ddCtx"></p>
+    <textarea id="ddInput" placeholder="输入你想追问的细节…"></textarea>
+    <div class="dd-actions">
+      <button class="dd-submit" id="ddSubmit">打包复制追问到剪贴板</button>
+      <button class="dd-cancel" id="ddCancel">取消</button>
+    </div>
+  </div>
+</div>
+<div class="dd-toast" id="ddToast"></div>
+
+<script>
+/* JS 安全规则(CRITICAL):var / function() / DOM 前 null 守卫 / 字符串内无中文弯引号 */
+
+var LAYOUT = {{layout_json}};  /* {fig1:{edges:[{from,to,type,back,source,quote}]}, fig2:{edges:[…]}} */
+
+var SKILL_DIRS = {{skill_dirs}};   /* {成员名: 该 skill 的源目录绝对路径} */
+var _h1 = document.querySelector(".hero h1");
+var GROUP = _h1 ? _h1.textContent : "";
+
+{{flow_lib}}
+
+/* ——— 图 1 / 图 2 的连线:与单页子流程图同一套正交布线 ———
+   竖直出源端口 → 在行间空档的独立轨道上水平走 → 竖直进目标顶端口;
+   跨层 / 回头的边不穿过盒子,走图右侧的通道列。轨道与端口分散的做法同 flow-lib.js 的 semRouteLane。 */
+var FIG_GAP = 24, FIG_ROW_GAP = 36, TRACK_H = 14, TRACK_PAD = 20;
+var CHAN_GAP = 12, CHAN_PAD = 18, CORNER = 8;
+
+/* 元素在画布坐标系里的矩形(.nbox 嵌在绝对定位的 .cluster 里,要一路累加) */
+function figRect(canvas, el) {
+  var l = 0, t = 0, n = el;
+  while (n && n !== canvas) { l += n.offsetLeft; t += n.offsetTop; n = n.offsetParent; }
+  return { l: l, t: t, w: el.offsetWidth, h: el.offsetHeight, r: l + el.offsetWidth, b: t + el.offsetHeight };
+}
+
+/* 盒子所属的"行"元素:图 1 是芯片自己,图 2 是它所在的分组框(都带 data-layer) */
+function figRowEl(el, canvas) {
+  var n = el;
+  while (n && n !== canvas) {
+    if (n.getAttribute && n.getAttribute("data-layer") !== null) { return n; }
+    n = n.parentNode;
+  }
+  return null;
+}
+
+/* 折线清理:去掉重合点与共线的中间点 */
+function figSimplify(pts) {
+  var out = [], i;
+  for (i = 0; i < pts.length; i++) {
+    if (out.length > 0 && Math.abs(out[out.length - 1][0] - pts[i][0]) < 0.6 && Math.abs(out[out.length - 1][1] - pts[i][1]) < 0.6) { continue; }
+    out.push([pts[i][0], pts[i][1]]);
+  }
+  var res = [out[0]], j;
+  for (j = 1; j < out.length - 1; j++) {
+    var a = res[res.length - 1], b = out[j], c = out[j + 1];
+    var col = (Math.abs(a[0] - b[0]) < 0.6 && Math.abs(b[0] - c[0]) < 0.6) || (Math.abs(a[1] - b[1]) < 0.6 && Math.abs(b[1] - c[1]) < 0.6);
+    if (!col) { res.push(b); }
+  }
+  if (out.length > 1) { res.push(out[out.length - 1]); }
+  return res;
+}
+
+/* 正交折线 + 圆角(orthoPath 的多段版:通道路由要 5 段,flow-lib 的三段版本套不下) */
+function orthoPoly(pts, r) {
+  function f(v) { return Math.round(v * 10) / 10; }
+  var d = "M " + f(pts[0][0]) + " " + f(pts[0][1]), i;
+  for (i = 1; i < pts.length - 1; i++) {
+    var p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+    var v0x = p1[0] - p0[0], v0y = p1[1] - p0[1], v1x = p2[0] - p1[0], v1y = p2[1] - p1[1];
+    var rr = Math.min(r, (Math.abs(v0x) + Math.abs(v0y)) / 2, (Math.abs(v1x) + Math.abs(v1y)) / 2);
+    function sg(v) { return v === 0 ? 0 : (v > 0 ? 1 : -1); }
+    d += " L " + f(p1[0] - sg(v0x) * rr) + " " + f(p1[1] - sg(v0y) * rr)
+      + " Q " + f(p1[0]) + " " + f(p1[1]) + " " + f(p1[0] + sg(v1x) * rr) + " " + f(p1[1] + sg(v1y) * rr);
+  }
+  var last = pts[pts.length - 1];
+  return d + " L " + f(last[0]) + " " + f(last[1]);
+}
+
+/* 箭头定义:与 base.html 子流程图逐字同款(orient=auto-start-reverse,颜色走 mk-* 变量) */
+function figMarker(id, cls, size) {
+  return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="' + size
+    + '" markerHeight="' + size + '" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="' + cls + '"></path></marker>';
+}
+
+/* 线型词汇:实线 = delegate(交棒)· 点线 = dependency(取用)· 橙色虚线 = 回头 / 互调 */
+function figEdgeCls(e) {
+  if (e.mutual) { return { cls: "fe delegate mutual", mk: "-me" }; }
+  if (e.back) { return { cls: "fe back", mk: "-ml" }; }
+  if (e.type === "delegate") { return { cls: "fe delegate", mk: "-me" }; }
+  if (e.type === "dependency") { return { cls: "fe dependency", mk: "-mc" }; }
+  return { cls: "fe " + e.type, mk: "-md" };
+}
+
+function renderFig(cfg) {
+  var canvas = document.getElementById(cfg.canvas), svg = document.getElementById(cfg.svg);
+  if (!canvas || !svg) { return; }
+  var inner = canvas.querySelector(".fig-inner");
+  if (!inner) { return; }
+  var i, j, r, k;
+
+  /* —— 1. 行:按 data-layer 分组(图 1 的孤立列不参与行排布,保持右侧一列) —— */
+  var all = canvas.querySelectorAll("[data-layer]"), rowMap = {}, keys = [];
+  for (i = 0; i < all.length; i++) {
+    var kk = all[i].getAttribute("data-layer");
+    if (kk === "iso" && !cfg.isoRow) { continue; }
+    if (!rowMap[kk]) { rowMap[kk] = []; keys.push(kk); }
+    rowMap[kk].push(all[i]);
+  }
+  keys.sort(function (a, b) {
+    if (a === "iso") { return 1; }
+    if (b === "iso") { return -1; }
+    return parseInt(a, 10) - parseInt(b, 10);
+  });
+
+  /* —— 2. 边:找到两端盒子与所在行 —— */
+  var links = [];
+  for (i = 0; i < cfg.edges.length; i++) {
+    var e = cfg.edges[i];
+    var a = canvas.querySelector(cfg.boxSel + '[data-key="' + e.from + '"]');
+    var b = canvas.querySelector(cfg.boxSel + '[data-key="' + e.to + '"]');
+    if (!a || !b || a.offsetParent === null || b.offsetParent === null) { continue; }
+    var ra = figRowEl(a, canvas), rb = figRowEl(b, canvas);
+    if (!ra || !rb) { continue; }
+    var ai = keys.indexOf(ra.getAttribute("data-layer")), bi = keys.indexOf(rb.getAttribute("data-layer"));
+    if (ai < 0 || bi < 0) { continue; }
+    links.push({ e: e, idx: i, aEl: a, bEl: b, aRow: ra, bRow: rb, ai: ai, bi: bi,
+      kind: e.mutual ? "mutual" : (bi === ai + 1 && !e.back ? "down" : "channel") });
+  }
+
+  /* —— 3. 每条边在行间空档里占一条轨道:空档高度 = max(基准, 14 * 轨道数 + 20) —— */
+  var gt = [];
+  function useTrack(g, lk, key) {
+    if (!gt[g]) { gt[g] = []; }
+    lk[key] = gt[g].length;
+    gt[g].push(lk);
+  }
+  for (i = 0; i < links.length; i++) {
+    if (links[i].kind === "down") { useTrack(links[i].bi, links[i], "t1"); }
+    else if (links[i].kind === "channel") {
+      useTrack(links[i].ai + 1, links[i], "t1");     /* 源下方的空档 */
+      useTrack(links[i].bi, links[i], "t2");         /* 目标上方的空档 */
+    }
+  }
+  var gSize = [];
+  for (g = 0; g <= keys.length; g++) {
+    var n = (gt[g] || []).length;
+    var base = g === 0 ? 0 : (g === keys.length ? 12 : FIG_ROW_GAP);
+    gSize[g] = n > 0 ? Math.max(base, TRACK_H * n + TRACK_PAD) : base;
+  }
+
+  /* —— 4. 排行:纵向按空档堆叠;图 2 顺带把每行水平居中 —— */
+  var avail = Math.max(320, canvas.clientWidth - 8), widest = 0;
+  if (cfg.center) {
+    for (r = 0; r < keys.length; r++) {
+      var wsum = 0, row0 = rowMap[keys[r]];
+      for (j = 0; j < row0.length; j++) { wsum += row0[j].offsetWidth + (j > 0 ? FIG_GAP : 0); }
+      widest = Math.max(widest, wsum);
+    }
+  }
+  var totalW = Math.max(avail, widest, parseInt(inner.style.minWidth, 10) || 0);
+  var top = gSize[0], rowTop = [], rowBot = [];
+  for (r = 0; r < keys.length; r++) {
+    var row = rowMap[keys[r]], high = 0;
+    if (cfg.center) {
+      var rw = 0;
+      for (j = 0; j < row.length; j++) { rw += row[j].offsetWidth + (j > 0 ? FIG_GAP : 0); }
+      var x = rw <= totalW ? Math.round((totalW - rw) / 2) : 0;
+      for (j = 0; j < row.length; j++) { row[j].style.left = Math.round(x) + "px"; x += row[j].offsetWidth + FIG_GAP; }
+    }
+    for (j = 0; j < row.length; j++) { row[j].style.top = Math.round(top) + "px"; high = Math.max(high, row[j].offsetHeight); }
+    rowTop[r] = top;
+    rowBot[r] = top + high;
+    top += high + gSize[r + 1];
+  }
+
+  /* —— 5. 端口 + 框内引线:线要落在节点盒子上;从节点到分组框边借行间空档与内边距走,不压别的节点 —— */
+  function spread(sideEl, otherEl, portX, portY, atTop) {
+    var groups = {}, key, arr;
+    for (i = 0; i < links.length; i++) {
+      key = links[i][sideEl].getAttribute("data-key");
+      if (!groups[key]) { groups[key] = []; }
+      groups[key].push(links[i]);
+    }
+    for (key in groups) {
+      if (!groups.hasOwnProperty(key)) { continue; }
+      arr = groups[key];
+      arr.sort(function (p, q) {
+        var pr = figRect(canvas, p[otherEl]), qr = figRect(canvas, q[otherEl]);
+        return (pr.l + pr.w / 2) - (qr.l + qr.w / 2);
+      });
+      for (j = 0; j < arr.length; j++) {
+        var bx = figRect(canvas, arr[j][sideEl]);
+        arr[j][portX] = Math.round(bx.l + bx.w * (j + 1) / (arr.length + 1));
+        arr[j][portY] = atTop ? bx.t : bx.b;      /* 端口在节点盒子的上/下边 */
+      }
+    }
+  }
+  spread("aEl", "bEl", "ax", "ay", false);
+  spread("bEl", "aEl", "bx", "by", true);
+
+  /* 分组框里的节点按行归拢(图 1 的芯片自己就是一行) */
+  function clusterRows(rowEl) {
+    var els = rowEl.querySelectorAll(cfg.boxSel), out = [], i2, j2, placed;
+    for (i2 = 0; i2 < els.length; i2++) {
+      if (els[i2].offsetParent === null) { continue; }
+      var rc = figRect(canvas, els[i2]);
+      placed = false;
+      for (j2 = 0; j2 < out.length; j2++) {
+        if (Math.abs(out[j2].t - rc.t) < 5) { out[j2].boxes.push(rc); out[j2].b = Math.max(out[j2].b, rc.b); placed = true; break; }
+      }
+      if (!placed) { out.push({ t: rc.t, b: rc.b, boxes: [rc] }); }
+    }
+    out.sort(function (p2, q2) { return p2.t - q2.t; });
+    return out;
+  }
+
+  /* 节点 → 分组框边:末行(首行)直上直下;隔着别的行就先横穿相邻的行间空档,再挑一条竖直走廊下(上)到框边 */
+  function clusterLeg(lk, isSrc) {
+    var boxEl = isSrc ? lk.aEl : lk.bEl, rowEl = isSrc ? lk.aRow : lk.bRow;
+    var px = isSrc ? lk.ax : lk.bx;
+    if (boxEl === rowEl) { return { pts: [], cx: px }; }
+    var cl = figRect(canvas, rowEl), rows2 = clusterRows(rowEl), me = figRect(canvas, boxEl);
+    var ri = 0, i2, j2, k2;
+    for (i2 = 0; i2 < rows2.length; i2++) { if (Math.abs(rows2[i2].t - me.t) < 5) { ri = i2; } }
+    var blocked = [], gapY;
+    if (isSrc) {
+      if (ri >= rows2.length - 1) { return { pts: [], cx: px }; }
+      gapY = (rows2[ri].b + rows2[ri + 1].t) / 2;
+      for (i2 = ri + 1; i2 < rows2.length; i2++) { blocked.push(rows2[i2]); }
+    } else {
+      if (ri === 0) { return { pts: [], cx: px }; }
+      gapY = (rows2[ri - 1].b + rows2[ri].t) / 2;
+      for (i2 = 0; i2 < ri; i2++) { blocked.push(rows2[i2]); }
+    }
+    var cands = [cl.l + 8, cl.r - 8], bs;
+    for (i2 = 0; i2 < blocked.length; i2++) {
+      bs = blocked[i2].boxes.slice().sort(function (p2, q2) { return p2.l - q2.l; });
+      for (j2 = 0; j2 + 1 < bs.length; j2++) { cands.push((bs[j2].r + bs[j2 + 1].l) / 2); }
+    }
+    var best = null, bestD = 1e9;
+    for (i2 = 0; i2 < cands.length; i2++) {
+      var x2 = Math.round(cands[i2]), ok = true;
+      for (j2 = 0; j2 < blocked.length && ok; j2++) {
+        for (k2 = 0; k2 < blocked[j2].boxes.length; k2++) {
+          var bb = blocked[j2].boxes[k2];
+          if (x2 > bb.l - 5 && x2 < bb.r + 5) { ok = false; break; }
+        }
+      }
+      if (ok && Math.abs(x2 - px) < bestD) { bestD = Math.abs(x2 - px); best = x2; }
+    }
+    if (best === null) { best = Math.round(cl.r - 8); }
+    return { pts: [[px, gapY], [best, gapY]], cx: best };
+  }
+
+  function trackY(g, idx) {
+    var n2 = (gt[g] || []).length;
+    var yA = g === 0 ? 0 : rowBot[g - 1];
+    var yB = g === keys.length ? top : rowTop[g];
+    return yA + (yB - yA) * (idx + 1) / (n2 + 1);
+  }
+
+  /* —— 6. 通道列:跨层 / 回头的边走图形右侧,每条一列,竖段互不重叠 —— */
+  var maxRight = 0;
+  for (i = 0; i < all.length; i++) {
+    if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { continue; }   /* 右侧孤立列单独安置 */
+    maxRight = Math.max(maxRight, figRect(canvas, all[i]).r);
+  }
+  var chans = [];
+  for (i = 0; i < links.length; i++) { if (links[i].kind === "channel") { chans.push(links[i]); } }
+
+  /* 6a. 图内竖直走廊:两行之间的空隙 / 行两侧的留白,只要竖段全程躲得开盒子就走图内,
+         省得每条跨层边都绕到最右边(线绕来绕去的主因)。躲不开才退回右侧通道列。 */
+  function boxesOfRow(r) {
+    var out = [], row = rowMap[keys[r]] || [], j2;
+    for (j2 = 0; j2 < row.length; j2++) { out.push(figRect(canvas, row[j2])); }
+    out.sort(function (p2, q2) { return p2.l - q2.l; });
+    return out;
+  }
+  var isoBoxes = [];
+  for (i = 0; i < all.length; i++) {
+    if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { isoBoxes.push(figRect(canvas, all[i])); }
+  }
+  function corridorFree(x, r0, r1, used, yA, yB) {
+    var r2, j2, bs;
+    for (j2 = 0; j2 < isoBoxes.length; j2++) {
+      if (x > isoBoxes[j2].l - 9 && x < isoBoxes[j2].r + 9 && isoBoxes[j2].b > yA && isoBoxes[j2].t < yB) { return false; }
+    }
+    for (r2 = r0; r2 <= r1; r2++) {
+      bs = boxesOfRow(r2);
+      for (j2 = 0; j2 < bs.length; j2++) { if (x > bs[j2].l - 9 && x < bs[j2].r + 9) { return false; } }
+    }
+    for (j2 = 0; j2 < used.length; j2++) {
+      if (Math.abs(used[j2].x - x) < 9 && used[j2].b > yA - 8 && used[j2].a < yB + 8) { return false; }
+    }
+    return true;
+  }
+  var usedCorridors = [];
+  for (i = 0; i < chans.length; i++) {
+    var lk0 = chans[i];
+    var gA = lk0.ai + 1, gB = lk0.bi;
+    var r0 = Math.min(gA, gB), r1 = Math.max(gA, gB) - 1;      /* 竖段穿过的行 */
+    var yA0 = Math.min(trackY(gA, lk0.t1), trackY(gB, lk0.t2));
+    var yB0 = Math.max(trackY(gA, lk0.t1), trackY(gB, lk0.t2));
+    if (r1 < r0) { continue; }
+    var cands = [], rr, bs2, j3;
+    for (rr = r0; rr <= r1; rr++) {
+      bs2 = boxesOfRow(rr);
+      if (bs2.length === 0) { continue; }
+      cands.push((0 + bs2[0].l) / 2);
+      cands.push((bs2[bs2.length - 1].r + totalW) / 2);
+      for (j3 = 0; j3 + 1 < bs2.length; j3++) { cands.push((bs2[j3].r + bs2[j3 + 1].l) / 2); }
+    }
+    var pref = (lk0.ax + lk0.bx) / 2, bestX = null, bestD = 1e9;
+    for (j3 = 0; j3 < cands.length; j3++) {
+      var cx0 = Math.round(cands[j3]);
+      if (cx0 < 6 || cx0 > totalW - 6) { continue; }
+      if (!corridorFree(cx0, r0, r1, usedCorridors, yA0, yB0)) { continue; }
+      if (Math.abs(cx0 - pref) < bestD) { bestD = Math.abs(cx0 - pref); bestX = cx0; }
+    }
+    if (bestX !== null) {
+      lk0.cx = bestX;
+      lk0.inside = true;
+      usedCorridors.push({ x: bestX, a: yA0, b: yB0 });
+    }
+  }
+  chans = [];
+  for (i = 0; i < links.length; i++) { if (links[i].kind === "channel" && !links[i].inside) { chans.push(links[i]); } }
+  for (i = 0; i < chans.length; i++) {
+    var y1 = trackY(chans[i].ai + 1, chans[i].t1), y2 = trackY(chans[i].bi, chans[i].t2);
+    chans[i].cyA = Math.min(y1, y2);
+    chans[i].cyB = Math.max(y1, y2);
+  }
+  chans.sort(function (p, q) { return p.cyA - q.cyA || p.idx - q.idx; });
+  /* 竖段不重叠的边共用一列(区间着色):不然十几条边就是十几列,图白白宽出几百像素 */
+  var colEnd = [];
+  for (i = 0; i < chans.length; i++) {
+    var col = 0;
+    while (col < colEnd.length && colEnd[col] > chans[i].cyA - 10) { col += 1; }
+    colEnd[col] = chans[i].cyB;
+    chans[i].cx = maxRight + CHAN_PAD + CHAN_GAP * col;
+  }
+  var chanRight = colEnd.length > 0 ? maxRight + CHAN_PAD + CHAN_GAP * (colEnd.length - 1) : maxRight;
+  var needW = chanRight + CHAN_PAD;
+  if (isoBoxes.length > 0) {
+    /* 孤立芯片没有任何连线:整列安置在通道列右边(绝对位置,重画不累加),
+       轨道横段与通道竖段就不会从它们身上压过去——只挪列的位置,不改列内排布 */
+    var isoLeft = chanRight + CHAN_PAD + 6, isoW = 0;
+    for (i = 0; i < all.length; i++) {
+      if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) {
+        all[i].style.left = Math.round(isoLeft) + "px";
+        isoW = Math.max(isoW, all[i].offsetWidth);
+      }
+    }
+    needW = isoLeft + isoW + 12;
+    isoBoxes = [];
+    for (i = 0; i < all.length; i++) {
+      if (all[i].getAttribute("data-layer") === "iso" && !cfg.isoRow) { isoBoxes.push(figRect(canvas, all[i])); }
+    }
+  }
+  inner.style.minWidth = Math.round(Math.max(totalW, needW)) + "px";
+  inner.style.height = Math.round(Math.max(top - gSize[keys.length] + 24, 60)) + "px";
+
+  /* —— 7. 出路径 —— */
+  var parts = [];
+  for (i = 0; i < links.length; i++) {
+    var lk = links[i], vis = figEdgeCls(lk.e), d;
+    if (lk.kind === "mutual") {
+      var ra2 = figRect(canvas, lk.aRow), rb2 = figRect(canvas, lk.bRow);
+      var lf = ra2.l <= rb2.l ? ra2 : rb2, rt = ra2.l <= rb2.l ? rb2 : ra2;
+      d = "M " + Math.round(lf.r + 1) + " " + Math.round(lf.t + lf.h / 2)
+        + " L " + Math.round(rt.l - 1) + " " + Math.round(rt.t + rt.h / 2);
+    } else {
+      var legA = clusterLeg(lk, true), legB = clusterLeg(lk, false);
+      var clA = figRect(canvas, lk.aRow), clB = figRect(canvas, lk.bRow);
+      var pts = [[lk.ax, lk.ay]], m;
+      for (m = 0; m < legA.pts.length; m++) { pts.push(legA.pts[m]); }
+      pts.push([legA.cx, clA.b]);
+      if (lk.kind === "down") {
+        var yt = trackY(lk.bi, lk.t1);
+        pts.push([legA.cx, yt]);
+        pts.push([legB.cx, yt]);
+      } else {
+        var ytA = trackY(lk.ai + 1, lk.t1), ytB = trackY(lk.bi, lk.t2);
+        pts.push([legA.cx, ytA]);
+        pts.push([lk.cx, ytA]);
+        pts.push([lk.cx, ytB]);
+        pts.push([legB.cx, ytB]);
+      }
+      pts.push([legB.cx, clB.t]);
+      for (m = legB.pts.length - 1; m >= 0; m--) { pts.push(legB.pts[m]); }
+      pts.push([lk.bx, lk.by]);
+      pts = figSimplify(pts);
+      d = (pts.length === 4 && lk.kind === "down")
+        ? orthoPath(pts[0][0], pts[0][1], pts[3][0], pts[3][1], pts[1][1], CORNER)   /* 四点直落:用 flow-lib 的三段折线 */
+        : orthoPoly(pts, CORNER);
+    }
+    var arrow = lk.kind === "mutual" ? " ⇄ " : " → ";
+    parts.push('<path d="' + d + '" class="' + vis.cls + '" data-i="' + lk.idx + '" data-source="' + lk.e.source + '"'
+      + (lk.kind === "mutual" ? ' marker-start="url(#' + cfg.svg + vis.mk + ')"' : "")
+      + ' marker-end="url(#' + cfg.svg + vis.mk + ')"><title>' + lk.e.from + arrow + lk.e.to + " · " + lk.e.type
+      + " · " + lk.e.source + "\n" + lk.e.quote + "</title></path>");
+  }
+  svg.setAttribute("width", canvas.scrollWidth);
+  svg.setAttribute("height", canvas.scrollHeight);
+  svg.innerHTML = "<defs>" + figMarker(cfg.svg + "-me", "mk-e", 6.5) + figMarker(cfg.svg + "-mc", "mk-c", 6.5)
+    + figMarker(cfg.svg + "-ml", "mk-l", 6.5) + figMarker(cfg.svg + "-md", "mk-d", 6) + "</defs>" + parts.join("");
+}
+
+function drawAll() {
+  renderFig({ canvas: "c1", svg: "s1", edges: LAYOUT.fig1.edges, boxSel: ".chip", center: false, isoRow: false });
+  renderFig({ canvas: "c2", svg: "s2", edges: LAYOUT.fig2.edges, boxSel: ".nbox", center: true, isoRow: true });
+  applyFocus();                       /* 重画会换掉 svg 内容,选中态要跟着回来 */
+}
+
+/* ——— 选中态:{fig, type:"edge"|"box", key} ——— */
+var FOCUS = null;
+
+function figSetCls(el, name, want) {
+  var cur = el.getAttribute("class") || "";
+  var has = (" " + cur + " ").indexOf(" " + name + " ") >= 0;
+  if (want === has) { return; }
+  el.setAttribute("class", want ? (cur + " " + name)
+    : (" " + cur + " ").replace(" " + name + " ", " ").replace(/^\s+|\s+$/g, ""));
+}
+
+function applyFocus() {
+  var ids = ["c1", "c2"], n, i, q;
+  for (n = 0; n < ids.length; n++) {
+    var cid = ids[n], canvas = document.getElementById(cid);
+    if (!canvas) { continue; }
+    var svg = document.getElementById(cid === "c1" ? "s1" : "s2");
+    var eds = cid === "c1" ? LAYOUT.fig1.edges : LAYOUT.fig2.edges;
+    var act = FOCUS && FOCUS.fig === cid ? FOCUS : null;
+    var keepBox = {}, keepEdge = {};
+    if (act) {
+      if (act.type === "edge") {
+        var e0 = eds[act.key];
+        if (e0) { keepEdge[act.key] = 1; keepBox[e0.from] = 1; keepBox[e0.to] = 1; }
+      } else {
+        keepBox[act.key] = 1;
+        for (i = 0; i < eds.length; i++) {
+          if (eds[i].from === act.key || eds[i].to === act.key) {
+            keepEdge[i] = 1; keepBox[eds[i].from] = 1; keepBox[eds[i].to] = 1;
+          }
+        }
+      }
+    }
+    var on = act !== null;
+    var paths = svg ? svg.querySelectorAll("path.fe") : [];
+    for (i = 0; i < paths.length; i++) {
+      var hitE = on && keepEdge[parseInt(paths[i].getAttribute("data-i"), 10)] === 1;
+      figSetCls(paths[i], "focus", on && hitE);
+      figSetCls(paths[i], "dim", on && !hitE);
+    }
+    var boxes = canvas.querySelectorAll("[data-key]");
+    for (i = 0; i < boxes.length; i++) {
+      var hitB = on && keepBox[boxes[i].getAttribute("data-key")] === 1;
+      figSetCls(boxes[i], "focus", on && hitB);
+      figSetCls(boxes[i], "dim", on && !hitB);
+    }
+    var cls = canvas.querySelectorAll(".cluster");
+    for (i = 0; i < cls.length; i++) {
+      var kids = cls[i].querySelectorAll("[data-key]"), any = false;
+      for (q = 0; q < kids.length; q++) {
+        if (keepBox[kids[q].getAttribute("data-key")] === 1) { any = true; break; }
+      }
+      figSetCls(cls[i], "focus", on && any);
+      figSetCls(cls[i], "dim", on && !any);
+      var ar = cls[i].querySelectorAll(".narr");
+      for (q = 0; q < ar.length; q++) { figSetCls(ar[q], "dim", on && !any); }
+    }
+  }
+}
+
+/* 单击 = 选中(不跳转),双击 = 进单页;点空白或再点一次 = 清除;Esc 也清除 */
+(function bindFocus() {
+  var ids = ["c1", "c2"], n;
+  function hit(ev) {
+    var el = ev.target;
+    while (el && el !== document.body) {
+      if (el.getAttribute) {
+        if (el.getAttribute("data-i") !== null) { return { type: "edge", key: parseInt(el.getAttribute("data-i"), 10) }; }
+        if (el.getAttribute("data-key") !== null) { return { type: "box", key: el.getAttribute("data-key") }; }
+      }
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function bind(cid) {
+    var canvas = document.getElementById(cid);
+    if (!canvas) { return; }
+    canvas.addEventListener("click", function (ev) {
+      var h = hit(ev);
+      if (h && h.type === "box") {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey) { return; }   /* 带修饰键仍按链接走 */
+        ev.preventDefault();
+      }
+      if (!h || (FOCUS && FOCUS.fig === cid && FOCUS.type === h.type && FOCUS.key === h.key)) { FOCUS = null; }
+      else { FOCUS = { fig: cid, type: h.type, key: h.key }; }
+      applyFocus();
+    });
+    canvas.addEventListener("dblclick", function (ev) {
+      var el = ev.target;
+      while (el && el !== canvas) {
+        if (el.tagName && el.tagName.toLowerCase() === "a" && el.getAttribute("href")) {
+          window.location.href = el.getAttribute("href");
+          return;
+        }
+        el = el.parentNode;
+      }
+    });
+  }
+  for (n = 0; n < ids.length; n++) { bind(ids[n]); }
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" || ev.keyCode === 27) { FOCUS = null; applyFocus(); }
+  });
+})();
+
+(function bindExpand() {
+  var cb = document.getElementById("expandAll"), c2 = document.getElementById("c2");
+  if (!cb || !c2) { return; }
+  cb.onchange = function () { if (cb.checked) { c2.classList.add("expanded"); } else { c2.classList.remove("expanded"); } drawAll(); };
+})();
+window.addEventListener("load", drawAll);
+window.addEventListener("resize", drawAll);
+setTimeout(drawAll, 250);
+
+/* ——— 主题切换 + localStorage ——— */
+(function bindTheme() {
+  var picker = document.getElementById("themePicker");
+  if (!picker) { return; }
+  picker.value = document.body.getAttribute("data-theme") || "docs";
+  var saved = null;
+  try { saved = localStorage.getItem("s2w-theme"); } catch (e) { saved = null; }
+  if (saved) {
+    document.body.setAttribute("data-theme", saved);
+    picker.value = saved;
+  }
+  picker.onchange = function () {
+    document.body.setAttribute("data-theme", picker.value);
+    try { localStorage.setItem("s2w-theme", picker.value); } catch (e) {}
+  };
+})();
+
+/* ——— 出处开关 ——— */
+(function bindSrcToggle() {
+  var toggle = document.getElementById("srcToggle");
+  if (!toggle) { return; }
+  toggle.onclick = function () {
+    document.body.classList.toggle("show-sources");
+    toggle.classList.toggle("active");
+    toggle.textContent = document.body.classList.contains("show-sources") ? "隐藏出处" : "显示出处";
+  };
+})();
+
+/* ——— 追问弹窗:总览页版本(边 → 成员 skill 的原文位置),打包复制给 Agent ——— */
+(function bindDeepDive() {
+  var overlay = document.getElementById("ddOverlay");
+  var titleEl = document.getElementById("ddTitle");
+  var ctxEl = document.getElementById("ddCtx");
+  var input = document.getElementById("ddInput");
+  var toast = document.getElementById("ddToast");
+  if (!overlay || !titleEl || !ctxEl || !input || !toast) { return; }
+  var curLabel = "", curSource = "";
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+  window.flashToast = showToast;
+
+  window.openDeepDive = function (label, source) {
+    curLabel = label;
+    curSource = source;
+    titleEl.textContent = "追问「" + label + "」";
+    ctxEl.textContent = "出处:" + source + " | 提交后把提问 + 位置打包复制到剪贴板,贴给 Agent 即可。";
+    input.value = "";
+    overlay.classList.add("active");
+    setTimeout(function () { input.focus(); }, 180);
+  };
+
+  /* 事件委托读 data-*:按钮上不写 onclick,省得引号被 HTML 解码后把 JS 串断开 */
+  document.addEventListener("click", function (ev) {
+    var el = ev.target;
+    while (el && el !== document.body) {
+      if (el.getAttribute && el.getAttribute("data-dd-source")) {
+        window.openDeepDive(el.getAttribute("data-dd-label") || "", el.getAttribute("data-dd-source"));
+        return;
+      }
+      el = el.parentNode;
+    }
+  });
+
+  var cancelBtn = document.getElementById("ddCancel");
+  if (cancelBtn) { cancelBtn.onclick = function () { overlay.classList.remove("active"); }; }
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) { overlay.classList.remove("active"); }
+  };
+
+  var submitBtn = document.getElementById("ddSubmit");
+  if (submitBtn) {
+    submitBtn.onclick = function () {
+      var q = input.value.replace(/^\s+|\s+$/g, "");
+      if (!q) { showToast("请输入你的问题"); return; }
+      var member = curSource.split("/")[0];
+      var loc = curSource.replace(/^[^/]*\//, "");            /* SKILL.md:32 */
+      var dir = SKILL_DIRS[member] || "";
+      var prompt = "【追问 · 由 skill-to-webpage 组合总览页打包】\n"
+        + "- 组合:" + GROUP + "\n"
+        + "- Skill:" + member + (dir ? "(源目录:" + dir + ")" : "") + "\n"
+        + "- 提问对象:" + curLabel + "\n"
+        + "- 原文位置:" + (dir ? dir + "/" : "") + loc.replace(/^SKILL\.md:/, "SKILL.md 第 ") + " 行\n"
+        + "- 我的问题:" + q + "\n\n"
+        + "请先读原文位置(以及该 skill 单页上这条边的两端节点),再回答。";
+      window.__lastPrompt = prompt;
+      function fallbackShow() {
+        input.value = prompt;
+        showToast("剪贴板不可用,已把打包内容放入输入框,请手动全选复制");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(prompt).then(function () {
+          overlay.classList.remove("active");
+          showToast("追问已打包复制(提问 + 位置),贴给 Agent 即可");
+        }).catch(fallbackShow);
+      } else {
+        fallbackShow();
+      }
+    };
+  }
+})();
+</script>
+</body>
+</html>
