@@ -9,7 +9,7 @@
   每版写进自己的文件夹:<output_dir>/<变体>/<skill>-workflow.html(+ .md);根目录 <output_dir>/<skill>-workflow.html
   放 merged 版(未选 merged 时放列表第一个)。页面顶栏注入版本切换链接(按所在位置算相对路径)。
   语义文件不存在或校验整体回落的变体会被跳过并告知。
-- 没有语义文件(或校验整体回落)→ 静态基线页:## 节点、### 步骤、原文;不画任何语义层。
+- 没有语义文件(或校验整体回落)→ 静态基线页:相对 L1 节点、L2 步骤、原文;不画任何语义层。
 - 有语义文件 → 先经 validate_semantics 校验(作废条目剔除),再按 templates/components.md「语义层标记」渲染。
 - overrides.json(可选,渲染 Agent 写的转述层):
   {"lang": "zh-CN", "title": "…", "chip_titles": {"n03": "帮用户找 skill"}, "leads": {"n03": "…"},
@@ -68,7 +68,7 @@ STEP_ORD = re.compile(r"^\s*(step|phase|stage|步骤|阶段|第)\s*(\d+)\s*(步)
 
 
 def doc_step_refs(steps):
-    """若节点的每个 ### 标题都自带序号前缀(Step 0 / Phase 2 / 第 3 步 …),返回按盒子顺序的文档序号文案列表
+    """若节点的每个相对 L2 标题都自带序号前缀(Step 0 / Phase 2 / 第 3 步 …),返回按盒子顺序的文档序号文案列表
     (如 ["Step 0", "Step 1", …]),供编号与「→ Step N」文案沿用文档自己的编号;否则返回 None(沿用 1 起序号)。"""
     refs = []
     for st in steps:
@@ -80,7 +80,11 @@ def doc_step_refs(steps):
     return refs or None
 
 
-def md_to_html(md):
+def md_to_html(md, heading_hierarchy=None):
+    source_to_relative = {
+        int(source): int(relative)
+        for relative, source in (heading_hierarchy or {}).get("relative_mapping", {}).items()
+    }
     out, lines, i = [], md.split("\n"), 0
     item_re = re.compile(r"^\s*([-*+]|\d+[.)])\s+")
     while i < len(lines):
@@ -107,7 +111,14 @@ def md_to_html(md):
             continue
         m = re.match(r"^(#{1,6})\s+(.*)$", line)
         if m:
-            lvl = min(len(m.group(1)) + 1, 6)
+            source_level = len(m.group(1))
+            relative_level = source_to_relative.get(source_level)
+            if relative_level is not None:
+                lvl = min(relative_level + 2, 6)
+            elif source_to_relative and source_level > max(source_to_relative):
+                lvl = 6
+            else:
+                lvl = min(source_level + 1, 6)
             out.append("<h%d>%s</h%d>" % (lvl, inline(m.group(2)), lvl))
             i += 1
             continue
@@ -148,6 +159,7 @@ class Renderer:
     def __init__(self, out_dir, semantics, theme, overrides, skill_dir, variants=None, current=None, link_base="../"):
         self.out_dir = Path(out_dir).resolve()
         self.static = load_static(self.out_dir / "static")
+        self.heading_hierarchy = self.static["heading_hierarchy"]
         self.name = self.out_dir.name   # 组内身份 = skill 目录名(bundle.json 成员名、静态路径、端点前缀都按它;frontmatter 的 name 只管页面标题与文件名)
         self.ov = json.loads(Path(overrides).read_text(encoding="utf-8")) if overrides else {}
         self.theme = theme
@@ -192,7 +204,7 @@ class Renderer:
         self.layers = S.get("layers", {})
         self.edges = [self.localize(e) for e in S.get("edges", [])] + self.bundle_in_edges()  # + 兄弟 skill 指向本页的边
         self.checks = {self.local_ep(c["at"]): c for c in S.get("checkpoints", [])}
-        # 每节点步骤:语义层给了用语义层的(静态步骤 + 隐含),否则用静态 ###
+        # 每节点步骤:语义层给了用语义层的(静态步骤 + 隐含),否则用静态相对 L2
         self.steps = {}
         for n in self.nodes:
             ss = S.get("subflows", {}).get(n["id"])
@@ -345,7 +357,10 @@ class Renderer:
         return '<p class="flow">%s</p>' % "<br>".join(parts) if parts else ""
 
     def orig_acc(self, source, content=None, orig_title=None):
-        body = md_to_html(content if content is not None else src_text(self.static, source, strip_fence=False))
+        body = md_to_html(
+            content if content is not None else src_text(self.static, source, strip_fence=False),
+            self.heading_hierarchy,
+        )
         head = ("原文 · %s · %s" % (E(orig_title), source)) if orig_title else ("原文 · %s" % source)
         return '<div class="acc"><details><summary>%s</summary><div class="acc-body">%s</div></details></div>' % (head, body)
 
@@ -383,7 +398,7 @@ class Renderer:
             elif approval:
                 gate_html = '<span class="sf-gate">⏸ %s</span>' % E(approval)
             when_html = '<span class="sf-when">⇢ %s</span>' % E(when) if when else ""
-            imp = '<span class="sf-imp">隐含</span>' if s.get("implicit") else ""
+            imp = '<span class="sf-imp">步骤</span>' if s.get("implicit") else ""
             type_html = '<span class="sf-type %s">%s</span>' % (fam, E(s["type"])) if s.get("type") else ""
             boxes.append('<button class="sf-node%s" data-x="%s"><span class="sn">%s%s%s</span>%s<span class="st">%s</span>%s</button>'
                          % (" implicit" if s.get("implicit") else "", x, self.step_no(node, k), imp, type_html, when_html, E(step_label(s)), gate_html))
@@ -488,9 +503,16 @@ class Renderer:
             ls = int(str(s["lines"]).split("-")[0])
             st = static_steps.get(ls)
             orig_title = s.get("title") if s.get("label") and s.get("label") != s.get("title") else None
-            orig = self.orig_acc(src, st["content"] if st else None, orig_title)
             if not self.sem:  # 静态基线:原文直接展开
-                orig = '<div class="card" data-source="%s">%s</div>' % (src, md_to_html(st["content"] if st else src_text(self.static, src, strip_fence=False)))
+                orig = '<div class="card" data-source="%s">%s</div>' % (
+                    src,
+                    md_to_html(
+                        st["content"] if st else src_text(self.static, src, strip_fence=False),
+                        self.heading_hierarchy,
+                    ),
+                )
+            else:
+                orig = ""  # 语义模式:「显示出处」已提供溯源,原文手风琴多余且破坏卡片简洁性
             out.append('<div class="explain-card" id="%s" data-source="%s">%s%s%s%s%s%s</div>' % (
                 x, src, head, goal, body, orig, self.flow_line("%s.%d" % (node, k)) if self.sem else "", self.dd("%s %s" % (self.step_ref(node, k), s["title"]), src)))
         return "".join(out)
@@ -529,10 +551,10 @@ class Renderer:
             first_step = n["steps"][0]["line_start"] if n["steps"] else None
             intro = n["content"] if first_step is None else "\n".join(self.static["lines"][n["line_start"]:first_step - 1]).strip("\n")
             if intro.strip():
-                body.append('<div class="card" data-source="SKILL.md:%d-%d">%s</div>' % (n["line_start"] + 1, (first_step - 1) if first_step else n["line_end"], md_to_html(intro)))
+                body.append('<div class="card" data-source="SKILL.md:%d-%d">%s</div>' % (n["line_start"] + 1, (first_step - 1) if first_step else n["line_end"], md_to_html(intro, self.heading_hierarchy)))
             body.append(self.build_stepper(node) + self.render_cards(node))
         else:
-            body.append('<div class="card" data-source="SKILL.md:%d-%d">%s%s</div>' % (n["line_start"], n["line_end"], md_to_html(n["content"]), self.dd(n["title"], "SKILL.md:%d-%d" % (n["line_start"], n["line_end"]))))
+            body.append('<div class="card" data-source="SKILL.md:%d-%d">%s%s</div>' % (n["line_start"], n["line_end"], md_to_html(n["content"], self.heading_hierarchy), self.dd(n["title"], "SKILL.md:%d-%d" % (n["line_start"], n["line_end"]))))
         if self.sem:
             if ly and ly["layer"] == "R" and self.sem.get("routing", {}).get("triggers"):
                 body.append('<p class="sem-h">触发条件(R 层)</p><ul class="rules">%s</ul>' % "".join(self.claim_li(c) for c in self.sem["routing"]["triggers"]))
@@ -555,15 +577,15 @@ class Renderer:
         r"when to (use|apply|request|trigger)|when to (run|invoke|use) this|when not to use|use when"
         r"|trigger|activation|applicability|何时(触发|使用|用)|使用时机|触发(条件|时机)", re.I)
 
-    def has_static_r(self):
-        if any(ly.get("layer") == "R" for ly in self.layers.values()):
-            return True
-        return any(self.R_TITLE_RE.search(n["title"]) for n in self.nodes)
-
     def routing_node(self):
-        """frontmatter 不是 ## 节点;目录里没有「何时触发」类节点时,从 description 合成一个 R 节点(芯片 + 目录 + 面板),
-        与 find-skills 等有 `## When to Use` 标题的页面形态一致:静态版只有 description 原文卡,语义版再附 routing 断言。不进 skeleton,不改目录。"""
-        if self.has_static_r() or not (self.static["description"] or "").strip():
+        """构建路由入口节点(rt 芯片 + 目录项 + 面板)。
+        内容永远来自 frontmatter description:这是 Agent 路由时唯一能看到的对外信号。
+        "When to Use" 类内部节点属于 W/A 层详细指导,不用于 rt。
+        语义层已通过 self.layers 显式标注 R-layer 节点时跳过(那时节点已有视觉区分)。"""
+        if any(ly.get("layer") == "R" for ly in self.layers.values()):
+            return None
+        desc = (self.static["description"] or "").strip()
+        if not desc:
             return None
         rt = (self.sem or {}).get("routing") or {}
         trig, excl = rt.get("triggers") or [], rt.get("exclusions") or []
@@ -573,12 +595,12 @@ class Renderer:
         if trig:
             sub = "%d 类触发信号" % len(trig)
         else:
-            first = re.sub(r"\s+", " ", self.static["description"]).strip()
+            first = re.sub(r"\s+", " ", desc).strip()
             sub = (first[:20] + "…") if len(first) > 20 else first
         lead = self.ov.get("leads", {}).get(self.R_ID) or "这是路由层(R):frontmatter description 给出的激活条件,任一出现就进入执行路径。它不是流程步骤,是入口条件。"
         chip = '<button class="node-chip" data-node="%s"><span class="nid">%s%s</span><span class="nt">%s</span><span class="sub">%s</span></button>' % (self.R_ID, self.R_ID, " · R" if self.sem else "", E(title), E(sub))
         toc = '<button data-node="%s"><span class="tid">%s</span><span class="tt">%s</span><span class="tl">%s</span></button>' % (self.R_ID, self.R_ID, E(title), E(src.replace("SKILL.md:", "")))
-        body = ['<div class="card" data-source="%s">%s%s</div>' % (src, md_to_html(self.static["description"] or "(无 description)"), self.dd(title, src))]
+        body = ['<div class="card" data-source="%s">%s%s</div>' % (src, md_to_html(desc), self.dd(title, src))]
         if trig:
             body.append('<p class="sem-h">触发条件(R 层)</p><ul class="rules">%s</ul>' % "".join(self.claim_li(c) for c in trig))
         if excl:
@@ -626,7 +648,7 @@ class Renderer:
         def sect(title, items, fmt):
             return '<p class="sem-h">%s(%d)</p><ul class="sem-list">%s</ul>' % (title, len(items), "".join("<li>%s</li>" % fmt(x) for x in items) if items else "<li>无</li>")
         body = '<div class="recon-sum">%s</div>' % "".join("<span>%s</span>" % E(c) for c in chips)
-        body += '<p class="sem-h">目录(静态 ## 标题)vs 分层(语义)</p><div class="scroll"><table class="tbl recon-tbl"><thead><tr><th>节点</th><th>标题</th><th>行号</th><th>### 步数</th><th>归属 / 角色</th><th>印证结论</th></tr></thead><tbody>%s</tbody></table></div>' % rows
+        body += '<p class="sem-h">目录(静态相对 L1)vs 分层(语义)</p><div class="scroll"><table class="tbl recon-tbl"><thead><tr><th>节点</th><th>标题</th><th>行号</th><th>L2 步数</th><th>归属 / 角色</th><th>印证结论</th></tr></thead><tbody>%s</tbody></table></div>' % rows
         body += sect("非流程标题", rec.get("non_workflow_nodes", []), lambda x: "<code>%s</code> → %s 层:%s" % (x.get("node"), x.get("layer"), E(x.get("why", ""))))
         body += sect("隐含步骤(文本有、目录无)", rec.get("implicit_steps", []), lambda x: "锚 %s,%s 步(%s)" % (self.jump_to(x.get("anchor", "")), x.get("count", "?"), x.get("source", "")))
         body += sect("顺序偏差(文档顺序 ≠ 执行顺序)", rec.get("order_deviations", []), lambda x: "%s(%s)" % (E(x.get("text", "")), x.get("source", "")))
@@ -742,7 +764,7 @@ class Renderer:
             thesis_title, thesis_src = "执行总纲:" + S["thesis"]["text"], S["thesis"].get("source", "SKILL.md:%d" % desc_line)
         else:
             thesis_title, thesis_src = "%d 个目录节点 · %d 个子步骤(静态基线,未做语义富化)" % (len(self.ids), steps_total), "SKILL.md:%d" % desc_line
-        thesis_html = self.ov.get("thesis_html", "" if self.sem else "按 ## 标题切分的节点与 ### 子步骤,点节点进入;开启「显示出处」可回查每块内容的行号。")
+        thesis_html = self.ov.get("thesis_html", "" if self.sem else "按自适应相对层级切分 L1 节点与 L2 子步骤,点节点进入;开启「显示出处」可回查每块内容的行号。")
         if self.sem and S.get("wsa_profile"):
             p = S["wsa_profile"]
             thesis_html += '<br><span class="wsa">W %s · S %s · A %s → %s</span>' % (p.get("W"), p.get("S"), p.get("A"), E(p.get("label", "")))
@@ -758,6 +780,12 @@ class Renderer:
         else:
             footer += " · 静态基线页:未做语义富化,所有内容为 SKILL.md 原文"
         footer += " · " + _dt.date.today().isoformat()
+        extra_meta = self.static.get("extra_metadata", {})
+        if extra_meta:
+            rows = "".join('<tr><th>%s</th><td>%s</td></tr>' % (E(k), E(str(v))) for k, v in extra_meta.items())
+            skill_metadata_html = '<details class="skill-info"><summary>Skill Info</summary><table>%s</table></details>' % rows
+        else:
+            skill_metadata_html = ""
         rail_html = self.rail()  # 必须先于 component_scripts 求值:RAIL_LINKS 在 rail() 里填充
         slots = {
             "{{lang}}": self.ov.get("lang", "zh-CN"),
@@ -778,6 +806,7 @@ class Renderer:
             "{{node_res_json}}": json.dumps({n["id"]: n["resources"] for n in self.nodes} | ({"recon": []} if "recon" in nodes_json else {}) | ({self.R_ID: []} if rn else {}), ensure_ascii=False),
             "{{subflow_loops_json}}": json.dumps(self.SUBFLOW_LOOPS, ensure_ascii=False),
             "{{initial_node_json}}": json.dumps(nodes_json[0] if nodes_json else "n01"),
+            "{{skill_metadata_html}}": skill_metadata_html,
             "{{rail_groups}}": rail_html, "{{toc_items}}": toc, "{{panels}}": "\n".join(panels),
         }
         out = base

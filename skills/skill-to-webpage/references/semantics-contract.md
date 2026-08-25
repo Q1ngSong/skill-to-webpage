@@ -4,7 +4,7 @@ skill-to-webpage 与**外接拆解 skill** 之间的数据契约。任何 skill 
 
 ## 原则:静态骨架是坐标系
 
-1. **结构拆解永远先跑**(零 LLM:`##` → 节点、`###` → 步骤、行号、资源)。它的产物是**目录**。拆解 skill 不得跳过它、不得替换它、不得重切节点。
+1. **结构拆解永远先跑**(零 LLM:扫描围栏外 H1–H6;仅跳过标题与 frontmatter `name` 一致的单例包装层,或正文极短且下层有多个标题的单例 H1;将前三个有效层级映射为相对 L1 节点 / L2 步骤 / L3 展示小节,并保留行号、资源)。它的产物是**目录**。拆解 skill 不得跳过它、不得替换它、不得重切节点。
 2. **语义层只能叠加与印证**。语义产物写成 `<解析器名>/semantics.json`,每条断言都锚定到目录里的某个节点或步骤。语义抽取发现目录没有的东西——无标题的隐含步骤、跨章节的依赖、文档顺序 ≠ 执行顺序、标题其实不是流程节点——**不改目录,写进 `reconciliation`(印证区)作为偏差报告**。
 3. **抽全不省**。能在文本里指认的都抽:分层归属、步骤分型、全部非顺序边(含跨节点)、检查点、终止、每步 8 维语义、6 类附件、W/S/A 强度。显式与推断都收,用 `basis` 区分。
 4. **每条可机核**。断言带 `source`(行号)与 `quote`(该行号范围内的逐字片段);`scripts/validate_semantics.py` 逐条回读核对,对不上的条目作废。
@@ -61,11 +61,11 @@ skill-to-webpage 与**外接拆解 skill** 之间的数据契约。任何 skill 
 | 字段 | 必填 | 内容 | 渲染端用途 |
 |---|:---:|---|---|
 | `schema` `generator` `generated_at` `source` | ✓ | 同 `/1`;`source.lines` 必须等于 `wc -l` | 校验 / 过期检测 / 页脚 |
-| `skeleton` | ✓ | **目录快照**:从 `static/` 抄来的节点 id / 标题 / 行号 / `###` 步骤数 | 印证基准 |
+| `skeleton` | ✓ | **目录快照**:从 `static/` 抄来的节点 id / 标题 / 行号 / 相对 L2 步骤数 | 印证基准 |
 | `thesis` `groups` `node_summaries` | — | 同 `/1` | Hero 总纲 / 节点总览分组 / 节点副标题 |
 | `layers` | ✓ | 每个静态节点归入 `R`(路由/激活)`W`(流程)`S`(语义/知识)`A`(附件/工具/资源),附 `role` 短标签与出处;**必须覆盖全部节点** | 节点总览分组依据;非 W 节点可弱化显示 |
 | `routing` | — | R 层:触发条件 / 排除条件 claim 数组 | Hero 区 |
-| `subflows` | — | 每节点步骤数组:静态 `###` 步骤原样 + `type`(19 型,见拆解器 `references/taxonomy.md`)+ `goal` + `semantics`(8 维 claim 数组)+ `attachments`(6 类 claim 数组)。目录没有、文本里按序做的动作可追加为步骤,必须 `"implicit": true` 并在印证区登记 | 子流程盒子链;步骤类型徽章;步骤卡"怎样算做对 / 常见翻车" |
+| `subflows` | — | 每节点步骤数组:静态相对 L2 步骤原样 + `type`(19 型,见拆解器 `references/taxonomy.md`)+ `goal` + `semantics`(8 维 claim 数组)+ `attachments`(6 类 claim 数组)。目录没有、文本里按序做的动作可追加为步骤,必须 `"implicit": true` 并在印证区登记 | 子流程盒子链;步骤类型徽章;步骤卡"怎样算做对 / 常见翻车" |
 | `edges` | — | **全部非顺序边**(相邻步骤的顺序边由目录隐含,不列):`type` ∈ `dependency` `condition_true` `condition_false` `loop` `retry` `fallback` `parallel` `approval` `termination`;端点可跨节点;`condition` 为条件文案 | 子流程图回边/自环;节点总览跨节点弧;跳转链接 |
 | `checkpoints` | — | `{at, kind: approval \| validate, source, quote}` | 步骤徽章 / 菱形闸口 |
 | `termination` | — | 终止条件 claim(`at` 指明在哪结束) | 子流程终点标记 |
@@ -95,7 +95,7 @@ skill-to-webpage 与**外接拆解 skill** 之间的数据契约。任何 skill 
 |---|---|
 | `nodes_total` / `nodes_classified`、`steps_total` / `steps_typed` | 覆盖率,必须相等(目录每一项都被语义层处理过) |
 | `non_workflow_nodes` | 目录里的标题不是流程节点(归入 R/S/A)——**"目录 ≠ 流程图"的主要偏差来源** |
-| `implicit_steps` | 文本里按顺序做事、但没有 `###` 标题的步骤 |
+| `implicit_steps` | 文本里按顺序做事、但没有映射为相对 L2 标题的步骤 |
 | `order_deviations` | 文档顺序 ≠ 执行顺序 |
 | `cross_anchored` | 某步骤的语义/附件来自别的节点(知识写在远处) |
 | `judgment_calls` | 容易误判之处及裁定(如"判据列表不是子步骤") |

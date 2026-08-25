@@ -248,6 +248,46 @@ a.xjump { color: var(--accent); text-decoration: none; border-bottom: 1px dashed
 
 .hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
 
+/* ——— Skill Info:可折叠的额外 frontmatter 字段 ——— */
+.skill-info { margin-top: 14px; }
+.skill-info summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px 3px 10px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 600 11.5px/1.4 var(--font-mono);
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+  list-style: none;
+  user-select: none;
+  transition: border-color .12s, color .12s;
+}
+.skill-info summary:hover { border-color: var(--accent); color: var(--accent); }
+.skill-info summary::-webkit-details-marker { display: none; }
+.skill-info summary::after { content: "▸"; font-size: 10px; opacity: .7; }
+.skill-info[open] summary::after { content: "▾"; }
+.skill-info table {
+  border-collapse: collapse;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.skill-info th, .skill-info td {
+  text-align: left;
+  padding: 6px 28px 6px 0;
+  border: none;
+  vertical-align: baseline;
+}
+.skill-info th {
+  font: 600 12px/1.5 var(--font-mono);
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: .9;
+}
+.skill-info td { color: var(--ink-soft); font-size: 13.5px; }
+
 /* ——— 流程带(workflow rail):节点语义分组,不放渲染元数据 ——— */
 .rail-wrap {
   position: sticky;
@@ -948,17 +988,18 @@ body.show-sources .qt { display: inline; }
   <header class="hero">
     <p class="eyebrow">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES</p>
     <h1>find-skills</h1>
-    <p class="lede" data-source="SKILL.md:3">帮用户从开放 agent skills 生态中发现并安装技能。<strong>何时用:</strong>用户问 "how do I do X"、"find a skill for X"、"is there a skill that can…",或表达想扩展 agent 能力时。</p>
+    <p class="lede" data-source="SKILL.md:3">Helps users discover and install agent skills when they ask questions like &quot;how do I do X&quot;, &quot;find a skill for X&quot;, &quot;is there a skill that can...&quot;, or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.</p>
+    
     <div class="thesis" data-source="SKILL.md:3">
       <strong>6 个目录节点 · 6 个子步骤(静态基线,未做语义富化)</strong>
-      <span>先弄清用户要什么,优先查 skills.sh 排行榜、不够再 <code>npx skills find</code> 搜索;推荐前必须验证质量(装机量 / 来源 / star),找不到就直接帮 + 建议自建 skill。</span>
+      <span>按自适应相对层级切分 L1 节点与 L2 子步骤,点节点进入;开启「显示出处」可回查每块内容的行号。</span>
     </div>
   </header>
 
   <!-- 流程带:节点按语义分组(理念/执行/支撑),芯片副标题写节点做什么 -->
   <div class="rail-wrap">
     <div class="rail" id="rail">
-      <div class="group" data-label="节点(文档顺序)"><button class="node-chip" data-node="n01"><span class="nid">n01</span><span class="nt">何时触发</span><span class="sub">Use this skill when …</span></button><span class="arrow">→</span><button class="node-chip" data-node="n02"><span class="nid">n02</span><span class="nt">Skills CLI</span><span class="sub">The Skills CLI (npx …</span></button><span class="arrow">→</span><button class="node-chip" data-node="n03"><span class="nid">n03</span><span class="nt">帮用户找 skill</span><span class="sub">Step 1: Understand W…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n04"><span class="nid">n04</span><span class="nt">常见类目</span><span class="sub">When searching, cons…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n05"><span class="nid">n05</span><span class="nt">检索技巧</span><span class="sub">1. Use specific keyw…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n06"><span class="nid">n06</span><span class="nt">找不到时</span><span class="sub">If no relevant skill…</span></button></div>
+      <div class="group" data-label="节点(文档顺序)"><button class="node-chip" data-node="rt"><span class="nid">rt</span><span class="nt">何时触发</span><span class="sub">Helps users discover…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n01"><span class="nid">n01</span><span class="nt">When to Use This Skill</span><span class="sub">Use this skill when …</span></button><span class="arrow">→</span><button class="node-chip" data-node="n02"><span class="nid">n02</span><span class="nt">What is the Skills CLI?</span><span class="sub">The Skills CLI (npx …</span></button><span class="arrow">→</span><button class="node-chip" data-node="n03"><span class="nid">n03</span><span class="nt">How to Help Users Find Sk…</span><span class="sub">Step 1: Understand W…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n04"><span class="nid">n04</span><span class="nt">Common Skill Categories</span><span class="sub">When searching, cons…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n05"><span class="nid">n05</span><span class="nt">Tips for Effective Search…</span><span class="sub">1. Use specific keyw…</span></button><span class="arrow">→</span><button class="node-chip" data-node="n06"><span class="nid">n06</span><span class="nt">When No Skills Are Found</span><span class="sub">If no relevant skill…</span></button></div>
     </div>
   </div>
 
@@ -969,7 +1010,7 @@ body.show-sources .qt { display: inline; }
       <div class="side-card toc-card">
         <p class="side-title">节点目录</p>
         <nav class="toc" id="toc">
-          <button data-node="n01"><span class="tid">n01</span><span class="tt">When to Use This Skill</span><span class="tl">10-20</span></button><button data-node="n02"><span class="tid">n02</span><span class="tt">What is the Skills CLI?</span><span class="tl">21-32</span></button><button data-node="n03"><span class="tid">n03</span><span class="tt">How to Help Users Find Skills</span><span class="tl">33-104</span></button><button data-node="n04"><span class="tid">n04</span><span class="tt">Common Skill Categories</span><span class="tl">105-118</span></button><button data-node="n05"><span class="tid">n05</span><span class="tt">Tips for Effective Searches</span><span class="tl">119-124</span></button><button data-node="n06"><span class="tid">n06</span><span class="tt">When No Skills Are Found</span><span class="tl">125-141</span></button>
+          <button data-node="rt"><span class="tid">rt</span><span class="tt">何时触发</span><span class="tl">3</span></button><button data-node="n01"><span class="tid">n01</span><span class="tt">When to Use This Skill</span><span class="tl">10-20</span></button><button data-node="n02"><span class="tid">n02</span><span class="tt">What is the Skills CLI?</span><span class="tl">21-32</span></button><button data-node="n03"><span class="tid">n03</span><span class="tt">How to Help Users Find Skills</span><span class="tl">33-104</span></button><button data-node="n04"><span class="tid">n04</span><span class="tt">Common Skill Categories</span><span class="tl">105-118</span></button><button data-node="n05"><span class="tid">n05</span><span class="tt">Tips for Effective Searches</span><span class="tl">119-124</span></button><button data-node="n06"><span class="tid">n06</span><span class="tt">When No Skills Are Found</span><span class="tl">125-141</span></button>
         </nav>
       </div>
       <div class="side-card">
@@ -980,7 +1021,8 @@ body.show-sources .qt { display: inline; }
 
     <!-- 详情面板:每个节点一个 <section class="panel" id="p-nXX"> -->
     <main id="panels">
-      <section class="panel" id="p-n01"><div class="panel-head"><span class="ph-id">n01 · SKILL.md:10-20</span><h2>When to Use This Skill</h2><p class="lead">原文节点(SKILL.md:10-20)。</p></div><div class="card" data-source="SKILL.md:10-20"><p>Use this skill when the user:</p>
+      <section class="panel" id="p-rt"><div class="panel-head"><span class="ph-id">rt · SKILL.md:3</span><h2>何时触发</h2><p class="lead">这是路由层(R):frontmatter description 给出的激活条件,任一出现就进入执行路径。它不是流程步骤,是入口条件。</p></div><div class="card" data-source="SKILL.md:3"><p>Helps users discover and install agent skills when they ask questions like &quot;how do I do X&quot;, &quot;find a skill for X&quot;, &quot;is there a skill that can...&quot;, or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.</p><button class="deep-dive-btn" title="追问" onclick="openDeepDive('何时触发','SKILL.md:3')">?</button></div><div class="pager"></div></section>
+<section class="panel" id="p-n01"><div class="panel-head"><span class="ph-id">n01 · SKILL.md:10-20</span><h2>When to Use This Skill</h2><p class="lead">原文节点(SKILL.md:10-20)。</p></div><div class="card" data-source="SKILL.md:10-20"><p>Use this skill when the user:</p>
 <ul><li>Asks &quot;how do I do X&quot; where X might be a common task with an existing skill</li><li>Says &quot;find a skill for X&quot; or &quot;is there a skill for X&quot;</li><li>Asks &quot;can you do X&quot; where X is a specialized capability</li><li>Expresses interest in extending agent capabilities</li><li>Wants to search for tools, templates, or workflows</li><li>Mentions they wish they had help with a specific domain (design, testing, deployment, etc.)</li></ul><button class="deep-dive-btn" title="追问" onclick="openDeepDive('When to Use This Skill','SKILL.md:10-20')">?</button></div><div class="pager"></div></section>
 <section class="panel" id="p-n02"><div class="panel-head"><span class="ph-id">n02 · SKILL.md:21-32</span><h2>What is the Skills CLI?</h2><p class="lead">原文节点(SKILL.md:21-32)。</p></div><div class="card" data-source="SKILL.md:21-32"><p>The Skills CLI (<code>npx skills</code>) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.</p>
 <p><strong>Key commands:</strong></p>
@@ -1020,7 +1062,7 @@ npx skills init my-xyz-skill</pre><button class="deep-dive-btn" title="追问" o
     </main>
   </div>
 
-  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/find-skills</code> · 拆解零 LLM · 静态基线页:未做语义富化,所有内容为 SKILL.md 原文 · 2026-08-24</footer>
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills</code> · 拆解零 LLM · 静态基线页:未做语义富化,所有内容为 SKILL.md 原文 · 2026-08-25</footer>
 </div>
 
 <!-- 追问弹窗 -->
@@ -1043,10 +1085,10 @@ npx skills init my-xyz-skill</pre><button class="deep-dive-btn" title="追问" o
 /* ——— 渲染时注入的页面数据 ——— */
 var SKILL_NAME = "find-skills";
 var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/find-skills";
-var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/find-skills/static";
-var NODES = ["n01", "n02", "n03", "n04", "n05", "n06"];
-var NODE_TITLES = {"n01": "何时触发", "n02": "Skills CLI", "n03": "帮用户找 skill", "n04": "常见类目", "n05": "检索技巧", "n06": "找不到时"};
-var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "n06": []};
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills/static";
+var NODES = ["rt", "n01", "n02", "n03", "n04", "n05", "n06"];
+var NODE_TITLES = {"n01": "When to Use This Skill", "n02": "What is the Skills CLI?", "n03": "How to Help Users Find Sk…", "n04": "Common Skill Categories", "n05": "Tips for Effective Search…", "n06": "When No Skills Are Found", "rt": "何时触发"};
+var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "n06": [], "rt": []};
 var SUBFLOW_LOOPS = {};
 var SEM_EDGES = {};   /* 语义层(可选):{"st-nXX": {arcs: [{from,to,label,inf}], end: {from,label,inf}}},渲染时经 component_scripts 赋值 */
 var RAIL_LINKS = [];  /* 语义层(可选):流程带支撑行 → 主线的依赖弧 [{from,to}] */
@@ -1895,7 +1937,7 @@ semDrawRail();
 /* ——— 初始状态 ——— */
 (function initFromHash() {
   var want = (location.hash || "").replace("#", "");
-  var start = "n01";
+  var start = "rt";
   if (want && NODES.indexOf(want) >= 0) { start = want; }
   showNode(start);
   window.addEventListener("hashchange", function () {

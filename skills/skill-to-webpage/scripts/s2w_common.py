@@ -19,16 +19,21 @@ def parse_frontmatter_block(text):
     return fm, text[m.end():]
 
 
-def steps_in_range(lines, line_start, line_end):
-    """在 full_text 的 [line_start, line_end](1 起,含)范围内定位 ### 标题 → 子步骤;围栏内不算。行号精确。"""
+def steps_in_range(lines, line_start, line_end, heading_level=3, absorbed_node_level=None):
+    """在指定行范围内按映射后的标题层级定位子步骤;围栏内不算。"""
+    heading_levels = {level for level in (heading_level, absorbed_node_level) if level is not None}
+    if not heading_levels:
+        return []
+    heading_res = [re.compile(r"^" + "#" * level + r"\s+(.*)$") for level in heading_levels]
     steps, fence = [], False
     for ln in range(line_start, line_end + 1):
         line = lines[ln - 1] if ln - 1 < len(lines) else ""
         if line.lstrip().startswith(FENCE):
             fence = not fence
             continue
-        if not fence and line.startswith("### "):
-            steps.append({"title": line[4:].strip(), "line_start": ln})
+        match = next((pattern.match(line) for pattern in heading_res if pattern.match(line)), None) if not fence else None
+        if match:
+            steps.append({"title": match.group(1).strip(), "line_start": ln})
     for j, s in enumerate(steps):
         s["line_end"] = steps[j + 1]["line_start"] - 1 if j + 1 < len(steps) else line_end
         s["content"] = "\n".join(lines[s["line_start"]:s["line_end"]]).strip("\n")
@@ -39,6 +44,23 @@ def load_static(static_dir):
     """读取阶段 1 产物:INDEX.md(R 层)+ nodes/*.md + full_text.md + metadata.json。"""
     static_dir = Path(static_dir)
     meta = json.loads((static_dir / "metadata.json").read_text(encoding="utf-8"))
+    node_level = meta.get("node_level", 2)
+    heading_hierarchy = meta.get("heading_hierarchy")
+    if not heading_hierarchy:
+        step_level = node_level + 1 if node_level < 6 else None
+        relative_mapping = {"1": node_level}
+        if step_level is not None:
+            relative_mapping["2"] = step_level
+        heading_hierarchy = {
+            "observed_levels": [],
+            "ignored_wrappers": [],
+            "relative_mapping": relative_mapping,
+            "node_level": node_level,
+            "step_level": step_level,
+            "detail_level": None,
+            "derived_from_legacy_node_level": True,
+        }
+    step_level = heading_hierarchy.get("step_level")
     full = (static_dir / "full_text.md").read_text(encoding="utf-8").lstrip("﻿").replace("\r\n", "\n")
     lines = full.split("\n")
     if lines and lines[-1] == "":
@@ -61,8 +83,14 @@ def load_static(static_dir):
                 if mm:
                     resources.append([mm.group(1), mm.group(2) == "exists"])
         ls, le = int(fm["line_start"]), int(fm["line_end"])
-        # 节点正文从 ## 标题的下一行开始:kb 里 content 不含标题行,首行号 = line_start + 1
-        steps = steps_in_range(lines, ls, le)
+        # 节点正文从映射后的 L1 标题下一行开始:kb 里 content 不含标题行,首行号 = line_start + 1
+        # 合并进邻居的短节点在 nodes/*.md 中会降为相对 L2,但 full_text.md 仍保留
+        # 原始节点层级。节点范围内部再次出现 node_level 标题时,它只能是被吸收节点。
+        steps = steps_in_range(
+            lines, ls + 1, le,
+            heading_level=step_level,
+            absorbed_node_level=node_level,
+        )
         nodes.append({
             "id": fm["id"], "title": json.loads(fm["title"]) if fm["title"].startswith('"') else fm["title"],
             "line_start": ls, "line_end": le, "content": body.strip("\n"), "resources": resources,
@@ -72,6 +100,9 @@ def load_static(static_dir):
         "skill_name": meta["skill_name"], "source_path": meta.get("source_path", ""),
         "description": description, "nodes": nodes, "lines": lines,
         "generated_at": meta.get("generated_at", ""),
+        "extra_metadata": meta.get("extra_metadata", {}),
+        "node_level": node_level,
+        "heading_hierarchy": heading_hierarchy,
     }
 
 
@@ -168,4 +199,3 @@ def ref_backs_edge(ref, edge_source, from_node=None):
     if span and rl and span[0] <= rl[0] <= span[1]:
         return True
     return bool(ref.get("from_node") and from_node and ref["from_node"] == from_node)
-

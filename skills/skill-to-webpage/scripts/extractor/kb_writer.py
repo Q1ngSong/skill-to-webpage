@@ -59,6 +59,25 @@ def _render_index_md(backbone: SkillBackbone) -> str:
     for node in backbone.nodes:
         lines.append(f"| {node.id} | {node.title} | {SOURCE_FILENAME}:{node.line_start}-{node.line_end} |")
     lines.append("")
+    hierarchy = backbone.heading_hierarchy
+    if hierarchy:
+        lines.extend(["## Heading Mapping", ""])
+        for relative, source_level in hierarchy.get("relative_mapping", {}).items():
+            lines.append(f"- Relative L{relative}: source H{source_level}")
+        for wrapper in hierarchy.get("ignored_wrappers", []):
+            lines.append(
+                f"- Ignored wrapper: source H{wrapper['level']} "
+                f"`{wrapper['title']}` at {SOURCE_FILENAME}:{wrapper['line']}"
+            )
+        lines.append("")
+    if backbone.extra_metadata:
+        lines.append("")
+        lines.append("## Skill Metadata")
+        lines.append("")
+        lines.append("| Field | Value |")
+        lines.append("|---|---|")
+        for k, v in backbone.extra_metadata.items():
+            lines.append(f"| `{k}` | {v} |")
     return "\n".join(lines)
 
 
@@ -99,7 +118,12 @@ def write_knowledge_base(backbone: SkillBackbone, kb_dir: Path) -> None:
         "source_path": backbone.source_path,
         "node_count": len(backbone.nodes),
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "node_level": backbone.node_level,
     }
+    if backbone.heading_hierarchy:
+        metadata["heading_hierarchy"] = backbone.heading_hierarchy
+    if backbone.extra_metadata:
+        metadata["extra_metadata"] = backbone.extra_metadata
     (kb_dir / "metadata.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )

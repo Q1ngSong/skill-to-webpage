@@ -71,7 +71,7 @@ class Validator:
         return None, None
 
     def load_members(self):
-        """组成员的节点 id 与步数(优先成员已有的语义层 subflows,否则数静态 ###),供前缀端点核对。"""
+        """组成员的节点 id 与步数(优先成员已有的语义层 subflows,否则数静态相对 L2),供前缀端点核对。"""
         if not self.bundle:
             return
         meta = json.loads((self.static / "metadata.json").read_text(encoding="utf-8"))
@@ -95,8 +95,8 @@ class Validator:
                         steps = {}
                     break
             if not steps:
-                # 手数 "### " 会把围栏代码块里的三级标题当成子步骤(端点越界就查不出来);
-                # load_static 走 steps_in_range,与渲染端对步骤的切法完全一致(围栏感知)。
+                # 手数某个绝对标题层级既不适应源文档层级,也会把围栏内标题误算为子步骤;
+                # load_static 走映射后的 steps_in_range,与渲染端对步骤的切法完全一致(围栏感知)。
                 steps = {n["id"]: len(n["steps"]) for n in load_static(sdir)["nodes"]}
             self.member_steps[m["name"]] = steps
 

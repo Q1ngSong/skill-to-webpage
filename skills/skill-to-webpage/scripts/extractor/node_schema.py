@@ -23,3 +23,6 @@ class SkillBackbone:
     description: str
     source_path: str
     nodes: list[Node] = field(default_factory=list)
+    extra_metadata: dict = field(default_factory=dict)
+    node_level: int = 2
+    heading_hierarchy: dict = field(default_factory=dict)

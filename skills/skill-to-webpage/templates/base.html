@@ -133,6 +133,46 @@ a.xjump { color: var(--accent); text-decoration: none; border-bottom: 1px dashed
 
 .hero .thesis span { color: var(--ink-soft); font-size: 15.5px; line-height: 1.75; }
 
+/* ——— Skill Info:可折叠的额外 frontmatter 字段 ——— */
+.skill-info { margin-top: 14px; }
+.skill-info summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px 3px 10px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 600 11.5px/1.4 var(--font-mono);
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+  list-style: none;
+  user-select: none;
+  transition: border-color .12s, color .12s;
+}
+.skill-info summary:hover { border-color: var(--accent); color: var(--accent); }
+.skill-info summary::-webkit-details-marker { display: none; }
+.skill-info summary::after { content: "▸"; font-size: 10px; opacity: .7; }
+.skill-info[open] summary::after { content: "▾"; }
+.skill-info table {
+  border-collapse: collapse;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.skill-info th, .skill-info td {
+  text-align: left;
+  padding: 6px 28px 6px 0;
+  border: none;
+  vertical-align: baseline;
+}
+.skill-info th {
+  font: 600 12px/1.5 var(--font-mono);
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: .9;
+}
+.skill-info td { color: var(--ink-soft); font-size: 13.5px; }
+
 /* ——— 流程带(workflow rail):节点语义分组,不放渲染元数据 ——— */
 .rail-wrap {
   position: sticky;
@@ -834,6 +874,7 @@ body.show-sources .qt { display: inline; }
     <p class="eyebrow">{{eyebrow}}</p>
     <h1>{{skill_name}}</h1>
     <p class="lede" data-source="{{description_source}}">{{description_html}}</p>
+    {{skill_metadata_html}}
     <div class="thesis" data-source="{{thesis_source}}">
       <strong>{{thesis_title}}</strong>
       <span>{{thesis_html}}</span>

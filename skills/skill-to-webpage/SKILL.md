@@ -10,7 +10,7 @@ description: 把一个 Claude Code Skill(SKILL.md + scripts/templates 等资源)
 ## 哲学
 
 - **呈现的是 workflow,不是文档**:主轴是"节点做什么、怎么推进、哪里分叉、哪里成环"。节点总览只放节点语义,渲染元数据(步数/环数)不上主视图。
-- **静态骨架是坐标系**:阶段 1 纯结构解析(`##` → 节点,`###` → 步骤,行号,资源),零 token。任何语义层都只能**叠加**在它上面,不能替换、不能重切;目录与实际流程的差异写进印证区而不是改目录。
+- **静态骨架是坐标系**:阶段 1 纯结构解析会扫描围栏外 H1–H6,跳过明确的单一文档包装标题(H1 的浅包装,或标题与 frontmatter `name` 一致),再把前三个有效层级映射为相对 L1 节点 / L2 步骤 / L3 卡片小节(行号、资源一并保留),零 token。任何语义层都只能**叠加**在它上面,不能替换、不能重切;目录与实际流程的差异写进印证区而不是改目录。
 - **解析器可插拔**:解析器就是普通 skill,用路径或名字指定;握手约定见 `references/parser-protocol.md`,数据格式见 `references/semantics-contract.md`。一个失败不影响其他。
 - **冲突回原文**:多份语义产物不一致时,以 SKILL.md 原文裁决(每条断言都带 `source` + `quote`,回读即可)。
 - **原文与转述分层**:带 `data-source` 的内容块是逐字原文;分组名、节点副标题、总纲、引语是转述,不冒充引文;页脚披露。
@@ -58,16 +58,19 @@ node scripts/verify-page.js output/<组名>/<组名>-workflow.html   # 13 项
 
 1. **加载**:Skill 工具能按名字找到就用;否则**直接读取其 SKILL.md 并按其步骤执行**(装在 `.agents/skills/` 等未注册目录时必然如此,两者等价)。
 2. **交给它三样东西**:源 skill 目录绝对路径、`static/` 绝对路径、它自己的输出目录 `output/<skill名>/<解析器名>/`(先创建);附契约路径 `references/semantics-contract.md`。
-3. **验收**:`python3 scripts/validate_semantics.py output/<skill名>/<解析器名> --static output/<skill名>/static --skill-dir <skill目录>`。整体回落 → 该解析器作废并记录原因;单条作废只减条目。
-4. 下一个解析器,互不影响。
+3. **组目录(bundle)时交第四样东西**:`output/<组名>/bundle.json` 的绝对路径 ——**每个解析器 agent 的 prompt 里都要显式给这个路径**,拿到它才能写 `s2w-semantics/3` 的跨 skill 边(`<skill>:nXX[.k]` 端点、`delegate` 类型),并按 `bundle/static/cross-refs.json` 的事实表逐条回原文核实。**漏了这一条,47 条引用事实会全部原地"未采纳",组合总览页里所有成员都显示孤立** —— 这不是零星丢失,是必然结果,派发解析器 agent 前先确认 prompt 里有没有这个路径。
+4. **验收**:`python3 scripts/validate_semantics.py output/<skill名>/<解析器名> --static output/<skill名>/static --skill-dir <skill目录> [--bundle output/<组名>/bundle.json]`(组目录时必须加 `--bundle`,否则带前缀的端点会被作废)。整体回落 → 该解析器作废并记录原因;单条作废只减条目。
+5. 下一个解析器,互不影响。
 
 **没有外部解析器但要语义层时**:Agent 自己按下方「阶段 2 · 临场语义判断」产出 `output/<skill名>/agent/semantics.json`(`/1` 子集即可),同样走验收;`agent` 就是一个普通解析器名。
 
 ### Step 4 · 合并与排错 → `merged/`
 
 ```bash
-python3 scripts/merge_semantics.py output/<skill名> --parsers <名1> [<名2> …] --skill-dir <skill目录>
+python3 scripts/merge_semantics.py output/<skill名> --parsers <名1> [<名2> …] --skill-dir <skill目录> [--bundle output/<组名>/bundle.json]
 ```
+
+组目录时**必须加 `--bundle`**——漏了这个参数,每个成员各自 merge 出来的 `merged/semantics.json` 都不会有跨 skill 边,即使 Step 3 已经拿到了带前缀的端点。
 
 读 `merged/merge-report.md`:**每处冲突回读 `static/full_text.md` 原文裁决**,把结论改进 `merged/semantics.json`(或加 `--prefer <名>` 重跑),记下依据行号。0 个可用解析器 → 跳过本步,后续渲染静态基线。
 
@@ -77,7 +80,9 @@ python3 scripts/merge_semantics.py output/<skill名> --parsers <名1> [<名2> �
 python3 scripts/render.py output/<skill名> --variants <Step 0 选的版本…> [--theme docs] [--overrides output/<skill名>/overrides.json] --skill-dir <skill目录>
 ```
 
-每个版本写进**自己的文件夹**:`output/<skill名>/<版本>/<skill名>-workflow.html`(+ `.md`);根目录 `output/<skill名>/<skill名>-workflow.html` 放 **merged 版**(未选 merged 时放列表第一个);多版时页面顶栏有版本切换链接。`merged` 吃 `static/` + `merged/`,`static` 只吃 `static/`(静态基线页),`<解析器名>` 吃该解析器自己的 `semantics.json`(合并前的单家视角,便于对照)。语义文件缺失或校验整体回落的版本会被跳过并告知。`render.py` 自动:分层节点总览、子流程图(类型徽章 / 闸口 / 条件弧 / 环 / 外部节点栏 / 终止)、由 8 维语义生成的步骤卡、原文折叠、印证报告面板、叙事版 `.md`。**Agent 的转述层**写进 `overrides.json` 再渲染,**不要手改生成的 HTML**:
+**组目录时**:上面这条命令要对**每个成员**跑一遍,而且**全部成员的 Step 4(merge)都跑完之后,要对每个成员重跑第二遍**(见 Step 2 bundle 分支的 for 循环)——先渲染的成员看不到后合并出来的兄弟入边,不补第二遍就会缺边,即使 Step 3/4 的跨 skill 边全部正确写出。
+
+每个版本写进**自己的文件夹**:`output/<skill名>/<版本>/<skill名>-workflow.html`(+ `.md`);根目录 `output/<skill名>/<skill名>-workflow.html` 放 **merged 版**(未选 merged 时放列表第一个);多版时页面顶栏有版本切换链接。`merged` 吃 `static/` + `merged/`,`static` 只吃 `static/`(静态基线页),`<解析器名>` 吃该解析器自己的 `semantics.json`(合并前的单家视角,便于对照)。语义文件缺失或校验整体回落的版本会被跳过并告知。`render.py` 自动:分层节点总览、子流程图(类型徽章 / 闸口 / 条件弧 / 环 / 外部节点栏 / 终止)、由 8 维语义生成的步骤卡、印证报告面板、叙事版 `.md`。静态版直接展开原文;语义版保持卡片简洁,不重复提供完整原文折叠,通过「显示出处」查看断言的逐字引文。**Agent 的转述层**写进 `overrides.json` 再渲染,**不要手改生成的 HTML**:
 
 ```json
 { "chip_titles": { "n03": "帮用户找 skill" }, "leads": { "n03": "段首引语(可含 HTML)" },
@@ -130,7 +135,7 @@ output/<组名>/
 
 | 文件 | 作用 |
 |------|------|
-| `scripts/extract.py` + `scripts/extractor/` | 阶段 1 静态拆解(零 LLM;43 个单测) |
+| `scripts/extract.py` + `scripts/extractor/` | 阶段 1 静态拆解(零 LLM;自适应相对标题层级) |
 | `scripts/extract_bundle.py` | 组级阶段 1(零 LLM):逐成员出 `static/`,扫跨引用事实表 `cross-refs.json`,写 `bundle.json` |
 | `scripts/validate_semantics.py` | 解析器产物校验:schema / sha256 / 行数 / 每条 `quote` 逐行回读 / 端点与序号 / 派生视图与边一致;可作模块 |
 | `scripts/merge_semantics.py` | 多解析器合并:静态赢结构,一致采纳、独有标来源、冲突记表并暂选 |
@@ -149,7 +154,7 @@ output/<组名>/
 
 ## 阶段 1:静态拆解(零 LLM)
 
-frontmatter 提 R 层(description 原样,引号已剥离);`##` 标题切节点(围栏内的 `##` 不误切);<3 行短节点并入邻居;扫描五类资源目录引用并查存在性;每节点记 `SKILL.md:起-止` 行号;CRLF/BOM 归一化。目录无 SKILL.md → 报错不硬跑。
+frontmatter 提 R 层(description 原样,引号已剥离);扫描围栏外 H1–H6 并统计实际层级;单例标题仅在“标题与 frontmatter `name` 一致”,或“H1 下有多个下一层标题且首个子标题前不超过 2 行直接正文”时视作文档包装并跳过,避免把 `## Start` 这类单节点 workflow 误删;把前三个有效层级压缩映射为相对 L1 节点 / L2 步骤 / L3 展示小节(原文跳级也连续映射);<3 行短节点以映射后的 L2 标题并入邻居;扫描五类资源目录引用并查存在性;每节点记 `SKILL.md:起-止` 行号,映射写入 `static/metadata.json` 与 `INDEX.md`;CRLF/BOM 归一化。目录无 SKILL.md → 报错不硬跑。
 
 ## 阶段 2:临场语义判断(Agent 作为解析器 `agent/` 时)
 
@@ -171,8 +176,8 @@ frontmatter 提 R 层(description 原样,引号已剥离);`##` 标题切节点(�
 | 场景 | 处理 |
 |------|------|
 | 目录无 SKILL.md | 报错:"skill-to-webpage 需要一个包含 SKILL.md 的 Claude Code Skill 目录路径。" |
-| SKILL.md 无任何 `##` 标题 | 单一 Overview 节点,页面退化为单节点详情 |
-| 节点无 `###` 子标题 | 不画子流程图,直接展示原文(语义层有隐含步骤则画虚线框) |
+| SKILL.md 无任何围栏外标题 | 单一 Overview 节点,页面退化为单节点详情 |
+| 相对 L1 节点下无 L2 子标题 | 不画子流程图,直接展示原文(语义层有隐含步骤则画虚线框) |
 | 解析器找不到 / 读不到 SKILL.md | 该解析器作废并告知,其余照跑 |
 | 解析器产物 JSON 非法 / schema 不符 / sha256 过期 / 行数不符 / `layers` 未覆盖 / `unanchored` 非空 | 该解析器整体作废,告知原因 |
 | 个别 claim 越界、缺 `source`、`quote` 回读对不上、派生视图无对应边 | 仅作废该条,交付时列出 |

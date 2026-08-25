@@ -296,7 +296,14 @@ class Merger:
                         items.append(x)
             R[key] = items
         M["reconciliation"] = R
-        M["ambiguities"] = sorted({a for n in names for a in self.sems[n].get("ambiguities", [])})
+        seen, ambig = set(), []
+        for n in names:
+            for a in self.sems[n].get("ambiguities", []) or []:
+                k = json.dumps(a, ensure_ascii=False, sort_keys=True) if not isinstance(a, str) else a
+                if k not in seen:
+                    seen.add(k)
+                    ambig.append(a)
+        M["ambiguities"] = ambig
         # 只有当分层覆盖全部静态节点时才是合格的 /2;否则(如仅 /1 解析器)降级为 /1,校验器按 /1 规则接受
         if len(M["layers"]) != len(self.static["nodes"]):
             M["schema"] = "s2w-semantics/1"
