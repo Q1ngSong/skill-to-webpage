@@ -1,6 +1,7 @@
 ---
 name: skill-to-webpage
-description: 把一个 Claude Code Skill(SKILL.md + scripts/templates 等资源)拆解成本地知识库,再渲染成可交互的单文件 workflow HTML 页——节点总览(按语义分组)、子流程图(环与跳转画成真实的边)、逐步骤点开、出处行号标注、追问打包(提问+位置+依赖文件复制给 Agent)。支持用任意解析器 skill(可多个)叠加语义层并相互印证;也支持一整组 skill——出组合总览页(skill 调用图 + 节点调用图)加每个成员一页。当用户想可视化一个 skill 的执行策略/workflow、想看一组 skill 之间怎么互相调用、想用某个解析器分析一个 skill、或想逐步探索某个 skill 怎么工作时使用。
+description: "Use when the user wants to visualize one or more Skills as interactive workflow HTML pages, inspect how a Skill works step by step, map execution paths, branches, or loops, compare parser interpretations, or explore call graphs between Skills. 当用户要求可视化一个或一组 Skill、把 SKILL.md 转成交互式 workflow 网页、查看执行流程、分支、循环或出处节点、分析 Skill 调用关系，或使用解析器分析并可视化 Skill 时使用。Do not use for merely reading, editing, or reviewing SKILL.md without a visualization request."
+
 ---
 
 # skill-to-webpage
@@ -154,7 +155,7 @@ output/<组名>/
 
 ## 阶段 1:静态拆解(零 LLM)
 
-frontmatter 提 R 层(description 原样,引号已剥离);扫描围栏外 H1–H6 并统计实际层级;单例标题仅在“标题与 frontmatter `name` 一致”,或“H1 下有多个下一层标题且首个子标题前不超过 2 行直接正文”时视作文档包装并跳过,避免把 `## Start` 这类单节点 workflow 误删;把前三个有效层级压缩映射为相对 L1 节点 / L2 步骤 / L3 展示小节(原文跳级也连续映射);<3 行短节点以映射后的 L2 标题并入邻居;扫描五类资源目录引用并查存在性;每节点记 `SKILL.md:起-止` 行号,映射写入 `static/metadata.json` 与 `INDEX.md`;CRLF/BOM 归一化。目录无 SKILL.md → 报错不硬跑。
+frontmatter 提 R 层(description 原样,引号已剥离);扫描围栏外 H1–H6 并统计实际层级;单例标题仅在“标题与 frontmatter `name` 一致”,或“H1 下有多个下一层标题且首个子标题前不超过 2 行直接正文”时视作文档包装并跳过,避免把 `## Start` 这类单节点 workflow 误删;把前三个有效层级压缩映射为相对 L1 节点 / L2 步骤 / L3 展示小节(原文跳级也连续映射);<3 行短节点以映射后的 L2 标题并入邻居;先索引当前 skill package 内的真实文件,再扫描节点里的 Markdown 链接、行内代码路径与带扩展名普通路径,只挂载规范化后仍位于包内且真实存在的文件(仅 basename 时须全包唯一,不存在/越界/歧义路径忽略);每节点记 `SKILL.md:起-止` 行号,映射写入 `static/metadata.json` 与 `INDEX.md`;CRLF/BOM 归一化。目录无 SKILL.md → 报错不硬跑。
 
 ## 阶段 2:临场语义判断(Agent 作为解析器 `agent/` 时)
 
@@ -183,7 +184,7 @@ frontmatter 提 R 层(description 原样,引号已剥离);扫描围栏外 H1–H
 | 个别 claim 越界、缺 `source`、`quote` 回读对不上、派生视图无对应边 | 仅作废该条,交付时列出 |
 | 解析器之间冲突 | `merge-report.md` 列出,按规则暂选;Agent 回原文裁决后改 `merged/semantics.json` |
 | 0 个可用解析器 | 渲染静态基线页,并说明 |
-| 引用的资源文件缺失 | 面板里标"缺失",不中断 |
+| 引用路径不存在 / 越出 skill package / 仅 basename 且不唯一 | 不列入节点资源,不中断 |
 
 ## 不在本次范围
 

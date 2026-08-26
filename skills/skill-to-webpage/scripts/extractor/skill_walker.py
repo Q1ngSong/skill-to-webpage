@@ -1,7 +1,10 @@
 """Zero-LLM structural decomposition of a Claude Code Skill's SKILL.md."""
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
+from urllib.parse import urlsplit
 
 from .node_schema import Node, ResourceRef, SkillBackbone
 from .slicer import slice_lines
@@ -9,9 +12,20 @@ from .slicer import slice_lines
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?\n)---\n", re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
-RESOURCE_RE = re.compile(r"(?<![\w/-])((?:scripts|templates|references|examples|assets)/[\w./-]+\.\w+)")
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]\n]*\]\(\s*<?([^\s)>]+)>?")
+FILE_TOKEN_RE = re.compile(
+    r"(?<![\w/.-])"
+    r"((?:\.{0,2}/)?(?:[\w@%+.-]+/)*[\w@%+.-]+\.[A-Za-z0-9][A-Za-z0-9_-]*"
+    r"(?:[?#][^\s`<>()[\]{}|\"']*)?)"
+)
 
 _KNOWN_FM_KEYS = {"name", "description"}
+
+
+@dataclass(frozen=True)
+class PackageFileIndex:
+    by_path: frozenset[str]
+    by_basename: dict[str, tuple[str, ...]]
 
 
 def scan_headings(all_lines: list[str], body_start_line: int) -> list[dict]:
@@ -263,19 +277,106 @@ def merge_short_nodes(
     return result
 
 
-def find_resources(content: str, skill_dir: Path) -> list[ResourceRef]:
-    """Find references to files under scripts/templates/references/examples/assets
-    inside a node's content, and check whether each referenced file actually
-    exists under skill_dir. Deduplicates by path, keeping first-seen order.
+def _is_within(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def build_package_file_index(skill_dir: Path) -> PackageFileIndex:
+    """Index real files contained by a skill package.
+
+    Symlinks are accepted only when their resolved target stays inside the
+    package. SKILL.md is the source document, not a referenced resource.
     """
+    root = skill_dir.resolve()
+    by_path: set[str] = set()
+    basenames: dict[str, list[str]] = {}
+    for candidate in sorted(skill_dir.rglob("*"), key=lambda path: path.as_posix()):
+        try:
+            if not candidate.is_file():
+                continue
+            rel_path = candidate.relative_to(skill_dir).as_posix()
+            if rel_path == "SKILL.md":
+                continue
+            resolved = candidate.resolve()
+            if not _is_within(resolved, root):
+                continue
+        except (OSError, ValueError):
+            continue
+        by_path.add(rel_path)
+        basenames.setdefault(candidate.name, []).append(rel_path)
+    return PackageFileIndex(
+        by_path=frozenset(by_path),
+        by_basename={name: tuple(paths) for name, paths in basenames.items()},
+    )
+
+
+def _resource_candidates(content: str) -> list[str]:
+    """Return explicit file-reference candidates in source order."""
+    found: list[tuple[int, int, str]] = []
+    sequence = 0
+    for pattern in (MARKDOWN_LINK_RE, FILE_TOKEN_RE):
+        for match in pattern.finditer(content):
+            found.append((match.start(1), sequence, match.group(1)))
+            sequence += 1
+    found.sort(key=lambda item: (item[0], item[1]))
+    return [item[2] for item in found]
+
+
+def _normalize_resource_candidate(raw: str) -> Optional[str]:
+    value = raw.strip().strip("`'\"<>{}[](),;:，。；：")
+    if not value:
+        return None
+    value = value.replace("\\", "/")
+    parsed = urlsplit(value)
+    if parsed.scheme or parsed.netloc:
+        return None
+    path = parsed.path
+    while path.startswith("./"):
+        path = path[2:]
+    if not path or path.startswith("/") or re.match(r"^[A-Za-z]:/", path):
+        return None
+    parts: list[str] = []
+    for part in path.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if not parts:
+                return None
+            parts.pop()
+        else:
+            parts.append(part)
+    if not parts:
+        return None
+    normalized = "/".join(parts)
+    if "." not in parts[-1] or parts[-1].startswith("."):
+        return None
+    return normalized
+
+
+def find_resources(
+    content: str,
+    skill_dir: Path,
+    file_index: Optional[PackageFileIndex] = None,
+) -> list[ResourceRef]:
+    """Find explicit references to existing files in the current skill package."""
+    index = file_index or build_package_file_index(skill_dir)
     seen: dict[str, ResourceRef] = {}
-    for match in RESOURCE_RE.finditer(content):
-        rel_path = match.group(1)
-        if ".." in rel_path.split("/"):
+    for raw in _resource_candidates(content):
+        candidate = _normalize_resource_candidate(raw)
+        if not candidate:
             continue
-        if rel_path in seen:
+        if "/" in candidate:
+            rel_path = candidate if candidate in index.by_path else None
+        else:
+            matches = index.by_basename.get(candidate, ())
+            rel_path = matches[0] if len(matches) == 1 else None
+        if not rel_path or rel_path in seen:
             continue
-        seen[rel_path] = ResourceRef(path=rel_path, exists=(skill_dir / rel_path).exists())
+        seen[rel_path] = ResourceRef(path=rel_path, exists=True)
     return list(seen.values())
 
 
@@ -303,8 +404,9 @@ def walk_skill(skill_dir: Path) -> SkillBackbone:
     nodes = split_into_nodes(all_lines, body_start_line, node_level=node_level)
     child_heading_level = heading_hierarchy.get("step_level") or min(node_level + 1, 6)
     nodes = merge_short_nodes(nodes, child_heading_level=child_heading_level)
+    file_index = build_package_file_index(skill_dir)
     for node in nodes:
-        node.resources = find_resources(node.content, skill_dir)
+        node.resources = find_resources(node.content, skill_dir, file_index=file_index)
 
     return SkillBackbone(
         skill_name=skill_name,

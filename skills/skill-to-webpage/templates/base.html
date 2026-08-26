@@ -548,6 +548,7 @@ table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 
 .explain-card {
   display: none;
   position: relative;
+  overflow-wrap: anywhere;
   margin-top: 12px;
   padding: 20px 22px;
   border: 1px solid var(--line);
@@ -874,7 +875,7 @@ body.show-sources .qt { display: inline; }
     <p class="eyebrow">{{eyebrow}}</p>
     <h1>{{skill_name}}</h1>
     <p class="lede" data-source="{{description_source}}">{{description_html}}</p>
-    {{skill_metadata_html}}
+{{skill_metadata_html}}
     <div class="thesis" data-source="{{thesis_source}}">
       <strong>{{thesis_title}}</strong>
       <span>{{thesis_html}}</span>

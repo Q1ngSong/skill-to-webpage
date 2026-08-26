@@ -663,6 +663,7 @@ table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 
 .explain-card {
   display: none;
   position: relative;
+  overflow-wrap: anywhere;
   margin-top: 12px;
   padding: 20px 22px;
   border: 1px solid var(--line);
@@ -989,7 +990,7 @@ body.show-sources .qt { display: inline; }
     <p class="eyebrow">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES</p>
     <h1>find-skills</h1>
     <p class="lede" data-source="SKILL.md:3">Helps users discover and install agent skills when they ask questions like &quot;how do I do X&quot;, &quot;find a skill for X&quot;, &quot;is there a skill that can...&quot;, or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.</p>
-    
+
     <div class="thesis" data-source="SKILL.md:3">
       <strong>6 个目录节点 · 6 个子步骤(静态基线,未做语义富化)</strong>
       <span>按自适应相对层级切分 L1 节点与 L2 子步骤,点节点进入;开启「显示出处」可回查每块内容的行号。</span>
@@ -1062,7 +1063,7 @@ npx skills init my-xyz-skill</pre><button class="deep-dive-btn" title="追问" o
     </main>
   </div>
 
-  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills</code> · 拆解零 LLM · 静态基线页:未做语义富化,所有内容为 SKILL.md 原文 · 2026-08-25</footer>
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/v4/find-skills</code> · 拆解零 LLM · 静态基线页:未做语义富化,所有内容为 SKILL.md 原文 · 2026-08-26</footer>
 </div>
 
 <!-- 追问弹窗 -->
@@ -1085,7 +1086,7 @@ npx skills init my-xyz-skill</pre><button class="deep-dive-btn" title="追问" o
 /* ——— 渲染时注入的页面数据 ——— */
 var SKILL_NAME = "find-skills";
 var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/find-skills";
-var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills/static";
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/v4/find-skills/static";
 var NODES = ["rt", "n01", "n02", "n03", "n04", "n05", "n06"];
 var NODE_TITLES = {"n01": "When to Use This Skill", "n02": "What is the Skills CLI?", "n03": "How to Help Users Find Sk…", "n04": "Common Skill Categories", "n05": "Tips for Effective Search…", "n06": "When No Skills Are Found", "rt": "何时触发"};
 var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "n06": [], "rt": []};

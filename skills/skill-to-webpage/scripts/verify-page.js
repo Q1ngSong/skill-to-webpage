@@ -40,16 +40,35 @@ function check(name, ok, detail) {
   /* 静态检查:占位符残留(排除正文里作为示例展示的 {{...}} 代码片段:
      只要 <title>/<body data-theme>/JS 数据槽位没有残留即可) */
   var html = fs.readFileSync(file, "utf8");
-  var criticalSlots = ["{{lang}}", "{{title}}", "{{default_theme}}", "{{theme_styles}}",
-    "{{panels}}", "{{rail_groups}}", "{{toc_items}}", "{{nodes_json}}", "{{skill_dir}}",
-    "{{kb_dir}}", "{{subflow_loops_json}}", "{{initial_node_json}}"];
   var bundleSlots = ["{{lang}}", "{{title}}", "{{default_theme}}", "{{theme_styles}}", "{{group}}",
     "{{eyebrow}}", "{{hero_html}}", "{{fig1_html}}", "{{fig2_html}}", "{{edges_table}}", "{{stats_table}}",
     "{{recon_html}}", "{{layout_json}}", "{{footer_note}}", "{{flow_lib}}", "{{skill_dirs}}"];
+  var criticalSlotSites = {
+    "{{lang}}": /<html\b[^>]*\blang=["']\{\{lang\}\}["']/i,
+    "{{title}}": /<title>\s*\{\{title\}\}\s*<\/title>/i,
+    "{{default_theme}}": /<body\b[^>]*\bdata-theme=["']\{\{default_theme\}\}["']/i,
+    "{{theme_styles}}": /\/\* —— 主题层[^*]*\*\/\s*\{\{theme_styles\}\}/i,
+    "{{panels}}": /<main\b[^>]*\bid=["']panels["'][^>]*>\s*\{\{panels\}\}/i,
+    "{{rail_groups}}": /<div\b(?=[^>]*\bclass=["'][^"']*\brail\b[^"']*["'])(?=[^>]*\bid=["']rail["'])[^>]*>\s*\{\{rail_groups\}\}/i,
+    "{{toc_items}}": /<nav\b(?=[^>]*\bclass=["'][^"']*\btoc\b[^"']*["'])(?=[^>]*\bid=["']toc["'])[^>]*>\s*\{\{toc_items\}\}/i,
+    "{{nodes_json}}": /\bvar\s+NODES\s*=\s*\{\{nodes_json\}\}/,
+    "{{skill_dir}}": /\bvar\s+SKILL_DIR\s*=\s*["']\{\{skill_dir\}\}["']/,
+    "{{kb_dir}}": /\bvar\s+KB_DIR\s*=\s*["']\{\{kb_dir\}\}["']/,
+    "{{subflow_loops_json}}": /\bvar\s+SUBFLOW_LOOPS\s*=\s*\{\{subflow_loops_json\}\}/,
+    "{{initial_node_json}}": /\bvar\s+start\s*=\s*\{\{initial_node_json\}\}/
+  };
+  var criticalSlots = Object.keys(criticalSlotSites);
   function slotLeaksIn(slots, scanAll) {
     var leaks = [], i;
     for (i = 0; i < slots.length; i++) {
-      if (html.indexOf(slots[i]) !== -1) { leaks.push(slots[i]); }
+      /* 单 skill 页会原样展示被分析 skill 的正文；正文可能恰好讲解
+         {{panels}} 一类模板 token。只检查 token 在 base.html 的骨架位置
+         是否残留，避免把教学示例误报成渲染失败。 */
+      if (!scanAll && criticalSlotSites[slots[i]]) {
+        if (criticalSlotSites[slots[i]].test(html)) { leaks.push(slots[i]); }
+      } else if (html.indexOf(slots[i]) !== -1) {
+        leaks.push(slots[i]);
+      }
     }
     /* 总览页整份都是生成物(base.html 正文里才有当示例展示的 {{…}}),所以不靠固定清单整份扫:
        正文里的残留出坏版式,<script> 里的会让整段 JS 解析失败、页面全瘫。 */

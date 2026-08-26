@@ -52,12 +52,13 @@ skill-to-webpage 把 SKILL 变成一张能交互的 workflow 网页。
 方式一：使用 npx 直接安装：
 ```bash
 npx skills add https://github.com/Q1ngSong/skill-to-webpage --skill skill-to-webpage
+npx skills add https://github.com/Q1ngSong/skill-to-webpage --skill rwsa-lite
 ```
 
 方式二：让 Agent 代劳
 打开你正在用的 agent，告诉他：
 ```bash
-帮我安装这个 skill：https://github.com/Q1ngSong/skill-to-webpage/tree/main/skills/skill-to-webpage
+帮我安装这个 skill：https://github.com/Q1ngSong/skill-to-webpage/tree/main/skills/skill-to-webpage 以及 https://github.com/Q1ngSong/skill-to-webpage/tree/main/skills/rwsa-lite
 ```
 
 方式三：或者手动安装这个 Skill，先 git 克隆仓库：
@@ -66,7 +67,7 @@ git clone https://github.com/Q1ngSong/skill-to-webpage.git
 ```
 再告诉 Agent 
 ```bash
-安装其中的 skills/skill-to-webpage
+安装其中的 skills/skill-to-webpage 以及 skills/rwsa-lite
 ```
 
 ### 立即使用
@@ -77,7 +78,7 @@ git clone https://github.com/Q1ngSong/skill-to-webpage.git
  可视化这个 skill:/path/to/some-skill
 ```
 
-2. 使用你的解析 skill([自定义解析 skill 解析案例](examples/2-parser-rwsa-lite-find-skills/find-skills-workflow.html))：
+2. 使用你的解析 skill([自定义解析 skill 解析案例](examples/2-parser-rwsa-lite-find-skills/find-skills-workflow.html)，推荐装上 rwsa-lite 作为一种基础的 LLM 解析方案)：
 ```
 使用 /path/to/my-parser-skill 分析并可视化 /path/to/some-skill
 ```

@@ -663,6 +663,7 @@ table.rowsel tbody tr.rowon { background: var(--accent-soft); box-shadow: inset 
 .explain-card {
   display: none;
   position: relative;
+  overflow-wrap: anywhere;
   margin-top: 12px;
   padding: 20px 22px;
   border: 1px solid var(--line);
@@ -989,7 +990,7 @@ body.show-sources .qt { display: inline; }
     <p class="eyebrow">SKILL WORKFLOW · 6 NODES · SKILL.md 141 LINES · SEMANTICS BY RWSA-LITE/0.2 · 74 CLAIMS VERIFIED</p>
     <h1>find-skills</h1>
     <p class="lede" data-source="SKILL.md:3">Helps users discover and install agent skills when they ask questions like &quot;how do I do X&quot;, &quot;find a skill for X&quot;, &quot;is there a skill that can...&quot;, or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.</p>
-    
+
     <div class="thesis" data-source="SKILL.md:33-104">
       <strong>执行总纲:理解需求后先查榜单、再搜索并核验质量，给出可安装选项；无结果则提供替代。</strong>
       <span><br><span class="wsa">W 3 · S 3 · A 3 → Full Runtime Workflow Skill</span></span>
@@ -1046,7 +1047,7 @@ npx skills init my-xyz-skill</pre></div><div class="stepper" id="st-n06"><div cl
     </main>
   </div>
 
-  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills</code> · 拆解零 LLM · 语义层由 <code>rwsa-lite/0.2</code> 产出,74 条断言经 <code>validate_semantics.py</code> 逐条回读核对 · 渲染 Agent 负责排版与衔接文案 · 带出处行号的内容为 SKILL.md 原文,开启「显示出处」可见每条断言的逐字引文 · 2026-08-25</footer>
+  <footer class="footer">由 <strong>skill-to-webpage</strong> 生成 · 源:<code>find-skills/SKILL.md</code>(141 行,6 个目录节点)· 输出:<code>/Volumes/DevLayer/skill/skill-to-webpage/output/v4/find-skills</code> · 拆解零 LLM · 语义层由 <code>rwsa-lite/0.2</code> 产出,74 条断言经 <code>validate_semantics.py</code> 逐条回读核对 · 渲染 Agent 负责排版与衔接文案 · 带出处行号的内容为 SKILL.md 原文,开启「显示出处」可见每条断言的逐字引文 · 2026-08-26</footer>
 </div>
 
 <!-- 追问弹窗 -->
@@ -1069,7 +1070,7 @@ npx skills init my-xyz-skill</pre></div><div class="stepper" id="st-n06"><div cl
 /* ——— 渲染时注入的页面数据 ——— */
 var SKILL_NAME = "find-skills";
 var SKILL_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/.agents/skills/find-skills";
-var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/v3/find-skills/static";
+var KB_DIR = "/Volumes/DevLayer/skill/skill-to-webpage/output/v4/find-skills/static";
 var NODES = ["n01", "n02", "n03", "n04", "n05", "n06", "recon"];
 var NODE_TITLES = {"n01": "When to Use This Skill", "n02": "What is the Skills CLI?", "n03": "How to Help Users Find Sk…", "n04": "Common Skill Categories", "n05": "Tips for Effective Search…", "n06": "When No Skills Are Found", "recon": "印证报告"};
 var NODE_RES = {"n01": [], "n02": [], "n03": [], "n04": [], "n05": [], "n06": [], "recon": []};
