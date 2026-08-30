@@ -13,7 +13,7 @@ output/<skill名>/
 └── <skill名>-workflow.md
 ```
 
-`<解析器名>` = 该 skill frontmatter 的 `name`。编排 Agent 自己的临场语义判断也是一个解析器,文件夹名固定 `agent/`(允许 `/1` 子集:groups / node_summaries / loops / jumps / guards)。
+`<解析器名>` = 用户指定的解析器 skill frontmatter 的 `name`。编排 Agent 的渲染前分析不属于解析器,不创建 `agent/`,也不加入 `parsers`。
 
 渲染一**组** skill 时,上面这棵树整体下沉一层,组根多出清单与事实表:
 
@@ -32,8 +32,8 @@ output/<组名>/
 2. **交给它三样东西**:源 skill 目录的绝对路径;`static/` 的绝对路径;它自己的输出目录 `output/<skill名>/<解析器名>/`(已创建)。外加契约文件路径 `references/semantics-contract.md`。
 3. **可选的第四个输入 `bundle.json`**:渲染的是**一组** skill(bundle)时,再给一个 `output/<组名>/bundle.json` 的绝对路径。拿到它的解析器可以写 `s2w-semantics/3`:跨 skill 边的端点带前缀(`<skill>:nXX[.k]`)、边型 `delegate`,并按 `bundle/static/cross-refs.json` 的事实表回原文取证(规则见契约「s2w-semantics/3」)。没拿到就当单 skill 处理,产出 `/2` 即可——**不给 bundle.json 时写前缀端点会被作废**。
 4. **要求**:只在自己的输出目录里写;不改 `static/`;产出 `semantics.json` 符合契约,`skeleton` 抄自 `static/`。
-5. **验收**:`python3 scripts/validate_semantics.py output/<skill>/<解析器名> --static output/<skill>/static --skill-dir <skill目录> [--bundle output/<组名>/bundle.json]`。退出码 1(整体回落)→ 该解析器作废;单条作废只减条目。
-6. **互不影响**:多个解析器顺序跑,一个失败不影响其他;全部失败 → 没有 merged,渲染退回 static 基线 + Agent 临场(= `agent/` 解析器)。
+5. **验收**:`python3 scripts/validate_semantics.py output/<skill>/<解析器名> --static output/<skill>/static --skill-dir <skill目录> [--bundle output/<组名>/bundle.json]`。通过 → `if_valid=true`;退出码 1(整体回落)→ `if_valid=false` 并记录原因。两者都保留输出与 parser 列表项;单条作废只减条目。
+6. **互不影响**:多个解析器顺序跑,一个失败不影响其他;全部尝试完成后,Step 4 把完整 parser 名单(含 `if_valid=false`)统一交给 merge,不在此前过滤。merge 后仍无可用语义 → 渲染退回 static 基线。
 
 ## 合并与排错(Step 4)
 
